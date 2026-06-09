@@ -1,0 +1,19 @@
+# Tasks for a Node/JavaScript project. The `version` task body runs under the
+# node executor (real JavaScript); the rest echo the npm commands to adapt.
+set default := "build"
+
+# Install dependencies.
+install:
+    @echo "npm install"
+
+# Build the project (depends on install).
+build: install
+    @echo "npm run build"
+
+# Run the test suite.
+test: install
+    @echo "npm test"
+
+# Print the Node.js version — body runs under the node executor.
+version (node):
+    console.log("node " + process.version)

@@ -1,0 +1,23 @@
+# Rune build & cache artifacts
+/dist/
+.rune/
+
+# Go
+*.test
+*.out
+coverage.txt
+
+# Not a Go test binary: the docker-compose test image (matched by *.test above).
+!Dockerfile.test
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# ai
+.claude/*
+.agents/*
+.specify/*
+skills-lock.json

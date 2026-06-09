@@ -1,0 +1,40 @@
+# Rune's own development tasks — Rune dogfooding Rune.
+# Run `rune --list` to see them. Tests run inside Docker per project policy
+# (see CONTRIBUTING.md). Use `go run ./cmd/rune <task>` if rune isn't installed.
+
+set default := "lint"
+
+# Format all Go code (gofmt + gofumpt + goimports via golangci-lint).
+fmt:
+    golangci-lint fmt
+
+# Check formatting, run go vet, and run the linters.
+lint:
+    @gofmt -l .
+    go vet ./...
+    golangci-lint run
+
+# Run the full test suite inside Docker (never on the host).
+test:
+    docker-compose run --rm test go test ./...
+
+# Run the test suite with the race detector inside Docker.
+test-race:
+    docker-compose run --rm test go test -race ./...
+
+# Build the static host binary into dist/.
+build:
+    go build -trimpath -ldflags "-s -w" -o dist/rune ./cmd/rune
+
+# Build the production container image.
+docker:
+    docker buildx build -t rune:local --load .
+
+# Verify the documentation inside Docker: every example validates and runs,
+# fenced rune blocks validate, internal links resolve (see test/docs).
+docs-check:
+    docker-compose run --rm test go test ./test/docs/...
+
+# Dry-run a release locally (no publish).
+release-dryrun:
+    goreleaser release --snapshot --clean

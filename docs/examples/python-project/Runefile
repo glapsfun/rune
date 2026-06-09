@@ -1,0 +1,15 @@
+# Tasks for a Python project. The `version` task body runs under the python
+# executor (real Python); the rest echo the commands to adapt.
+set default := "test"
+
+# Create a virtualenv and install dependencies.
+install:
+    @echo "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
+
+# Run the test suite (depends on install).
+test: install
+    @echo "pytest -q"
+
+# Print the Python version — body runs under the python executor.
+version (python):
+    import sys; print("python", sys.version.split()[0])

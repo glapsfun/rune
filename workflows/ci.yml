@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: go vet
+        run: go vet ./...
+      # golangci-lint v2 also enforces the enabled formatters (gofumpt, goimports).
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The race detector requires a C toolchain (CGO). All three runners ship
+      # one; this is intentionally separate from the CGO-free release build.
+      - name: Test (race)
+        env:
+          CGO_ENABLED: "1"
+        run: go test -race ./...
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # Prove the shipped artifact (static, CGO-free) compiles on every OS.
+      - name: Build (static)
+        env:
+          CGO_ENABLED: "0"
+        run: go build ./...
+
+  golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # Regenerate the golden-bearing packages, then fail if anything drifted.
+      # (A blanket `go test ./... -update` would error on packages without the flag.)
+      - name: Regenerate goldens
+        run: go test ./internal/diag ./internal/lexer ./internal/parser ./internal/cli ./test/corpus -update
+      - name: Check goldens are committed
+        run: |
+          if ! git diff --exit-code testdata/; then
+            echo "::error::Goldens are out of date. Regenerate deliberately with -update (never hand-edit) and, if the grammar changed, update docs/GRAMMAR.md."
+            exit 1
+          fi
+
+  fuzz-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Fuzz lexer (smoke)
+        run: go test -run=xxx -fuzz=FuzzLexer -fuzztime=20s ./internal/lexer
+      - name: Fuzz parser (smoke)
+        run: go test -run=xxx -fuzz=FuzzParser -fuzztime=20s ./internal/parser
+
+  release-dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # Proves .goreleaser.yaml is valid and every referenced file (LICENSE,
+      # README) resolves — before any real tag is ever pushed.
+      - name: GoReleaser dry-run
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --snapshot --clean
+
+  # Documentation verification: every example validates and runs, fenced rune
+  # blocks validate, and internal links resolve (test/docs). Runs natively here
+  # for fast, clearly-named feedback; the cross-OS `test` matrix above also
+  # exercises ./test/docs via `go test ./...`. node/python are provisioned so
+  # Tier-B polyglot examples run rather than skip.
+  docs-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify documentation
+        run: go test ./test/docs/...

@@ -1,0 +1,12 @@
+# This is a runnable example used by docs/getting-started.md.
+# It is exercised by CI / `rune docs-check`, so it always reflects working syntax.
+
+set default := "greet"
+
+# Greet someone by name (defaults to "world").
+greet name="world":
+    @echo "Hello, {{name}}! This is your first Rune task."
+
+# Run the project's checks; `greet` runs first as a dependency.
+check: greet
+    @echo "All good ✓"

@@ -1,0 +1,25 @@
+# Test harness for Rune. Per project policy, the test suite runs inside this
+# container, never directly on the host.
+#
+#   docker compose run --rm test            # full suite: go test ./...
+#   docker compose run --rm test go vet ./...
+#   docker compose run --rm test go build ./...
+#
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    working_dir: /src
+    environment:
+      CGO_ENABLED: "0"
+      GOFLAGS: "-mod=mod"
+    volumes:
+      - .:/src
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    command: ["go", "test", "./..."]
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

@@ -1,0 +1,13 @@
+set default:="greet"
+build_dir:="dist"
+
+# Say hello.
+greet   name="world":
+        @echo "hello, {{name}}"
+
+[confirm("Really clean?")]
+clean:
+    rm -rf {{build_dir}}
+
+bundle (node):
+    console.log("bundling")

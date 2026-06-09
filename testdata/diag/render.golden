@@ -1,0 +1,20 @@
+# unknown_task
+Runefile:1:4: error: unknown task: b
+1 | a: b
+  |    ^
+
+# undefined_var
+Runefile:2:11: error: undefined variable: nope
+2 |     @echo {{nope}}
+  |           ^^^^^^^^
+
+# cycle
+Runefile:1:1: error: dependency cycle: c → c
+1 | c: c
+  | ^
+
+# arity
+Runefile:3:6: error: task "greet" expects at least 1 argument(s), got 0
+3 | all: greet
+  |      ^^^^^
+

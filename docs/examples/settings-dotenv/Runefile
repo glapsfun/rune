@@ -1,0 +1,12 @@
+# Settings shape a Runefile; a project .env feeds task environments.
+# `set export` makes Runefile variables available to bodies as env vars; values
+# in .env (here GREETING) are loaded too. Secrets come from the environment,
+# never hard-coded here.
+set default := "show"
+set export
+
+app := "demo"
+
+# Print config sourced from a setting (app) and from .env (GREETING).
+show:
+    @echo "app=$app greeting=${GREETING:-unset}"

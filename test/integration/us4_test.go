@@ -1,0 +1,57 @@
+package integration
+
+import (
+	"strings"
+	"testing"
+)
+
+const us4Runefile = `set agent_cmd := ["definitely-not-a-real-agent-xyz", "-p"]
+
+# Show recent git log.
+logs:
+    @echo log-line-1
+
+[private]
+secret_token:
+    @echo SHOULD-NEVER-BE-EXPOSED
+
+[confirm("Really clean?")]
+clean:
+    @echo cleaning
+
+triage (agent):
+    Summarize the last commits. You may call the logs task.
+`
+
+func TestUS4_MCPStdioStarts(t *testing.T) {
+	// `rune mcp` blocks serving on stdio; with no client and closed stdin it
+	// should exit cleanly (EOF) rather than crash. We assert it starts by
+	// closing stdin immediately.
+	dir := writeRunefile(t, us4Runefile)
+	r := runWithStdin(t, dir, "", "mcp")
+	// Exit code may be 0 (clean EOF) or a transport close; just ensure it did
+	// not panic / report a usage error.
+	if strings.Contains(r.stderr, "panic") {
+		t.Fatalf("mcp server panicked: %s", r.stderr)
+	}
+}
+
+func TestUS4_AgentMissingCLIExits1(t *testing.T) {
+	dir := writeRunefile(t, us4Runefile)
+	r := run(t, dir, nil, "triage")
+	if r.code != 1 {
+		t.Fatalf("exit = %d, want 1 (missing agent CLI); stderr=%s", r.code, r.stderr)
+	}
+	if !strings.Contains(r.stderr, "not found on PATH") {
+		t.Errorf("error should name the missing agent CLI: %q", r.stderr)
+	}
+}
+
+func TestUS4_ServeHTTPRequiresToken(t *testing.T) {
+	dir := writeRunefile(t, us4Runefile)
+	// No --token-file -> usage error (exit 2), never starts unauthenticated.
+	r := run(t, dir, nil, "serve", "--http", "--addr", "127.0.0.1:0")
+	if r.code != 2 {
+		t.Errorf("exit = %d, want 2 (missing token); stderr=%s", r.code, r.stderr)
+	}
+}

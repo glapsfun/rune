@@ -1,0 +1,14 @@
+File
+  Setting default = "greet"
+  Assignment build_dir = "dist"
+  Task greet
+    doc: "Say hello."
+    Param name defaulted = "world"
+    Body
+      @"echo \"hello, {{name}}\""
+  Task build
+    doc: "Build the project."
+    Deps: greet
+    Body
+      @"echo \"building {{build_dir}}...\""
+      "go build ./..."

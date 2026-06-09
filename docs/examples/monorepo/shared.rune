@@ -1,0 +1,3 @@
+# Shared tasks spliced into the root Runefile via `import`.
+package:
+    @echo "packaging all services"

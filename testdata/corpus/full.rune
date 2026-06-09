@@ -1,0 +1,52 @@
+set default := "build"
+set export
+set shell := ["bash", "-cu"]
+
+src_dir := "src"
+out := src_dir / "out"
+
+# Build the project.
+# Spans two lines of doc.
+build target="release": fetch
+    @echo "building {{target}} into {{out}}"
+    go build ./...
+
+# Fetch dependencies.
+fetch:
+    @go mod download
+
+[parallel]
+checks: lint test
+
+lint:
+    @echo lint
+
+test:
+    @echo test
+
+[cache(inputs = ["go.mod", "src/**/*.go"], outputs = ["dist/app"])]
+build-cached:
+    go build -o dist/app ./...
+
+analyze (python):
+    print("analyzing")
+
+[confirm("Really clean?")]
+[no-exit-message]
+clean:
+    -rm -rf dist
+
+greet name="world" +extra:
+    @echo "hi {{name}}: {{extra}}"
+
+mode := if os() == "linux" { "lin" } else if os() == "windows" { "win" } else { "other" }
+
+[private]
+_helper:
+    @echo helper
+
+deploy: build && notify
+    @echo deploy
+
+notify:
+    @echo notified

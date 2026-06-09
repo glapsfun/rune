@@ -1,0 +1,21 @@
+# A CI pipeline as one task with dependencies, plus a gated deploy.
+# In CI: `rune ci` (predictable exit codes), or `rune --dry-run ci` to preview.
+set default := "ci"
+
+# The CI gate: lint, test, build must all pass.
+ci: lint test build
+    @echo "CI passed ✓"
+
+lint:
+    @echo "golangci-lint run"
+
+test:
+    @echo "go test ./..."
+
+build:
+    @echo "go build ./..."
+
+# Deploy is gated: it prompts unless run with --yes (safe for unattended CI/agents).
+[confirm("Deploy to production?")]
+deploy: ci
+    @echo "deploying to production"

@@ -1,0 +1,56 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    # Encode skill rules as gates (Principle VIII). Conservative subset tied to
+    # correctness; broader style linters (revive/gocritic) follow the full US3 sweep.
+    - errorlint # wrap errors with %w; errors.Is/As over == / type-switch
+    - contextcheck # don't drop/replace inherited context.Context
+    - noctx # external/HTTP calls carry a context
+    - bodyclose # response bodies are closed (resource lifecycle)
+    - wastedassign # no dead assignments (caught the parser _ = lb/_ = rb)
+  settings:
+    errcheck:
+      # Writes to in-memory builders/buffers and to stdout/stderr never return
+      # an actionable error; checking them adds noise without value.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*strings.Builder).WriteString
+        - (*strings.Builder).WriteByte
+        - (*strings.Builder).WriteRune
+        - (*bytes.Buffer).WriteString
+        - (*bytes.Buffer).WriteByte
+  exclusions:
+    rules:
+      # Test setup (exec/listen/request without a context, error type-assertions)
+      # is acceptable; these linters target production call sites.
+      - path: _test\.go
+        linters:
+          - noctx
+          - errorlint
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/rune-task-runner/rune
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

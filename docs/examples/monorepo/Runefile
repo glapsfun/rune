@@ -1,0 +1,12 @@
+# A monorepo: shared tasks via `import`, per-service tasks via `mod` namespaces.
+import "shared.rune"
+
+mod api "services/api.rune"
+mod web "services/web.rune"
+
+set default := "package"
+
+# Release runs the shared packaging step. Build a single service with its
+# namespace, e.g. `rune api::build` or `rune web::build`.
+release: package
+    @echo "release: all services packaged"

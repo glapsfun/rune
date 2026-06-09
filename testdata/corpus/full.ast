@@ -1,0 +1,55 @@
+File
+  Setting default = "build"
+  Setting export = true
+  Setting shell = ["bash", "-cu"]
+  Assignment src_dir = "src"
+  Assignment out = (/ src_dir "out")
+  Assignment mode = if(os() == "linux" -> "lin"; os() == "windows" -> "win"; else -> "other")
+  Task build
+    doc: "Build the project.\nSpans two lines of doc."
+    Param target defaulted = "release"
+    Deps: fetch
+    Body
+      @"echo \"building {{target}} into {{out}}\""
+      "go build ./..."
+  Task fetch
+    doc: "Fetch dependencies."
+    Body
+      @"go mod download"
+  Task checks
+    Attr parallel
+    Deps: lint, test
+  Task lint
+    Body
+      @"echo lint"
+  Task test
+    Body
+      @"echo test"
+  Task build-cached
+    Attr cache(inputs=["go.mod", "src/**/*.go"], outputs=["dist/app"])
+    Body
+      "go build -o dist/app ./..."
+  Task analyze (python)
+    Body
+      "print(\"analyzing\")"
+  Task clean
+    Attr confirm("Really clean?")
+    Attr no-exit-message
+    Body
+      -"rm -rf dist"
+  Task greet
+    Param name defaulted = (+ "world" extra)
+    Body
+      @"echo \"hi {{name}}: {{extra}}\""
+  Task _helper
+    Attr private
+    Body
+      @"echo helper"
+  Task deploy
+    Deps: build
+    PostHooks: notify
+    Body
+      @"echo deploy"
+  Task notify
+    Body
+      @"echo notified"

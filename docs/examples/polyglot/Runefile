@@ -1,0 +1,19 @@
+# One Runefile, three languages: each task body runs under its own executor.
+# Shell is the default; (python) and (node) shell out to those interpreters.
+set default := "all"
+
+# Run every step. Each dependency runs under its own executor.
+all: shell-step py-step js-step
+    @echo "polyglot pipeline complete"
+
+# Default (sh) executor.
+shell-step:
+    @echo "shell step"
+
+# Python executor.
+py-step (python):
+    print("python step")
+
+# Node executor.
+js-step (node):
+    console.log("node step")

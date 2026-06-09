@@ -1,0 +1,18 @@
+# A container workflow. Bodies echo the docker commands so the example is safe
+# to run; swap the echoes for real `docker ...` lines in your project.
+set default := "build"
+
+image := "myapp:local"
+
+# Build the image.
+build:
+    @echo "docker build -t {{image}} ."
+
+# Run the container (depends on build).
+run: build
+    @echo "docker run --rm {{image}}"
+
+# Push to a registry — gated so it can't run unattended by accident.
+[confirm("Push image to the registry?")]
+push: build
+    @echo "docker push {{image}}"

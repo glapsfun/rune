@@ -1,0 +1,18 @@
+# Keep the build context minimal and deterministic. The image build only needs
+# Go sources + go.mod/go.sum; everything below is irrelevant to it.
+.git/
+dist/
+.rune/
+specs/
+.specify/
+.claude/
+.agents/
+docs/
+.github/
+.idea/
+.vscode/
+*.test
+*.out
+coverage.txt
+.DS_Store
+Thumbs.db

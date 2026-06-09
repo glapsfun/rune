@@ -1,0 +1,20 @@
+# Tasks for a Go service: fetch → build → test → run.
+# Bodies echo the real commands so this example runs anywhere; swap the echoes
+# for the real `go ...` lines in your project.
+set default := "build"
+
+# Download dependencies.
+fetch:
+    @echo "go mod download"
+
+# Build the binary. `fetch` runs first (dependency).
+build target="release": fetch
+    @echo "go build -tags {{target}} -o dist/app ./cmd/app"
+
+# Run the test suite. `build` runs first.
+test: build
+    @echo "go test ./..."
+
+# Run the service locally on a chosen port.
+run port="8080": build
+    @echo "starting service on :{{port}}"

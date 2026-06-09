@@ -1,0 +1,250 @@
+# Runefile Language Guide
+
+A Runefile is a small, line-oriented file describing **tasks** (named blocks of commands)
+plus a few settings and variables. If you know `make` or `just`, you'll recognize it at a
+glance. This guide is a practical, example-driven tour; the formal grammar lives in
+[`GRAMMAR.md`](GRAMMAR.md) (the parser is the source of truth).
+
+New to Rune? Read [What is Rune?](overview.md) and [Getting started](getting-started.md) first.
+For task-oriented deep dives on a single capability, see the [guides](guides/README.md); for
+runnable starting points, the [examples](examples/README.md).
+
+> The Runefile expression language is intentionally **total** (no loops, no recursion).
+> Real logic belongs in task bodies; the configuration stays readable and statically
+> analyzable.
+
+## Tasks
+
+The core unit. A task has a name, an optional parameter list, an optional executor, an
+optional dependency list, and an indented body:
+
+```rune
+# The comment directly above a task is its documentation (shown by `rune --list`).
+build:
+    go build ./...
+    @echo "done"
+```
+
+Bodies use **significant indentation**. Each body line is a command. Two prefixes:
+
+- `@` — do not echo the command before running it.
+- `-` — continue even if this line fails (ignore its error).
+
+```rune
+clean:
+    -rm -rf dist        # ignore failure if dist/ doesn't exist
+    @echo "cleaned"     # don't print this echo line itself
+```
+
+### Parameters
+
+```rune
+# Defaulted parameter:
+greet name="world":
+    @echo "hello {{name}}"
+
+# Required (no default):
+deploy env:
+    @echo "deploying to {{env}}"
+
+# Variadic — one-or-more (+) and zero-or-more (*):
+test +packages:
+    go test {{packages}}
+
+lint *paths:
+    golangci-lint run {{paths}}
+```
+
+Run them: `rune greet Ada`, `rune deploy prod`, `rune test ./... ./cmd/...`.
+
+### Dependencies and post-hooks
+
+Dependencies run **before** the task; post-hooks (after `&&`) run **after** it succeeds.
+Each task runs at most once per invocation.
+
+```rune
+deploy: build test && notify
+    @echo "deploying"
+
+build:
+    go build ./...
+
+test:
+    go test ./...
+
+notify:
+    @echo "deployed ✓"
+```
+
+Pass arguments to a dependency with the parenthesized form:
+
+```rune
+release: (build "release")
+    @echo "releasing"
+
+build target="debug":
+    go build -tags {{target}} ./...
+```
+
+## Interpolation
+
+`{{ expr }}` evaluates an expression and substitutes the result. Use `{{{{` for a literal
+brace.
+
+```rune
+src := "src"
+build:
+    @echo "compiling from {{src}}/"
+```
+
+## Variables and settings
+
+```rune
+# Variable assignment:
+out := "dist"
+bin := out / "app"          # `/` joins paths (forward slash on every OS)
+
+# Settings:
+set default := "build"      # task to run when none is given
+set export                  # export Runefile variables into task environments
+set shell := ["bash", "-cu"]  # override the shell for (sh) bodies
+```
+
+A bare `set name` is shorthand for `set name := true`.
+
+### Opt-in backward-compatibility pragma
+
+The default interpretation never changes under you. Opt into versioned semantics per file:
+
+```rune
+set rune_version := "1"
+```
+
+## Expressions
+
+The expression sublanguage supports string literals, concatenation, path-join,
+conditionals, comparisons, and function calls.
+
+```rune
+# Concatenation (+) and path-join (/):
+greeting := "hello, " + name
+path := "src" / "main.go"
+
+# Conditional with comparisons (== != =~, where =~ is regex match):
+mode := if os() == "linux" { "lin" } else if os() == "windows" { "win" } else { "other" }
+```
+
+String literals come in single (`'...'`), double (`"..."`), and triple-quoted
+(`'''...'''`, `"""..."""`) forms; triple-quoted strings are de-dented.
+
+### Built-in functions
+
+Rune ships a set of pure, total helper functions (mirroring the `just` family):
+
+| Category | Functions |
+|----------|-----------|
+| Host | `os()`, `arch()`, `os_family()`, `num_cpus()` |
+| Environment | `env("NAME")`, `env("NAME", "default")` |
+| Paths | `join(...)`, `clean(p)`, `extension(p)`, `file_name(p)`, `file_stem(p)`, `parent_dir(p)`, `absolute_path(p)` |
+| Strings | `uppercase`, `lowercase`, `capitalize`, `trim`, `trim_start`, `trim_end`, `replace(s, from, to)`, `replace_regex(s, re, to)` |
+| Filesystem | `path_exists(p)`, `read(p)` |
+| Misc | `uuid()`, `datetime(fmt)`, `quote(s)`, `which(name)`, `require(name)`, `error(msg)` |
+
+```rune
+home := env("HOME", "/tmp")
+name := capitalize(trim(raw_name))
+build:
+    @echo "on {{os()}}/{{arch()}} with {{num_cpus()}} CPUs"
+```
+
+## Executors
+
+A task body runs under an executor named in parentheses after the signature. The default
+is `sh` — a **pure-Go, cross-platform shell** (`mvdan.cc/sh`) that behaves the same on
+Linux, macOS, and Windows without invoking the system shell.
+
+```rune
+# default (sh) — no parentheses needed
+hello:
+    echo "hi"
+
+# Python body (shells out to the real python3 via a temp file):
+analyze (python):
+    print("analyzing")
+
+# Node body:
+bundle (node):
+    console.log("bundling")
+
+# Agent body — drives an installed AI-agent CLI (see docs/mcp.md):
+summarize (agent):
+    Summarize the latest git changes.
+```
+
+`python`/`node`/custom executors shell out to the real interpreter, so those runtimes must
+be installed (see the [Docker guide](docker.md) for the container caveat).
+
+## Attributes
+
+Attributes sit on their own line(s) above a task in `[...]`:
+
+```rune
+[private]                       # hidden from --list and MCP; callable only as a dependency
+[confirm("Really clean?")]      # prompt before running (auto-approve with --yes)
+[parallel]                      # run this task's dependencies concurrently
+[group("build")]                # group label in listings
+[linux]  [macos]  [windows]  [unix]   # restrict to an OS
+[no-cd]                         # don't change into the Runefile's directory
+[network]                       # marks the task as network-using (MCP openWorldHint)
+[no-exit-message]               # suppress the trailing error banner on failure
+[working-directory("./sub")]    # run the body from a specific directory
+[env("KEY", "value")]           # set an environment variable for the body
+[doc("Custom one-line doc")]    # override the doc string
+[script("/usr/bin/env python3")]  # run the whole body as a script under this interpreter
+[cache(inputs = ["go.mod", "src/**/*.go"], outputs = ["dist/app"])]  # content-hash caching
+```
+
+### Caching (opt-in)
+
+Rune never skips work based on timestamps. Caching is an explicit, per-task opt-in via
+`[cache]`. A fingerprint is computed over the declared inputs, the task body, the resolved
+variables, and the executor; a cache hit is **logged**, never silent.
+
+```rune
+[cache(inputs = ["go.mod", "go.sum", "**/*.go"], outputs = ["dist/app"])]
+build:
+    go build -o dist/app ./...
+```
+
+Clear the cache with `rune --clear-cache`.
+
+## Imports and modules
+
+```rune
+import "common.rune"        # inline another Runefile's tasks/vars
+import? "optional.rune"     # ignore if the file is missing
+
+mod tools "tools.rune"      # namespace: invoke as `rune tools::build`
+```
+
+## Dotenv
+
+A project `.env` file is loaded into task environments (parsed via the same pure-Go shell),
+so secrets and config come from the environment — never hard-coded in the Runefile.
+
+## Formatting
+
+Rune is its own formatter. Reformat a Runefile canonically in place:
+
+```sh
+rune --fmt
+```
+
+## See also
+
+- [Guides](guides/README.md) — task-oriented deep dives (dependencies, caching, executors, …)
+- [Examples](examples/README.md) — runnable starting points by use case
+- [CLI reference](cli.md) — flags, subcommands, exit codes
+- [Troubleshooting](troubleshooting.md) — errors, diagnostics, and exit codes
+- [GRAMMAR.md](GRAMMAR.md) — the formal grammar
+- [MCP guide](mcp.md) — exposing tasks to AI agents

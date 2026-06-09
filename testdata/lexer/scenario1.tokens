@@ -1,0 +1,28 @@
+SET
+IDENT("default")
+ASSIGN
+STRING("greet")
+NEWLINE
+COMMENT("Say hello.")
+NEWLINE
+IDENT("greet")
+IDENT("name")
+EQUALS
+STRING("world")
+COLON
+NEWLINE
+INDENT
+AT
+BODYTEXT("echo \"hello, {{name}}\"")
+NEWLINE
+DEDENT
+IDENT("build")
+COLON
+IDENT("greet")
+NEWLINE
+INDENT
+AT
+BODYTEXT("echo \"building...\"")
+NEWLINE
+DEDENT
+EOF

@@ -1,0 +1,19 @@
+# OS-restricted tasks: an [linux]/[macos]/[windows] task only lists and runs on
+# that OS. The os()/arch() built-ins report the current platform.
+set default := "info"
+
+# Always available; reports the current platform.
+info:
+    @echo "running on {{os()}}/{{arch()}}"
+
+[linux]
+setup:
+    @echo "apt-get install build-essential"
+
+[macos]
+setup-mac:
+    @echo "brew install coreutils"
+
+[windows]
+setup-win:
+    @echo "choco install make"

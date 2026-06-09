@@ -1,0 +1,8 @@
+set default := "greet"
+
+# Say hello.
+greet name="world":
+    @echo "hello, {{name}}"
+
+build: greet
+    @echo "building..."
