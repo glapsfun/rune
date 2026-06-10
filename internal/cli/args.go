@@ -21,7 +21,7 @@ type rawInvocation struct {
 // arguments are assigned to a task greedily by its parameter arity (a variadic
 // param consumes all remaining tokens), matching how just splits a chained
 // command line. Unknown task names are a usage error (exit 2).
-func splitArgs(args []string, tasks map[string]*ast.Task) (map[string]string, []rawInvocation, error) {
+func splitArgs(args []string, tasks map[string]*ast.Task, commands []string) (map[string]string, []rawInvocation, error) {
 	overrides := map[string]string{}
 	var invs []rawInvocation
 
@@ -36,6 +36,9 @@ func splitArgs(args []string, tasks map[string]*ast.Task) (map[string]string, []
 		}
 		task, ok := tasks[tok]
 		if !ok {
+			if s, found := nearest(tok, candidateNames(tasks, commands)); found {
+				return nil, nil, usagef("unknown task: %s (did you mean %q?)", tok, s)
+			}
 			return nil, nil, usagef("unknown task: %s", tok)
 		}
 		i++
@@ -48,6 +51,16 @@ func splitArgs(args []string, tasks map[string]*ast.Task) (map[string]string, []
 		invs = append(invs, rawInvocation{name: tok, args: pos})
 	}
 	return overrides, invs, nil
+}
+
+// candidateNames returns the set of names a mistyped token might have meant: the
+// Runefile's task names plus the reserved built-in command names.
+func candidateNames(tasks map[string]*ast.Task, commands []string) []string {
+	names := make([]string, 0, len(tasks)+len(commands))
+	for n := range tasks {
+		names = append(names, n)
+	}
+	return append(names, commands...)
 }
 
 // paramCapacity returns how many positional args a task consumes: -1 (all

@@ -67,14 +67,14 @@ and stdout/stderr behave exactly as before; existing suite green in Docker.
 
 ### Tests for User Story 1 ⚠️ (write first, must FAIL)
 
-- [ ] T008 [P] [US1] Integration test `test/integration/cli_help_test.go` (uses the existing `run`/`writeRunefile` harness): `rune --help` lists `serve`, `version`, `completion`, `help` and references `--list`; `rune serve --help` shows the flags, an example, and `Aliases:` includes `mcp`; `rune version` stdout == `rune --version` stdout; assert exit codes.
+- [x] T008 [P] [US1] Integration test `test/integration/cli_help_test.go` (uses the existing `run`/`writeRunefile` harness): `rune --help` lists `serve`, `version`, `completion`, `help` and references `--list`; `rune serve --help` shows the flags, an example, and `Aliases:` includes `mcp`; `rune version` stdout == `rune --version` stdout; assert exit codes.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] In `cmd/rune/root.go`, add `Short`, `Long`, and `Example` to the root command; ensure top-level help distinguishes built-in commands from tasks and tells users to run `rune --list` (FR-003).
-- [ ] T010 [P] [US1] In `cmd/rune/serve.go`, add `Short`, `Long`, and `Example` covering both stdio (`rune mcp`/`rune serve`) and HTTP (`rune serve --http --addr …`) usage (FR-002).
-- [ ] T011 [P] [US1] In `cmd/rune/version.go`, add `Short`, `Long`, and `Example`; route output through `cmd.OutOrStdout()` (FR-002).
-- [ ] T012 [US1] Add a shared version formatter (e.g. `versionString(version, commit string)` in `cmd/rune/version.go`) used by both `newVersionCmd` and `root.Version` in `cmd/rune/root.go`, so `rune version` and `rune --version` are byte-identical (FR-004). Depends on T011.
+- [x] T009 [US1] In `cmd/rune/root.go`, add `Short`, `Long`, and `Example` to the root command; ensure top-level help distinguishes built-in commands from tasks and tells users to run `rune --list` (FR-003).
+- [x] T010 [P] [US1] In `cmd/rune/serve.go`, add `Short`, `Long`, and `Example` covering both stdio (`rune mcp`/`rune serve`) and HTTP (`rune serve --http --addr …`) usage (FR-002).
+- [x] T011 [P] [US1] In `cmd/rune/version.go`, add `Short`, `Long`, and `Example`; route output through `cmd.OutOrStdout()` (FR-002).
+- [x] T012 [US1] Add a shared version formatter (e.g. `versionString(version, commit string)` in `cmd/rune/version.go`) used by both `newVersionCmd` and `root.Version` in `cmd/rune/root.go`, so `rune version` and `rune --version` are byte-identical (FR-004). Depends on T011.
 
 **Checkpoint**: US1 fully functional — commands are discoverable and documented (SC-001/SC-002/SC-004).
 
@@ -92,14 +92,14 @@ emits a script whose `--help` documents installation.
 
 ### Tests for User Story 2 ⚠️ (write first, must FAIL)
 
-- [ ] T013 [P] [US2] Unit test `internal/cli/complete_test.go`: `TaskCandidates` returns only non-private, OS-matching tasks each with its first doc line; returns `nil` (no error, no panic) when the Runefile is missing or unparseable.
-- [ ] T014 [P] [US2] Integration test `test/integration/cli_completion_test.go`: `rune __complete ""` includes built-in command names and Runefile task names with descriptions and ends with the `ShellCompDirectiveNoFileComp` directive; in a dir with no/broken Runefile it returns commands only and emits **no** error line (FR-012); `rune completion zsh` exits 0 and prints a script.
+- [x] T013 [P] [US2] Unit test `internal/cli/complete_test.go`: `TaskCandidates` returns only non-private, OS-matching tasks each with its first doc line; returns `nil` (no error, no panic) when the Runefile is missing or unparseable.
+- [x] T014 [P] [US2] Integration test `test/integration/cli_completion_test.go`: `rune __complete ""` includes built-in command names and Runefile task names with descriptions and ends with the `ShellCompDirectiveNoFileComp` directive; in a dir with no/broken Runefile it returns commands only and emits **no** error line (FR-012); `rune completion zsh` exits 0 and prints a script.
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Implement `internal/cli/complete.go`: type `TaskCandidate{Name, Doc string}` and `func TaskCandidates(opts Options) []TaskCandidate` — resolve (`config.Resolve`), parse + compose (`parser.Parse`/`config.Compose`), filter via `IsPrivate()`/`osMatches`, take `firstLine(t.Doc)`; **skip the analyzer**; return `nil` on any error. Cobra-free.
-- [ ] T016 [US2] In `cmd/rune/root.go`, set `root.ValidArgsFunction` to call `cli.TaskCandidates(opts)` and map each to `cobra.CompletionWithDesc(c.Name, c.Doc)`, returning `cobra.ShellCompDirectiveNoFileComp`; never write to stdout from the function. Depends on T015.
-- [ ] T017 [US2] Reconcile existing completion coverage in `test/docs/cli_test.go` (and any doc CLI reference) with Cobra's `completion <shell>` surface for bash/zsh/fish/powershell; update fixtures/assertions that assumed the old custom `genCompletion` (e.g. `rune completion` with no shell arg).
+- [x] T015 [US2] Implement `internal/cli/complete.go`: type `TaskCandidate{Name, Doc string}` and `func TaskCandidates(opts Options) []TaskCandidate` — resolve (`config.Resolve`), parse + compose (`parser.Parse`/`config.Compose`), filter via `IsPrivate()`/`osMatches`, take `firstLine(t.Doc)`; **skip the analyzer**; return `nil` on any error. Cobra-free.
+- [x] T016 [US2] In `cmd/rune/root.go`, set `root.ValidArgsFunction` to call `cli.TaskCandidates(opts)` and map each to `cobra.CompletionWithDesc(c.Name, c.Doc)`, returning `cobra.ShellCompDirectiveNoFileComp`; never write to stdout from the function. Depends on T015.
+- [x] T017 [US2] Reconcile existing completion coverage in `test/docs/cli_test.go` (and any doc CLI reference) with Cobra's `completion <shell>` surface for bash/zsh/fish/powershell; update fixtures/assertions that assumed the old custom `genCompletion` (e.g. `rune completion` with no shell arg).
 
 **Checkpoint**: US2 fully functional — dynamic, described task-name completion on all four shells (SC-003).
 
@@ -115,17 +115,17 @@ errors are concise (no full-usage dump); the `--` escape hatch runs a colliding 
 
 ### Tests for User Story 3 ⚠️ (write first, must FAIL)
 
-- [ ] T018 [P] [US3] Unit test `internal/cli/suggest_test.go`: table-driven `nearest` — `serv→serve`, `tset→test`, within-threshold matches, and no suggestion when distance exceeds the threshold.
-- [ ] T019 [P] [US3] Unit test `cmd/rune/serve_test.go` (package main): serve flag validation — `--addr`/`--token-file` without `--http` returns a usage error; valid combinations pass.
-- [ ] T020 [P] [US3] Integration test `test/integration/cli_errors_test.go`: `rune serv` → stderr contains `did you mean "serve"`, exit 2, **no** usage block; `rune serve --addr :1` → exit 2; with a Runefile defining a task named `serve`, `rune -- serve` runs the **task** (asserts task output) while `rune serve` runs the **server** (FR-008 routing — the one empirical risk from research.md D2).
+- [x] T018 [P] [US3] Unit test `internal/cli/suggest_test.go`: table-driven `nearest` — `serv→serve`, `tset→test`, within-threshold matches, and no suggestion when distance exceeds the threshold.
+- [x] T019 [P] [US3] Unit test `cmd/rune/serve_test.go` (package main): serve flag validation — `--addr`/`--token-file` without `--http` returns a usage error; valid combinations pass.
+- [x] T020 [P] [US3] Integration test `test/integration/cli_errors_test.go`: `rune serv` → stderr contains `did you mean "serve"`, exit 2, **no** usage block; `rune serve --addr :1` → exit 2; with a Runefile defining a task named `serve`, `rune -- serve` runs the **task** (asserts task output) while `rune serve` runs the **server** (FR-008 routing — the one empirical risk from research.md D2).
 
 ### Implementation for User Story 3
 
-- [ ] T021 [P] [US3] Add `Commands []string` to `cli.Options` in `internal/cli/dispatch.go`; populate it in `cmd/rune/main.go` with the reserved command names (`serve`, `mcp`, `completion`, `help`, `version`).
-- [ ] T022 [P] [US3] Implement `internal/cli/suggest.go`: `nearest(token string, candidates []string) (string, bool)` using Levenshtein distance with threshold `min(2, ⌊len/3⌋)` — cobra-free.
-- [ ] T023 [US3] In `internal/cli/args.go`, enhance the `splitArgs` `unknown task: <tok>` error to append `(did you mean "<nearest>"?)`, where candidates = Runefile task names ∪ `opts.Commands`. Keep exit code 2. Depends on T021, T022.
-- [ ] T024 [US3] In `cmd/rune/serve.go`, add `RunE` validation: `--addr`/`--token-file` without `--http` → `&cli.UsageError{}` (exit 2, FR-015); register `--token-file` file completion via `RegisterFlagCompletionFunc`. Depends on T005.
-- [ ] T025 [US3] Confirm `rune -- <task>` routes to the task path; if Cobra routes `rune -- serve` to the `serve` subcommand, detect `cmd.ArgsLenAtDash() == 0` in root `RunE` / adjust registration so the task path wins. Validated by T020.
+- [x] T021 [P] [US3] Add `Commands []string` to `cli.Options` in `internal/cli/dispatch.go`; populate it in `cmd/rune/main.go` with the reserved command names (`serve`, `mcp`, `completion`, `help`, `version`).
+- [x] T022 [P] [US3] Implement `internal/cli/suggest.go`: `nearest(token string, candidates []string) (string, bool)` using Levenshtein distance with threshold `min(2, ⌊len/3⌋)` — cobra-free.
+- [x] T023 [US3] In `internal/cli/args.go`, enhance the `splitArgs` `unknown task: <tok>` error to append `(did you mean "<nearest>"?)`, where candidates = Runefile task names ∪ `opts.Commands`. Keep exit code 2. Depends on T021, T022.
+- [x] T024 [US3] In `cmd/rune/serve.go`, add `RunE` validation: `--addr`/`--token-file` without `--http` → `&cli.UsageError{}` (exit 2, FR-015); register `--token-file` file completion via `RegisterFlagCompletionFunc`. Depends on T005.
+- [x] T025 [US3] Confirm `rune -- <task>` routes to the task path; if Cobra routes `rune -- serve` to the `serve` subcommand, detect `cmd.ArgsLenAtDash() == 0` in root `RunE` / adjust registration so the task path wins. Validated by T020.
 
 **Checkpoint**: All three stories independently functional; built-in precedence + `--` escape verified.
 
@@ -133,11 +133,11 @@ errors are concise (no full-usage dump); the `--` escape hatch runs a colliding 
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T026 [P] Update CLI documentation for the new command surface and completion install steps: `docs/` CLI reference, `README.md`, `CONTRIBUTING.md` (technical-writer skill); keep `docs-check` green.
-- [ ] T027 [P] Format & lint: `rune fmt` then `golangci-lint run` — gofumpt/goimports clean, no unhandled errors, no new globals/`init()` (Constitution VIII).
-- [ ] T028 Full verification in Docker: `docker-compose run --rm test go test ./...` and `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...` — green on the whole suite (SC-006).
-- [ ] T029 Execute quickstart.md scenarios S1–S6 against the built binary and confirm expected stdout/stderr/exit for each.
-- [ ] T030 [P] Cross-platform CI smoke: confirm the suite builds/passes on Linux, macOS, Windows (Constitution VI) — completion scripts generate on all four shells.
+- [x] T026 [P] Update CLI documentation for the new command surface and completion install steps: `docs/` CLI reference, `README.md`, `CONTRIBUTING.md` (technical-writer skill); keep `docs-check` green.
+- [x] T027 [P] Format & lint: `rune fmt` then `golangci-lint run` — gofumpt/goimports clean, no unhandled errors, no new globals/`init()` (Constitution VIII).
+- [x] T028 Full verification in Docker: `docker-compose run --rm test go test ./...` and `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...` — green on the whole suite (SC-006).
+- [x] T029 Execute quickstart.md scenarios S1–S6 against the built binary and confirm expected stdout/stderr/exit for each.
+- [x] T030 [P] Cross-platform CI smoke: confirm the suite builds/passes on Linux, macOS, Windows (Constitution VI) — completion scripts generate on all four shells.
 
 ---
 

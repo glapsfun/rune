@@ -77,13 +77,18 @@ rune --clear-cache               # drop the [cache] fingerprints
 
 ## Subcommands
 
-Rune reserves a few names so they never silently shadow a task:
+Built-in commands take precedence over a task of the same name. A task whose name
+collides with a built-in stays reachable with the `--` separator — `rune -- serve` runs a
+task named `serve` rather than the server. Run `rune <command> --help` for full details on
+any command.
 
 | Command | Description |
 |---------|-------------|
-| `rune mcp` | Start the MCP server over **stdio** (for local agents/IDEs). |
-| `rune serve [--http] [--addr <addr>] [--token-file <file>]` | Start the MCP server; `--http` enables the Streamable HTTP transport, `--addr` sets the bind address, `--token-file` supplies the bearer token. |
-| `rune completion [bash\|zsh\|fish\|powershell]` | Print a shell-completion script (defaults to `bash`). |
+| `rune serve [--http] [--addr <addr>] [--token-file <file>]` | Start the MCP server. Stdio by default; `--http` enables the Streamable HTTP transport (which requires `--token-file`), and `--addr` sets the bind address. |
+| `rune mcp` | Alias for `rune serve` over **stdio** (for local agents/IDEs). |
+| `rune version` | Print the version and build commit (identical to `--version`). |
+| `rune completion <bash\|zsh\|fish\|powershell>` | Print a shell-completion script for the given shell (a shell argument is required; an unsupported shell is an error). Completions include your Runefile's task names; run `rune completion --help` for install steps. |
+| `rune help [command]` | Help about any command. |
 
 See the [MCP guide](mcp.md) for exposing tasks to AI agents and the security model.
 

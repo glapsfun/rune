@@ -79,7 +79,7 @@ func execute(opts Options, runefile string, args []string) error {
 	tasks := indexTasks(file)
 	assigns := indexAssignments(file)
 
-	overrides, rawInvs, err := splitArgs(args, tasks)
+	overrides, rawInvs, err := splitArgs(args, tasks, opts.Commands)
 	if err != nil {
 		return err
 	}

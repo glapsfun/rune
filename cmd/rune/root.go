@@ -12,13 +12,22 @@ import (
 )
 
 // newRootCmd builds the root command: Rune's task dispatcher. Built-in
-// capabilities (serve/mcp, version, plus Cobra's auto-added completion/help) are
-// registered as subcommands by the caller. Any first positional that does not
-// match a subcommand is a dynamic task invocation handled by RunE.
+// capabilities (serve/mcp, version, completion, plus Cobra's auto-added help)
+// are registered as subcommands by the caller. Any first positional that does
+// not match a subcommand is a dynamic task invocation handled by RunE.
 func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 	root := &cobra.Command{
-		Use:           "rune [global flags] [VAR=VALUE ...] [TASK [ARGS...]] ...",
-		Short:         "A shared task runner for humans and AI agents",
+		Use:   "rune [global flags] [VAR=VALUE ...] [TASK [ARGS...]] ...",
+		Short: "A shared task runner for humans and AI agents",
+		Long: `Rune runs tasks defined in a Runefile — for humans on the CLI and for AI
+agents and IDEs over MCP.
+
+The built-in commands are listed below. Tasks are dynamic: run 'rune --list' to
+see the tasks in your Runefile, then 'rune <task> [args]' to run one. A task
+whose name collides with a built-in command stays reachable via 'rune -- <task>'.`,
+		Example: `  rune --list           # show the tasks defined in your Runefile
+  rune build            # run the 'build' task
+  rune build --watch    # flags after the task name are passed to the task`,
 		Version:       fmt.Sprintf("%s (commit %s)", version, commit),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -26,6 +35,19 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 		// subcommands makes Cobra's default validator reject an unknown first
 		// arg ("unknown command") instead of routing it to RunE as a task.
 		Args: cobra.ArbitraryArgs,
+		// Dynamic completion of task names from the current Runefile, merged by
+		// Cobra with the built-in command names. Runs side-effect-free, so it
+		// resolves the working directory itself rather than relying on
+		// PersistentPreRunE (which Cobra does not invoke during completion).
+		ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]cobra.Completion, cobra.ShellCompDirective) {
+			o := *opts
+			o.Cwd, _ = os.Getwd()
+			var out []cobra.Completion
+			for _, c := range cli.TaskCandidates(o) {
+				out = append(out, cobra.CompletionWithDesc(c.Name, c.Doc))
+			}
+			return out, cobra.ShellCompDirectiveNoFileComp
+		},
 		// Resolve streams/context once, before the task path OR any subcommand,
 		// so every command observes the same I/O and cancellation.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -36,6 +58,7 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 			opts.Color = useColor()
 			opts.Version = version
 			opts.Ctx = cmd.Context()
+			opts.Commands = subcommandNames(cmd.Root())
 			return nil
 		},
 		// This fires only when no subcommand matched the first positional:
@@ -45,6 +68,11 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 			return cli.Run(*opts, args)
 		},
 	}
+
+	// Rune ships its own completion command (see newCompletionCmd) so an
+	// unsupported shell is a clear error; disable Cobra's default so there is
+	// exactly one. The hidden __complete driver is unaffected.
+	root.CompletionOptions.DisableDefaultCmd = true
 
 	// Stop global-flag parsing at the first positional so trailing task flags
 	// pass through to the task untouched.
@@ -66,6 +94,20 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 	f.BoolVar(&opts.ClearCache, "clear-cache", false, "remove the project-local .rune/cache directory")
 
 	return root
+}
+
+// subcommandNames returns the names and aliases of root's visible subcommands,
+// used to enrich the "unknown task" error with a did-you-mean suggestion.
+func subcommandNames(root *cobra.Command) []string {
+	var names []string
+	for _, c := range root.Commands() {
+		if c.Hidden {
+			continue
+		}
+		names = append(names, c.Name())
+		names = append(names, c.Aliases...)
+	}
+	return names
 }
 
 // useColor reports whether ANSI color should be emitted on stderr (where Rune's

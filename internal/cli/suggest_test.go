@@ -10,11 +10,11 @@ func TestNearest(t *testing.T) {
 		token, want string
 		ok          bool
 	}{
-		{"serv", "serve", true},     // 1 deletion
-		{"tset", "test", true},      // transposition (distance 2)
-		{"biuld", "build", true},    // transposition (distance 2)
-		{"versoin", "version", true}, // transposition (distance 2)
-		{"zzzzzzzzzz", "", false},   // nothing close
+		{"serv", "serve", true},      // 1 deletion
+		{"tset", "test", true},       // transposition (distance 2)
+		{"biuld", "build", true},     // transposition (distance 2)
+		{"versoin", "version", true}, //nolint:misspell // intentional typo: tests the did-you-mean suggestion
+		{"zzzzzzzzzz", "", false},    // nothing close
 	}
 	for _, c := range cases {
 		got, ok := nearest(c.token, cands)
