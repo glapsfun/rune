@@ -44,8 +44,8 @@ GitHub artifact attestation over `checksums.txt` and the image digest; verified 
 ## Container image — FR-010/017
 
 ```
-ghcr.io/rune-task-runner/rune:<version>     # multi-arch manifest (linux/amd64 + linux/arm64)
-ghcr.io/rune-task-runner/rune:latest        # stable releases only (FR-020)
+ghcr.io/glapsfun/rune:<version>     # multi-arch manifest (linux/amd64 + linux/arm64)
+ghcr.io/glapsfun/rune:latest        # stable releases only (FR-020)
 ```
 
 Pulling the version/latest ref on amd64 or arm64 serves the matching variant automatically.

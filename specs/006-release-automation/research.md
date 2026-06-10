@@ -91,7 +91,7 @@ the `version` subcommand, so FR-006 is satisfied by the build — no Go changes 
 `Dockerfile` with `--platform` + `VERSION`/`COMMIT` build-args) + `docker_manifests:` that
 combine `…-amd64` and `…-arm64` into `:{{.Version}}` and a `:latest` manifest. Gate `latest`
 with `name_template`/`skip_push` so **prereleases never move `latest`**
-(`skip_push: '{{ .Prerelease }}'`). Push to `ghcr.io/rune-task-runner/rune`.
+(`skip_push: '{{ .Prerelease }}'`). Push to `ghcr.io/glapsfun/rune`.
 **Rationale**: GoReleaser `dockers` reuses our hand-written distroless Dockerfile (ko builds
 its own image and ignores a Dockerfile; raw buildx means hand-scripting tags/manifests).
 **Alternatives**: `dockers_v2:` — the future-proof unified block (builds + manifest in one),
@@ -108,7 +108,7 @@ https://goreleaser.com/customization/dockers_v2/
 
 **Decision**: Use **`homebrew_casks:`** (NOT `brews:`) for the Homebrew formula, and
 **`scoops:`** for the Scoop manifest, each pointing at an external repo
-(`rune-task-runner/homebrew-tap`, `rune-task-runner/scoop-bucket`) via `repository.token`.
+(`glapsfun/homebrew-tap`, `glapsfun/scoop-bucket`) via `repository.token`.
 Set `skip_upload: auto` on both so prereleases don't update stable channels (FR-020).
 **Rationale**: `brews:` is **fully deprecated as of v2.16** (soft-deprecated v2.10).
 Homebrew Formulas are designed to build from source; the old `brews:` block abused them for
@@ -215,7 +215,7 @@ at release. (Satisfies FR-005/020.)
 GoReleaser archive name, downloads it from the GitHub Release, verifies its SHA-256 against
 `checksums.txt`, extracts, and installs `rune` to a bin dir (`/usr/local/bin` or
 `$HOME/.local/bin`, `INSTALL_DIR` overridable). Document
-`curl -sSL https://raw.githubusercontent.com/rune-task-runner/rune/main/scripts/install.sh | sh`.
+`curl -sSL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh | sh`.
 **Rationale**: GoReleaser does not generate an installer; checksum verification in-script
 satisfies FR-019. Lint with shellcheck; smoke-test in CI.
 **Alternatives**: Attaching the script as a release asset via `release.extra_files` (can do

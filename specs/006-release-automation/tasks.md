@@ -14,6 +14,37 @@ the `goreleaser` dry-run + the verify commands in `quickstart.md` / `contracts/v
 
 **Organization**: Tasks are grouped by user story (P1–P5) for independent, incremental delivery.
 
+## Implementation status (2026-06-10)
+
+**41/46 complete.** All in-repo deliverables are implemented and validated:
+`.goreleaser.yaml` (extended; `goreleaser check` passes), `Dockerfile.goreleaser`,
+`.github/workflows/release.yml` + `pr-title.yml`, `ci.yml` release-dryrun job, `cliff.toml`,
+`CHANGELOG.md`, `scripts/install.sh`, and all docs. Validated locally: a `goreleaser
+release --snapshot` built all 6 binaries + checksums and generated a valid Homebrew cask +
+Scoop manifest; `rune --version` reports the stamped version; `git-cliff` produced a correct
+Keep a Changelog section (skipping pre-convention history); shellcheck on `install.sh` is
+clean; the docs-verify harness passes.
+
+**Done via `gh`/Docker this session**: T001/T002 (created `glapsfun/homebrew-tap` +
+`glapsfun/scoop-bucket`), T004 (protected `release` environment, required reviewer
+`vladtara`), T005 (squash-merge uses PR title), T026 (git-cliff output validated), T037
+(shellcheck clean).
+
+**5 tasks remain — genuinely require a manual token or a live release run:**
+
+- **T003** — mint `TAP_GITHUB_TOKEN` (fine-grained PAT or GitHub App token scoped to the
+  tap+bucket repos; also used to push the changelog commit to `main`). No API/CLI can create
+  this; do it in the GitHub UI, then `gh secret set TAP_GITHUB_TOKEN`. See
+  [docs/releasing.md](../../docs/releasing.md) → "One-time setup".
+- **T019/T032/T039/T045** — live verification that needs a published (pre)release: multi-arch
+  image build/push (local Rancher-Desktop docker rejects `buildx --load`; CI's
+  `setup-buildx-action` handles it), cosign/provenance verification, install-channel checks,
+  and the end-to-end prerelease walk-through ([quickstart.md](./quickstart.md) S6–S8). Run the
+  Release workflow with `prerelease: true` once T003 is set.
+
+> Owner namespace resolved during implementation: release artifacts target **`glapsfun`** (the
+> actual git remote); the Go module path stays `github.com/rune-task-runner/rune` (vanity import).
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no incomplete dependency)
@@ -34,11 +65,11 @@ Two files are edited by **multiple** stories and therefore serialize across phas
 **Purpose**: Provision the accounts, repos, and secrets the pipeline depends on. Mostly
 out-of-repo operational steps; can proceed in parallel.
 
-- [ ] T001 [P] Create the public `rune-task-runner/homebrew-tap` repo (empty + README) for the Homebrew cask (research §E, FR-018)
-- [ ] T002 [P] Create the public `rune-task-runner/scoop-bucket` repo (empty + README) for the Scoop manifest (research §E, FR-018)
+- [x] T001 [P] Create the public `glapsfun/homebrew-tap` repo (empty + README) for the Homebrew cask (research §E, FR-018)
+- [x] T002 [P] Create the public `glapsfun/scoop-bucket` repo (empty + README) for the Scoop manifest (research §E, FR-018)
 - [ ] T003 [P] Create a GitHub App install token (preferred) or fine-grained PAT scoped to `homebrew-tap` + `scoop-bucket` with `contents: write`, **and** allow it to bypass `main` branch protection (for the changelog commit); store as repo secret `TAP_GITHUB_TOKEN` (research §F, §A operational note)
-- [ ] T004 [P] Create a protected `release` GitHub Environment with required reviewers so only authorized maintainers can publish (FR-029, research §J)
-- [ ] T005 [P] Enable repo setting **Settings → General → "Default to PR title for squash merge commits"** so the validated PR title becomes the squash commit subject (research §H1, FR-013a)
+- [x] T004 [P] Create a protected `release` GitHub Environment with required reviewers so only authorized maintainers can publish (FR-029, research §J)
+- [x] T005 [P] Enable repo setting **Settings → General → "Default to PR title for squash merge commits"** so the validated PR title becomes the squash commit subject (research §H1, FR-013a)
 
 ---
 
@@ -50,12 +81,12 @@ dry-run gate.
 
 **⚠️ CRITICAL**: No user-story publishing can occur until this phase is complete.
 
-- [ ] T006 Validate and normalize the existing `.goreleaser.yaml` against GoReleaser v2.16: run `goreleaser check`; confirm `version: 2`, the 6-target `builds:` matrix (`CGO_ENABLED=0`, `-trimpath`, version/commit ldflags), `archives.formats:` (plural), and `checksums.txt` (research §C, §K)
-- [ ] T007 Add `release:` block with `prerelease: auto` to `.goreleaser.yaml` so `-rc.N` tags are auto-flagged as GitHub pre-releases (FR-005, research §H5)
-- [ ] T008 Create `.github/workflows/release.yml` skeleton: `workflow_dispatch` with inputs `bump` (choice: patch|minor|major, required) and `prerelease` (boolean, default false); `environment: release`; `concurrency` guard; `permissions: { contents: write }`; `actions/checkout` with `fetch-depth: 0` + `fetch-tags: true`; `actions/setup-go@v5` (go 1.25) — SHA-pinned (contracts/release-workflow.md, research §J)
-- [ ] T009 Add preconditions to `.github/workflows/release.yml`: refuse unless `github.ref == refs/heads/main`, the tree is clean (`git status --porcelain`), and all check-runs for `HEAD` are `success` (gh query) (FR-025, FR-026, research §A/J)
-- [ ] T010 Add version-computation + tagging steps to `.github/workflows/release.yml`: derive `<next>` from the latest `v*` tag + `bump` (+ `-rc.N` if `prerelease`), **refuse if the tag exists**, then create & push an annotated tag (FR-002, FR-003, FR-004, FR-005; contracts/version.md; data-model state machine)
-- [ ] T011 Add a `release-dryrun` job to `.github/workflows/ci.yml` running `goreleaser check` + `goreleaser release --snapshot --clean` (operationalizes Constitution gate #7, FR-027; quickstart S1/S2)
+- [x] T006 Validate and normalize the existing `.goreleaser.yaml` against GoReleaser v2.16: run `goreleaser check`; confirm `version: 2`, the 6-target `builds:` matrix (`CGO_ENABLED=0`, `-trimpath`, version/commit ldflags), `archives.formats:` (plural), and `checksums.txt` (research §C, §K)
+- [x] T007 Add `release:` block with `prerelease: auto` to `.goreleaser.yaml` so `-rc.N` tags are auto-flagged as GitHub pre-releases (FR-005, research §H5)
+- [x] T008 Create `.github/workflows/release.yml` skeleton: `workflow_dispatch` with inputs `bump` (choice: patch|minor|major, required) and `prerelease` (boolean, default false); `environment: release`; `concurrency` guard; `permissions: { contents: write }`; `actions/checkout` with `fetch-depth: 0` + `fetch-tags: true`; `actions/setup-go@v5` (go 1.25) — SHA-pinned (contracts/release-workflow.md, research §J)
+- [x] T009 Add preconditions to `.github/workflows/release.yml`: refuse unless `github.ref == refs/heads/main`, the tree is clean (`git status --porcelain`), and all check-runs for `HEAD` are `success` (gh query) (FR-025, FR-026, research §A/J)
+- [x] T010 Add version-computation + tagging steps to `.github/workflows/release.yml`: derive `<next>` from the latest `v*` tag + `bump` (+ `-rc.N` if `prerelease`), **refuse if the tag exists**, then create & push an annotated tag (FR-002, FR-003, FR-004, FR-005; contracts/version.md; data-model state machine)
+- [x] T011 Add a `release-dryrun` job to `.github/workflows/ci.yml` running `goreleaser check` + `goreleaser release --snapshot --clean` (operationalizes Constitution gate #7, FR-027; quickstart S1/S2)
 
 **Checkpoint**: The workflow can guard, compute a version, and create a tag; CI validates the
 release config and a full snapshot. User stories can now add publishing.
@@ -70,9 +101,9 @@ self-contained binaries for all 6 OS/arch targets + a checksums file.
 **Independent Test**: Run the workflow (or `--snapshot` dry-run) → 6 downloadable archives +
 `checksums.txt`; a downloaded binary reports the exact released version (quickstart S2/S3; SC-002/006).
 
-- [ ] T012 [US1] Add the GoReleaser publish step to `.github/workflows/release.yml`: `goreleaser/goreleaser-action@v7` (`version: "~> v2"`, `args: release --clean`) with `env: GITHUB_TOKEN` (SHA-pinned) (FR-016, contracts/release-workflow.md)
-- [ ] T013 [US1] Confirm `.goreleaser.yaml` archives include `LICENSE*` + `README*` and the Windows `.exe`/zip override, so each of the 6 archives matches the naming contract `rune_<version>_<os>_<arch>.<ext>` (FR-007, FR-009, contracts/artifacts.md)
-- [ ] T014 [US1] Verify US1: run `goreleaser release --snapshot --clean`; assert 6 archives + `checksums.txt` in `dist/`, and the built binary prints `rune version <v> (commit <sha>)` (quickstart S2/S3, FR-006, SC-002/006)
+- [x] T012 [US1] Add the GoReleaser publish step to `.github/workflows/release.yml`: `goreleaser/goreleaser-action@v7` (`version: "~> v2"`, `args: release --clean`) with `env: GITHUB_TOKEN` (SHA-pinned) (FR-016, contracts/release-workflow.md)
+- [x] T013 [US1] Confirm `.goreleaser.yaml` archives include `LICENSE*` + `README*` and the Windows `.exe`/zip override, so each of the 6 archives matches the naming contract `rune_<version>_<os>_<arch>.<ext>` (FR-007, FR-009, contracts/artifacts.md)
+- [x] T014 [US1] Verify US1: run `goreleaser release --snapshot --clean`; assert 6 archives + `checksums.txt` in `dist/`, and the built binary prints `rune version <v> (commit <sha>)` (quickstart S2/S3, FR-006, SC-002/006)
 
 **Checkpoint**: MVP — a real run publishes a complete cross-platform binary release. **STOP & VALIDATE.**
 
@@ -83,13 +114,13 @@ self-contained binaries for all 6 OS/arch targets + a checksums file.
 **Goal**: The same release builds and pushes one multi-arch GHCR image (linux amd64+arm64),
 tagged with the version and (for stable) `latest`.
 
-**Independent Test**: `docker buildx imagetools inspect ghcr.io/rune-task-runner/rune:<version>`
+**Independent Test**: `docker buildx imagetools inspect ghcr.io/glapsfun/rune:<version>`
 lists both platforms; the image runs and reports the version on each arch (quickstart S7; US2 scenarios).
 
-- [ ] T015 [US2] Add `dockers:` to `.goreleaser.yaml` — one entry per goarch (amd64, arm64), `use: buildx`, reusing `Dockerfile` with `--platform=linux/<arch>` and `--build-arg VERSION=/COMMIT=`; images `ghcr.io/rune-task-runner/rune:{{.Version}}-<arch>` (FR-010, research §D, contracts/artifacts.md)
-- [ ] T016 [US2] Add `docker_manifests:` to `.goreleaser.yaml` combining the per-arch images into `:{{.Version}}` and a `:latest` manifest, with `latest` gated off prereleases (`skip_push: '{{ .Prerelease }}'`) (FR-010, FR-020, research §D)
-- [ ] T017 [US2] Add to `.github/workflows/release.yml`: `docker/setup-qemu-action@v3`, `docker/setup-buildx-action@v3`, and `docker/login-action@v3` to `ghcr.io` (user `${{ github.actor }}`, password `GITHUB_TOKEN`) — SHA-pinned (research §D/J)
-- [ ] T018 [US2] Add `packages: write` to the `permissions:` block in `.github/workflows/release.yml` (FR-017, research §J)
+- [x] T015 [US2] Add `dockers:` to `.goreleaser.yaml` — one entry per goarch (amd64, arm64), `use: buildx`, reusing `Dockerfile` with `--platform=linux/<arch>` and `--build-arg VERSION=/COMMIT=`; images `ghcr.io/glapsfun/rune:{{.Version}}-<arch>` (FR-010, research §D, contracts/artifacts.md)
+- [x] T016 [US2] Add `docker_manifests:` to `.goreleaser.yaml` combining the per-arch images into `:{{.Version}}` and a `:latest` manifest, with `latest` gated off prereleases (`skip_push: '{{ .Prerelease }}'`) (FR-010, FR-020, research §D)
+- [x] T017 [US2] Add to `.github/workflows/release.yml`: `docker/setup-qemu-action@v3`, `docker/setup-buildx-action@v3`, and `docker/login-action@v3` to `ghcr.io` (user `${{ github.actor }}`, password `GITHUB_TOKEN`) — SHA-pinned (research §D/J)
+- [x] T018 [US2] Add `packages: write` to the `permissions:` block in `.github/workflows/release.yml` (FR-017, research §J)
 - [ ] T019 [US2] Verify US2: in a `--snapshot` run confirm local `…-amd64`/`…-arm64` images build; document the post-release `imagetools inspect` + dual-arch `docker run --platform` check (quickstart S7, FR-010/017)
 
 **Checkpoint**: US1 + US2 both deliver independently — binaries and a multi-arch image.
@@ -104,13 +135,13 @@ identical GitHub Release notes, from Conventional-Commit PR titles.
 **Independent Test**: After merges, a release adds a dated grouped `CHANGELOG.md` section and
 the release notes match it, with no manual editing (quickstart S4; FR-012/014/015).
 
-- [ ] T020 [P] [US3] Create `cliff.toml` mapping Conventional-Commit types to Keep-a-Changelog groups (`feat`→Added, `fix`→Fixed, `perf`/`refactor`→Changed, …), configured to parse only commits after the first managed baseline tag (research §H2/H4, contracts/changelog.md)
-- [ ] T021 [P] [US3] Create the curated first-managed `CHANGELOG.md` entry for the current state (Keep a Changelog format); git-cliff manages sections from the next tag forward (research §H4, FR-012)
-- [ ] T022 [P] [US3] Create `.github/workflows/pr-title.yml` using `amannn/action-semantic-pull-request@v6` (triggers incl. `synchronize`) to enforce Conventional-Commit PR titles; mark it a required status check (FR-013a, research §H1)
-- [ ] T023 [P] [US3] Document the Conventional Commits PR-title requirement in `CONTRIBUTING.md` (FR-013a)
-- [ ] T024 [US3] Set `changelog: { disable: true }` in `.goreleaser.yaml` so git-cliff is the single source (research §H3, FR-014)
-- [ ] T025 [US3] Insert a changelog step into `.github/workflows/release.yml` **before** the tag step (T010): `git cliff --unreleased --tag <next> --prepend CHANGELOG.md`, commit `chore(release): <next>` to `main` (via `TAP_GITHUB_TOKEN`/App identity that can bypass protection); update the goreleaser step (T012) to pass `--release-notes <(git cliff --latest)` (FR-012/013/014, research §A/H3)
-- [ ] T026 [US3] Verify US3: `git cliff --unreleased --tag vX.Y.Z` produces a grouped section, and `git cliff --latest` equals the top `CHANGELOG.md` section; confirm an empty change set warns rather than emitting a broken section (quickstart S4, FR-012/014, edge case)
+- [x] T020 [P] [US3] Create `cliff.toml` mapping Conventional-Commit types to Keep-a-Changelog groups (`feat`→Added, `fix`→Fixed, `perf`/`refactor`→Changed, …), configured to parse only commits after the first managed baseline tag (research §H2/H4, contracts/changelog.md)
+- [x] T021 [P] [US3] Create the curated first-managed `CHANGELOG.md` entry for the current state (Keep a Changelog format); git-cliff manages sections from the next tag forward (research §H4, FR-012)
+- [x] T022 [P] [US3] Create `.github/workflows/pr-title.yml` using `amannn/action-semantic-pull-request@v6` (triggers incl. `synchronize`) to enforce Conventional-Commit PR titles; mark it a required status check (FR-013a, research §H1)
+- [x] T023 [P] [US3] Document the Conventional Commits PR-title requirement in `CONTRIBUTING.md` (FR-013a)
+- [x] T024 [US3] Set `changelog: { disable: true }` in `.goreleaser.yaml` so git-cliff is the single source (research §H3, FR-014)
+- [x] T025 [US3] Insert a changelog step into `.github/workflows/release.yml` **before** the tag step (T010): `git cliff --unreleased --tag <next> --prepend CHANGELOG.md`, commit `chore(release): <next>` to `main` (via `TAP_GITHUB_TOKEN`/App identity that can bypass protection); update the goreleaser step (T012) to pass `--release-notes <(git cliff --latest)` (FR-012/013/014, research §A/H3)
+- [x] T026 [US3] Verify US3: `git cliff --unreleased --tag vX.Y.Z` produces a grouped section, and `git cliff --latest` equals the top `CHANGELOG.md` section; confirm an empty change set warns rather than emitting a broken section (quickstart S4, FR-012/014, edge case)
 
 **Checkpoint**: Releases now carry an automated, single-sourced changelog + matching notes.
 
@@ -124,11 +155,11 @@ build provenance verifiable with public material only.
 **Independent Test**: Verify a release artifact's checksum, cosign signature, and provenance;
 a tampered artifact fails verification (quickstart S6; contracts/verification.md; SC-004).
 
-- [ ] T027 [US4] Add `signs:` to `.goreleaser.yaml` — cosign keyless over `checksums.txt` (`artifacts: checksum`, `sign-blob --bundle=${signature} ${artifact} --yes`) ⚠️ default is `none` (FR-022, research §G1)
-- [ ] T028 [US4] Add `docker_signs:` to `.goreleaser.yaml` — cosign keyless signing of images/manifests by `${artifact}@${digest}` (FR-022, research §G1)
-- [ ] T029 [US4] Add `sboms:` to `.goreleaser.yaml` — syft per-archive SPDX-JSON SBOMs (`artifacts: archive`) (FR-023, research §G2)
-- [ ] T030 [US4] Add `id-token: write` + `attestations: write` to the `permissions:` block in `.github/workflows/release.yml` (cosign keyless OIDC + attestation, research §G/J)
-- [ ] T031 [US4] Add `actions/attest-build-provenance@v4` steps to `.github/workflows/release.yml` after the goreleaser step: attest `dist/checksums.txt` via `subject-checksums`, and attest the image by digest with `push-to-registry: true` (SHA-pinned) (FR-024, research §G3)
+- [x] T027 [US4] Add `signs:` to `.goreleaser.yaml` — cosign keyless over `checksums.txt` (`artifacts: checksum`, `sign-blob --bundle=${signature} ${artifact} --yes`) ⚠️ default is `none` (FR-022, research §G1)
+- [x] T028 [US4] Add `docker_signs:` to `.goreleaser.yaml` — cosign keyless signing of images/manifests by `${artifact}@${digest}` (FR-022, research §G1)
+- [x] T029 [US4] Add `sboms:` to `.goreleaser.yaml` — syft per-archive SPDX-JSON SBOMs (`artifacts: archive`) (FR-023, research §G2)
+- [x] T030 [US4] Add `id-token: write` + `attestations: write` to the `permissions:` block in `.github/workflows/release.yml` (cosign keyless OIDC + attestation, research §G/J)
+- [x] T031 [US4] Add `actions/attest-build-provenance@v4` steps to `.github/workflows/release.yml` after the goreleaser step: attest `dist/checksums.txt` via `subject-checksums`, and attest the image by digest with `push-to-registry: true` (SHA-pinned) (FR-024, research §G3)
 - [ ] T032 [US4] Verify US4: run the checksum + `cosign verify-blob` + `gh attestation verify` flow from `contracts/verification.md`; run the negative tamper test (flip a byte → verification fails) (quickstart S6, SC-004)
 
 **Checkpoint**: All artifacts are independently verifiable; supply-chain hardening complete.
@@ -143,12 +174,12 @@ stable channels stay current automatically and skip prereleases.
 **Independent Test**: On each platform, install via at least one channel and confirm the
 released version runs; prereleases don't update stable channels (quickstart S5; FR-018/019/020).
 
-- [ ] T033 [US5] Add `homebrew_casks:` to `.goreleaser.yaml` targeting `rune-task-runner/homebrew-tap` with `repository.token: "{{ .Env.TAP_GITHUB_TOKEN }}"` and `skip_upload: auto` ⚠️ NOT `brews:` (deprecated) (FR-018, FR-020, research §E)
-- [ ] T034 [US5] Add `scoops:` to `.goreleaser.yaml` targeting `rune-task-runner/scoop-bucket` with `repository.token: "{{ .Env.TAP_GITHUB_TOKEN }}"` and `skip_upload: auto` (FR-018, FR-020, research §E)
-- [ ] T035 [US5] Add `TAP_GITHUB_TOKEN` to the env of the goreleaser step in `.github/workflows/release.yml` (research §F)
-- [ ] T036 [P] [US5] Create `scripts/install.sh` (POSIX sh): detect OS+arch, map to the archive name, download from the GitHub Release, **verify SHA-256 against `checksums.txt`**, extract, install `rune` to `INSTALL_DIR` (default `/usr/local/bin`) (FR-019, research §I, contracts/artifacts.md)
-- [ ] T037 [P] [US5] Lint `scripts/install.sh` with shellcheck and add a smoke-test invocation (e.g. `INSTALL_DIR=/tmp/runebin sh scripts/install.sh` against a published/snapshot release) (FR-019, quickstart S5)
-- [ ] T038 [P] [US5] Update `docs/installation.md` with Homebrew (`brew install rune-task-runner/tap/rune`), Scoop, and install-script instructions (FR-030)
+- [x] T033 [US5] Add `homebrew_casks:` to `.goreleaser.yaml` targeting `glapsfun/homebrew-tap` with `repository.token: "{{ .Env.TAP_GITHUB_TOKEN }}"` and `skip_upload: auto` ⚠️ NOT `brews:` (deprecated) (FR-018, FR-020, research §E)
+- [x] T034 [US5] Add `scoops:` to `.goreleaser.yaml` targeting `glapsfun/scoop-bucket` with `repository.token: "{{ .Env.TAP_GITHUB_TOKEN }}"` and `skip_upload: auto` (FR-018, FR-020, research §E)
+- [x] T035 [US5] Add `TAP_GITHUB_TOKEN` to the env of the goreleaser step in `.github/workflows/release.yml` (research §F)
+- [x] T036 [P] [US5] Create `scripts/install.sh` (POSIX sh): detect OS+arch, map to the archive name, download from the GitHub Release, **verify SHA-256 against `checksums.txt`**, extract, install `rune` to `INSTALL_DIR` (default `/usr/local/bin`) (FR-019, research §I, contracts/artifacts.md)
+- [x] T037 [P] [US5] Lint `scripts/install.sh` with shellcheck and add a smoke-test invocation (e.g. `INSTALL_DIR=/tmp/runebin sh scripts/install.sh` against a published/snapshot release) (FR-019, quickstart S5)
+- [x] T038 [P] [US5] Update `docs/installation.md` with Homebrew (`brew install glapsfun/tap/rune`), Scoop, and install-script instructions (FR-030)
 - [ ] T039 [US5] Verify US5: confirm `--snapshot` skips tap/bucket upload for a prerelease tag; document brew/scoop install + run the install-script smoke test (quickstart S5, FR-018/020)
 
 **Checkpoint**: All five stories deliver independently; full distribution surface is live.
@@ -159,13 +190,13 @@ released version runs; prereleases don't update stable channels (quickstart S5; 
 
 **Purpose**: Documentation, runbook, and end-to-end validation spanning all stories.
 
-- [ ] T040 [P] Create `docs/releasing.md` — maintainer runbook: how to cut a release (bump/prerelease inputs), preconditions, and re-run/failure recovery (FR-028, FR-030, contracts/release-workflow.md)
-- [ ] T041 [P] Update `docs/docker.md` with GHCR multi-arch pull + image signature/provenance verification (FR-030, contracts/verification.md)
-- [ ] T042 [P] Update `README` install section to point at the new channels (Homebrew/Scoop/script/Docker) (FR-030)
-- [ ] T043 [P] Add optional helper tasks to `Runefile` (e.g. `changelog`, `verify`) alongside the existing `release-dryrun` task (research §K)
-- [ ] T044 Ensure the `docs-verify` harness (`test/docs`) passes for all new/updated docs — links resolve and examples validate (Constitution gate #6)
+- [x] T040 [P] Create `docs/releasing.md` — maintainer runbook: how to cut a release (bump/prerelease inputs), preconditions, and re-run/failure recovery (FR-028, FR-030, contracts/release-workflow.md)
+- [x] T041 [P] Update `docs/docker.md` with GHCR multi-arch pull + image signature/provenance verification (FR-030, contracts/verification.md)
+- [x] T042 [P] Update `README` install section to point at the new channels (Homebrew/Scoop/script/Docker) (FR-030)
+- [x] T043 [P] Add optional helper tasks to `Runefile` (e.g. `changelog`, `verify`) alongside the existing `release-dryrun` task (research §K)
+- [x] T044 Ensure the `docs-verify` harness (`test/docs`) passes for all new/updated docs — links resolve and examples validate (Constitution gate #6)
 - [ ] T045 End-to-end validation: cut a real **prerelease** (`prerelease: true`) and walk all of quickstart.md (S2–S8) — confirm `latest`/tap/bucket are NOT updated, then run `goreleaser` idempotency/re-run check (SC-008, SC-009, quickstart S8)
-- [ ] T046 [P] Record the deferred follow-ups in `docs/releasing.md`: `dockers_v2` migration (classic dockers removed in GoReleaser v3), optional `v0`/`v0.4` moving image tags, deb/rpm packages, and Apple notarization / Windows Authenticode (research §D, spec Out of Scope)
+- [x] T046 [P] Record the deferred follow-ups in `docs/releasing.md`: `dockers_v2` migration (classic dockers removed in GoReleaser v3), optional `v0`/`v0.4` moving image tags, deb/rpm packages, and Apple notarization / Windows Authenticode (research §D, spec Out of Scope)
 
 ---
 

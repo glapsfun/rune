@@ -38,3 +38,11 @@ docs-check:
 # Dry-run a release locally (no publish).
 release-dryrun:
     goreleaser release --snapshot --clean
+
+# Validate the GoReleaser config without building anything.
+release-check:
+    goreleaser check
+
+# Preview the unreleased changelog section (requires git-cliff).
+changelog:
+    git cliff --unreleased

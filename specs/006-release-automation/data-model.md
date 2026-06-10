@@ -107,8 +107,8 @@ A path through which consumers obtain a release.
 |---------|--------|--------------|-----------|
 | GitHub Release | binaries + checksums + sigs + SBOMs | no (prereleases marked) | FR-016 |
 | GHCR registry | multi-arch image; `:latest` moves only for stable | `latest` is stable-only | FR-017, FR-020 |
-| Homebrew tap | `rune-task-runner/homebrew-tap` cask | yes (`skip_upload: auto`) | FR-018, FR-020 |
-| Scoop bucket | `rune-task-runner/scoop-bucket` manifest | yes (`skip_upload: auto`) | FR-018, FR-020 |
+| Homebrew tap | `glapsfun/homebrew-tap` cask | yes (`skip_upload: auto`) | FR-018, FR-020 |
+| Scoop bucket | `glapsfun/scoop-bucket` manifest | yes (`skip_upload: auto`) | FR-018, FR-020 |
 | Install script | `scripts/install.sh` (curl\|sh) | resolves latest stable | FR-019 |
 
 **Invariant**: a prerelease updates **none** of the stable-only channels (FR-020, SC-009).

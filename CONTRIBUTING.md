@@ -115,6 +115,22 @@ example, `rune docs-check` is the fast check; if you don't have `rune`, run the
   fixtures in the same PR.
 - Describe what changed and why; reference any related spec under `specs/`.
 
+### Pull request titles (Conventional Commits)
+
+PRs are **squash-merged**, and the PR **title** becomes the commit subject on `main`. Titles
+**must** follow [Conventional Commits](https://www.conventionalcommits.org/) — a CI check
+(`Validate PR title`) enforces this. The type drives the release changelog grouping:
+
+| Title prefix | Changelog group | Example |
+|--------------|-----------------|---------|
+| `feat:` | Added | `feat: add --watch flag` |
+| `fix:` | Fixed | `fix: handle CRLF in lexer` |
+| `perf:` / `refactor:` | Changed | `refactor: split the eval package` |
+| `feat!:` / `BREAKING CHANGE:` | (breaking — minor bump pre-1.0) | `feat!: drop legacy syntax` |
+| `docs:`, `chore:`, `ci:`, `test:`, `build:` | omitted from the changelog | `docs: clarify install steps` |
+
+Releases are automated from these titles — see [docs/releasing.md](docs/releasing.md).
+
 ### What CI will check
 
 Every push and PR runs the gate set in [`.github/workflows/ci.yml`](.github/workflows/ci.yml);

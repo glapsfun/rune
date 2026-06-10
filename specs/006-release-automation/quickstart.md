@@ -77,9 +77,9 @@ See [contracts/verification.md](./contracts/verification.md). Smoke version:
 ```sh
 sha256sum --check checksums.txt --ignore-missing                       # checksum
 cosign verify-blob --bundle checksums.txt.sigstore.json \
-  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
+  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' checksums.txt
-gh attestation verify checksums.txt --repo rune-task-runner/rune       # provenance
+gh attestation verify checksums.txt --repo glapsfun/rune       # provenance
 ```
 
 **Negative test**: flip a byte in an archive → checksum + signature verification MUST fail.
@@ -87,9 +87,9 @@ gh attestation verify checksums.txt --repo rune-task-runner/rune       # provena
 ## Scenario 7 — Multi-arch image (FR-010, US2)
 
 ```sh
-docker buildx imagetools inspect ghcr.io/rune-task-runner/rune:<version>
-docker run --rm --platform linux/arm64 ghcr.io/rune-task-runner/rune:<version> --version
-docker run --rm --platform linux/amd64 ghcr.io/rune-task-runner/rune:<version> --version
+docker buildx imagetools inspect ghcr.io/glapsfun/rune:<version>
+docker run --rm --platform linux/arm64 ghcr.io/glapsfun/rune:<version> --version
+docker run --rm --platform linux/amd64 ghcr.io/glapsfun/rune:<version> --version
 ```
 
 **Expected**: the manifest lists `linux/amd64` + `linux/arm64`; each platform runs and reports

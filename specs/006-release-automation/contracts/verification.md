@@ -16,7 +16,7 @@ Untampered → `OK`; tampered → checksum mismatch (SC-004).
 ```sh
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
-  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
+  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   checksums.txt
 ```
@@ -29,16 +29,16 @@ consumers who want it.
 
 ```sh
 cosign verify \
-  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
+  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
-  ghcr.io/rune-task-runner/rune:<version>
+  ghcr.io/glapsfun/rune:<version>
 ```
 
 ## 4. Build provenance — FR-024
 
 ```sh
-gh attestation verify checksums.txt --repo rune-task-runner/rune
-gh attestation verify oci://ghcr.io/rune-task-runner/rune:<version> --repo rune-task-runner/rune
+gh attestation verify checksums.txt --repo glapsfun/rune
+gh attestation verify oci://ghcr.io/glapsfun/rune:<version> --repo glapsfun/rune
 ```
 
 Confirms *how/where* the artifact was built (SLSA-style provenance), complementing the

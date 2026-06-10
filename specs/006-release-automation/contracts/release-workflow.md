@@ -24,7 +24,7 @@
 - `CHANGELOG.md` has a new dated section; the GitHub Release notes match it (FR-012, FR-014).
 - A GitHub Release exists with: 6 binary archives, `checksums.txt`, signatures, SBOMs
   (FR-007, FR-009, FR-016, FR-021–023); marked pre-release iff `prerelease` (FR-005).
-- A multi-arch image `ghcr.io/rune-task-runner/rune:<version>` is pushed (+ `:latest` iff
+- A multi-arch image `ghcr.io/glapsfun/rune:<version>` is pushed (+ `:latest` iff
   stable), signed, with provenance (FR-010, FR-017, FR-020, FR-022, FR-024).
 - Stable releases update the Homebrew cask + Scoop manifest; prereleases do not (FR-018, FR-020).
 
