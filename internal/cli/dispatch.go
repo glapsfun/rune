@@ -35,6 +35,10 @@ type Options struct {
 	Stdin   io.Reader
 	Stdout  io.Writer
 	Stderr  io.Writer
+
+	// Commands are the reserved subcommand names (and aliases). They are used
+	// only to enrich the "unknown task" error with a did-you-mean suggestion.
+	Commands []string
 }
 
 // ctx returns the invocation context, defaulting to Background.
