@@ -8,6 +8,13 @@
 
 **Input**: User description: "i want to create relis proces to destrbute app — artefact must be to compile to arch (linux = x86, arm), (macos = x86, arm) also win = x86, arm and docker image for x86 and arm. relise must create tag with fix version template, version example v0.0.1. also automation add change to change log and overall apply best practice for release that type of app"
 
+## Clarifications
+
+### Session 2026-06-10
+
+- Q: Commits are free-form today; how should changelog notes be categorized into Added/Changed/Fixed? → A: Adopt Conventional Commits enforced on squash-merge PR titles; the changelog is auto-grouped from those titles.
+- Q: Where should the Homebrew formula and Scoop manifest be hosted? → A: Dedicated public tap & bucket repos the project owns (e.g. `homebrew-tap`, `scoop-bucket`), auto-updated by each stable release via a push token.
+
 ## User Scenarios & Testing *(mandatory)*
 
 This feature serves two audiences:
@@ -135,8 +142,9 @@ Beyond raw downloads, consumers can install the released version through the pat
 
 #### Changelog
 
-- **FR-012**: Each release MUST add a dated, version-headed section to a committed `CHANGELOG.md` that follows a recognized changelog convention and groups entries by change type.
-- **FR-013**: Changelog entries MUST be derived automatically from the commit/pull-request history since the previous release, without manual assembly.
+- **FR-012**: Each release MUST add a dated, version-headed section to a committed `CHANGELOG.md` that follows the "Keep a Changelog" convention and groups entries by change type (Added / Changed / Fixed / etc.).
+- **FR-013**: Changelog entries MUST be derived automatically from Conventional-Commit-formatted squash-merge pull-request titles since the previous release, without manual assembly; the commit type (`feat`, `fix`, etc.) determines the change-type group.
+- **FR-013a**: The project MUST adopt the Conventional Commits convention for squash-merge pull-request titles and MUST enforce it with an automated check on pull requests, so that changelog categorization is reliable.
 - **FR-014**: The release page notes MUST present the same change information as the corresponding `CHANGELOG.md` section.
 - **FR-015**: Each changelog version MUST link to its tag and to a comparison against the previous version.
 
@@ -144,7 +152,7 @@ Beyond raw downloads, consumers can install the released version through the pat
 
 - **FR-016**: Binaries, archives, and the checksums file MUST be attached to a published release for the tag.
 - **FR-017**: Container images MUST be pushed to a container registry from which consumers can pull by version or by "latest".
-- **FR-018**: A package-manager install path MUST be maintained for macOS/Linux (Homebrew) and Windows (Scoop), kept current for each stable release.
+- **FR-018**: A package-manager install path MUST be maintained for macOS/Linux (Homebrew) and Windows (Scoop) via dedicated tap and bucket repositories the project owns; each stable release MUST automatically update the formula and manifest in those repositories (the maintainer does not hand-edit them).
 - **FR-019**: A one-line install script MUST be provided that detects the consumer's OS and architecture, downloads the correct artifact, verifies its checksum, and installs the binary onto the path.
 - **FR-020**: Stable installation channels (latest image tag, package-manager manifests, install-script default) MUST NOT be updated to point at a pre-release.
 
@@ -191,7 +199,7 @@ Beyond raw downloads, consumers can install the released version through the pat
 - **Architecture mapping**: "x86" means 64-bit (x86-64 / amd64) and "arm" means 64-bit (arm64). 32-bit targets are out of scope.
 - **Hosting**: Binaries are published as repository releases and container images to the repository's container registry (the project is hosted on GitHub; the existing container image already references the GitHub repository). Specific registry naming is an implementation detail of planning.
 - **Foundation already in place**: The app already builds as a single self-contained, CGO-free Go binary for the six targets, and a baseline cross-compilation config and a minimal distroless container build already exist. This feature wires those into an automated, tag-driven release pipeline and adds changelog generation, signing/SBOM/provenance, and the install channels. It also operationalizes the constitution's existing "release-dryrun" quality gate.
-- **History convention**: Commit/pull-request history is structured enough (e.g., conventional-style messages or curated PR titles) to categorize changelog entries automatically.
+- **History convention**: The project adopts Conventional Commits, enforced on squash-merge pull-request titles via an automated PR check, so changelog entries can be categorized automatically. Existing free-form history before adoption is summarized into the first managed changelog section rather than retro-categorized.
 - **Release source**: Releases are cut from the `main` branch after continuous-integration gates pass; the maintainer chooses the version bump (the process is maintainer-initiated, not auto-cut from commits).
 - **Signing model**: Signing uses a keyless / transparency-log approach so no long-lived private signing key must be managed.
 - **Container scope**: Container images are Linux multi-arch only (Windows/macOS container images are out of scope, as is standard for this tool class).
@@ -201,7 +209,7 @@ Beyond raw downloads, consumers can install the released version through the pat
 
 - A source repository with releases, a container registry, and continuous integration enabled.
 - Publishing credentials available to the automation with permission to push tags, create releases, push container images, and sign artifacts.
-- A target location for the Homebrew formula and Scoop manifest (e.g., a tap/bucket the project controls).
+- Two dedicated public repositories the project owns for the Homebrew tap and Scoop bucket, plus a token with push access to them so the release can update the formula/manifest automatically. (One-time setup; updates are automatic thereafter.)
 - The project's existing quality gates (lint, cross-OS tests, build, documentation checks, release dry-run) as the precondition for any release.
 
 ## Out of Scope
