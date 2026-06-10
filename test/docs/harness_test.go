@@ -88,7 +88,12 @@ type result struct {
 // caller to assert on.
 func runRune(t *testing.T, dir string, args ...string) result {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// Generous bound: this gates correctness (exit code / output), not latency. On
+	// Windows CI the first `node`/`python` invocation cold-starts slowly and variably
+	// (Defender scanning the interpreter on first exec) — under the full `-race` suite
+	// load it can momentarily exceed a tight budget, which made the polyglot example
+	// flaky. Only a genuine hang should trip this.
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, runeBin, args...)
