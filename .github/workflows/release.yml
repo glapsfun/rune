@@ -68,25 +68,34 @@ jobs:
         id: ver
         run: |
           set -euo pipefail
-          latest=$(git tag --list 'v*' --sort=-v:refname | head -n1)
-          latest=${latest:-v0.0.0}
-          base=${latest#v}; base=${base%%-*}
-          MA=${base%%.*}; rest=${base#*.}; MI=${rest%%.*}; PA=${rest##*.}
+          # Derive the target from the latest STABLE tag (vX.Y.Z, no suffix) — not the
+          # latest tag, which may be a prerelease. This is what makes rc iteration and
+          # promotion work with just bump + prerelease:
+          #   bump + prerelease=true  (repeatedly) -> rc.1, rc.2, ... of the SAME target
+          #   bump + prerelease=false                -> that target as a stable release (promote)
+          # Stable tags are sorted numerically (git's versionsort mis-ranks prereleases).
+          last_stable=$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sed 's/^v//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n1)
+          last_stable="${last_stable:-0.0.0}"
+          MA="${last_stable%%.*}"; rest="${last_stable#*.}"; MI="${rest%%.*}"; PA="${rest##*.}"
           case "${{ inputs.bump }}" in
             major) MA=$((MA + 1)); MI=0; PA=0 ;;
             minor) MI=$((MI + 1)); PA=0 ;;
             patch) PA=$((PA + 1)) ;;
           esac
-          next="v${MA}.${MI}.${PA}"
+          target="${MA}.${MI}.${PA}"
           if [ "${{ inputs.prerelease }}" = "true" ]; then
-            n=$(git tag --list "${next}-rc.*" | wc -l | tr -d ' ')
-            next="${next}-rc.$((n + 1))"
+            maxrc=$(git tag --list "v${target}-rc.*" | sed -E "s/^v${target}-rc\.//" \
+              | grep -E '^[0-9]+$' | sort -n | tail -n1)
+            next="v${target}-rc.$(( ${maxrc:-0} + 1 ))"
+          else
+            next="v${target}"
           fi
           if git rev-parse -q --verify "refs/tags/${next}" >/dev/null 2>&1; then
             echo "::error::tag ${next} already exists; refusing to re-release"; exit 1
           fi
           echo "tag=${next}" >> "$GITHUB_OUTPUT"
-          echo "Releasing ${next} (from ${latest})"
+          echo "Releasing ${next} (last stable: v${last_stable}, target: v${target})"
 
       - name: Set up Go
         uses: actions/setup-go@v5
