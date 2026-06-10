@@ -20,4 +20,7 @@ coverage.txt
 .claude/*
 .agents/*
 .specify/*
+# …but the project constitution is a committed, reviewable artifact.
+!.specify/memory/
+!.specify/memory/constitution.md
 skills-lock.json
