@@ -54,10 +54,14 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             echo "::error::working tree is dirty; refusing to release"; exit 1
           fi
-          ok=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs" \
-                 --jq '[.check_runs[].conclusion] | (length > 0) and all(. == "success")')
-          if [ "$ok" != "true" ]; then
-            echo "::error::CI is not green for ${{ github.sha }}; refusing to release"; exit 1
+          # Check the CI workflow's own conclusion for this commit. Do NOT inspect *all*
+          # check-runs: this Release run registers its own in-progress check-run ("release")
+          # on the same commit, which is never "success" yet — that would self-deadlock.
+          ci=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&event=push" \
+                 --jq 'if (.workflow_runs | length) == 0 then "missing"
+                       else (.workflow_runs | sort_by(.run_started_at) | last | .conclusion // "pending") end')
+          if [ "$ci" != "success" ]; then
+            echo "::error::CI (ci.yml) for ${{ github.sha }} is '${ci}', not success; refusing to release"; exit 1
           fi
 
       - name: Compute next version
