@@ -74,8 +74,10 @@ jobs:
           #   bump + prerelease=true  (repeatedly) -> rc.1, rc.2, ... of the SAME target
           #   bump + prerelease=false                -> that target as a stable release (promote)
           # Stable tags are sorted numerically (git's versionsort mis-ranks prereleases).
+          # `|| true`: grep exits 1 when there are no stable tags, which under
+          # `pipefail` would abort the step — tolerate the empty result instead.
           last_stable=$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sed 's/^v//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n1)
+            | sed 's/^v//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n1 || true)
           last_stable="${last_stable:-0.0.0}"
           MA="${last_stable%%.*}"; rest="${last_stable#*.}"; MI="${rest%%.*}"; PA="${rest##*.}"
           case "${{ inputs.bump }}" in
@@ -86,7 +88,7 @@ jobs:
           target="${MA}.${MI}.${PA}"
           if [ "${{ inputs.prerelease }}" = "true" ]; then
             maxrc=$(git tag --list "v${target}-rc.*" | sed -E "s/^v${target}-rc\.//" \
-              | grep -E '^[0-9]+$' | sort -n | tail -n1)
+              | grep -E '^[0-9]+$' | sort -n | tail -n1 || true)
             next="v${target}-rc.$(( ${maxrc:-0} + 1 ))"
           else
             next="v${target}"
