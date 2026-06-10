@@ -100,6 +100,10 @@ jobs:
           tool: git-cliff
 
       - name: Update CHANGELOG.md and render release notes
+        env:
+          # git-cliff's [remote.github] integration calls the GitHub API to enrich
+          # commits; without a token it gets rate-limited (HTTP 403) and panics.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git cliff --unreleased --tag "${{ steps.ver.outputs.tag }}" --prepend CHANGELOG.md
