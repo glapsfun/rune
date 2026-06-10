@@ -15,7 +15,7 @@ binaries, multi-arch images, signatures, SBOMs, provenance, and the Homebrew/Sco
 
 The workflow then:
 
-- computes the next `vX.Y.Z` (or `vX.Y.Z-rc.N`) from the latest tag and your bump, refusing
+- computes the next version from the latest **stable** tag and your bump (see below), refusing
   if that tag already exists;
 - prepends a dated section to `CHANGELOG.md` (from Conventional-Commit PR titles) and commits
   it to `main`;
@@ -25,8 +25,20 @@ The workflow then:
   the `latest` image tag plus updated Homebrew cask and Scoop manifest;
 - attaches GitHub build-provenance attestations to the binaries and the image.
 
-> **Versioning note (pre-1.0):** under SemVer, `0.y.z` treats a breaking change as a **minor**
-> bump (not major). You choose the bump; the tooling does not auto-infer it.
+### Versioning: rc iteration and promotion
+
+The target version is computed from the latest **stable** tag + your `bump`, so the same two
+inputs cover the whole lifecycle — **keep the bump the same** while working toward a release:
+
+| You want | bump | prerelease | Result (latest stable `v0.4.x`) |
+|----------|------|------------|----------------------------------|
+| First release candidate | `minor` | ✓ | `v0.5.0-rc.1` |
+| Next release candidate | `minor` | ✓ | `v0.5.0-rc.2` (iterates — target doesn't move) |
+| Promote rc → stable | `minor` | ✗ | `v0.5.0` |
+| Start the next line | `minor`/`patch`/`major` | either | bumps from the new stable |
+
+> **Pre-1.0 (`0.y.z`):** by SemVer convention a breaking change bumps **minor**, not major.
+> You choose the bump; the tooling never auto-infers it.
 
 ## Verifying a release
 
