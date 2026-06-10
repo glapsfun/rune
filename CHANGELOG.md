@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.1.0-rc.1] - 2026-06-10
+
+### Added
+- Add automated cross-platform release pipeline
+
+### Documentation
+- Add spec, plan, research, and tasks
+
+### Fixed
+- Release guard must not check its own in-progress run (#2) (#2)
+- Widen docs example-run timeout for slow Windows interpreter cold-start (#3) (#3)
+
 
 ## [Unreleased]
 
