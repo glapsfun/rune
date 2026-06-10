@@ -154,8 +154,11 @@ jobs:
         id: image
         run: |
           set -euo pipefail
+          # GoReleaser tags images with {{.Version}} (the tag WITHOUT the leading "v"),
+          # so strip it to match the published ref.
+          ver="${{ steps.ver.outputs.tag }}"; ver="${ver#v}"
           digest=$(docker buildx imagetools inspect \
-            "ghcr.io/glapsfun/rune:${{ steps.ver.outputs.tag }}" \
+            "ghcr.io/glapsfun/rune:${ver}" \
             --format '{{ .Manifest.Digest }}')
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
 
