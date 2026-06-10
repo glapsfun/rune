@@ -1,0 +1,5 @@
+# Force LF in the working tree on every platform. Golden-file tests compare
+# bytes (testdata/**/*.{fmt,tokens,ast}) and the lexer captures task-body text
+# verbatim, so a CRLF checkout on Windows would corrupt both comparisons and
+# the body text itself. `text=auto` still auto-detects and leaves binaries alone.
+* text=auto eol=lf

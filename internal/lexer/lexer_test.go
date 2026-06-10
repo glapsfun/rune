@@ -144,6 +144,35 @@ func TestLexTable(t *testing.T) {
 	}
 }
 
+// TestLexCRLFBodyText guards against a Windows regression: a Runefile authored
+// with CRLF line endings must not leak the trailing carriage return into body
+// text, which would corrupt the shell command (a literal \r) on Unix.
+func TestLexCRLFBodyText(t *testing.T) {
+	src := "greet:\r\n    @echo hi\r\n    echo bye\r\n"
+	toks, diags := Lex("Runefile", src)
+	if diags.HasErrors() {
+		t.Fatalf("unexpected diagnostics: %v", diags)
+	}
+	var bodies []string
+	for _, tk := range toks {
+		if tk.Kind == token.BODYTEXT {
+			bodies = append(bodies, tk.Lit)
+		}
+	}
+	want := []string{"echo hi", "echo bye"}
+	if len(bodies) != len(want) {
+		t.Fatalf("got %d BODYTEXT tokens %q, want %d", len(bodies), bodies, len(want))
+	}
+	for i, b := range bodies {
+		if strings.ContainsRune(b, '\r') {
+			t.Errorf("BODYTEXT[%d] contains a carriage return: %q", i, b)
+		}
+		if b != want[i] {
+			t.Errorf("BODYTEXT[%d] = %q, want %q", i, b, want[i])
+		}
+	}
+}
+
 func TestLexIndentationErrors(t *testing.T) {
 	// A body line mixing tabs and spaces is a located error.
 	src := "greet:\n \techo hi\n"

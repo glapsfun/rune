@@ -210,6 +210,12 @@ func (l *lexer) lexBodyLine(width int, raw string, hasTab, hasSpace bool) {
 	}
 	rest := l.src[restStart:l.pos]
 	end := l.pin()
+	// Tolerate CRLF line endings: drop the trailing carriage return so body text
+	// is identical whether the Runefile was authored with LF or CRLF.
+	if strings.HasSuffix(rest, "\r") {
+		rest = rest[:len(rest)-1]
+		end = token.Position{Offset: end.Offset - 1, Line: end.Line, Col: end.Col - 1}
+	}
 	if l.at(l.pos) == '\n' {
 		l.advance()
 	}

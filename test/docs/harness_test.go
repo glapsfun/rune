@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -38,6 +39,9 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	bin := filepath.Join(dir, "rune")
+	if runtime.GOOS == "windows" {
+		bin += ".exe" // go build writes -o verbatim; Windows needs the extension to exec.
+	}
 	build := exec.Command("go", "build", "-o", bin, "./cmd/rune")
 	build.Dir = root
 	build.Env = append(os.Environ(), "CGO_ENABLED=0")
