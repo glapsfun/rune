@@ -42,3 +42,31 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.12
+
+  release-dryrun:
+    name: release-dryrun
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          check-latest: true
+      # Validate the whole config (catches deprecated keys, e.g. brews -> homebrew_casks),
+      # then build binaries + archives + checksums. Signing/SBOM/docker need cosign/syft/
+      # OIDC and are exercised by the real release job, so they are skipped here.
+      - name: GoReleaser check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: check
+      - name: GoReleaser snapshot (no publish)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --snapshot --clean --skip=sign,sbom,docker

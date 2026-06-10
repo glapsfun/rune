@@ -1,6 +1,9 @@
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+Active feature plan: `specs/006-release-automation/plan.md` (Release Automation —
+GoReleaser v2 + GitHub Actions tag-driven release: cross-platform binaries, multi-arch
+GHCR images, cosign/SBOM/provenance, git-cliff changelog, Homebrew/Scoop, install script).
+For additional context about technologies to be used, project structure, shell commands,
+and other important information, read the current plan and its `research.md`.
 <!-- SPECKIT END -->
 
 ## Development workflow

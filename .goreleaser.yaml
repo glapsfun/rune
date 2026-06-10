@@ -38,8 +38,139 @@ checksum:
   name_template: "checksums.txt"
   algorithm: sha256
 
+# Single source of release notes is git-cliff (passed via --release-notes on the CLI);
+# GoReleaser's own changelog is disabled so the two never diverge.
+changelog:
+  disable: true
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-changelog:
-  use: github
+release:
+  github:
+    owner: glapsfun
+    name: rune
+  # Tags like v1.2.0-rc.1 are auto-flagged as GitHub pre-releases.
+  prerelease: auto
+
+# --- Container images (multi-arch GHCR) -------------------------------------
+# Per-arch images are built from Dockerfile.goreleaser (which COPYs the prebuilt,
+# version-stamped binary — no recompile) and combined into one manifest.
+dockers:
+  - id: rune-amd64
+    goos: linux
+    goarch: amd64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=A shared task runner for humans and AI agents"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.source=https://github.com/glapsfun/rune"
+      - "--label=org.opencontainers.image.licenses=MIT"
+  - id: rune-arm64
+    goos: linux
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    use: buildx
+    image_templates:
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.description=A shared task runner for humans and AI agents"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.source=https://github.com/glapsfun/rune"
+      - "--label=org.opencontainers.image.licenses=MIT"
+
+docker_manifests:
+  - name_template: "ghcr.io/glapsfun/rune:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+  # `latest` is skipped automatically for prereleases.
+  - name_template: "ghcr.io/glapsfun/rune:latest"
+    skip_push: auto
+    image_templates:
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
+      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+
+# --- Supply chain: SBOMs, signing, provenance -------------------------------
+# One SPDX-JSON SBOM per archive (syft).
+sboms:
+  - id: archive
+    artifacts: archive
+    documents:
+      - "${artifact}.sbom.spdx.json"
+
+# Sign checksums.txt with cosign keyless (covers every archive transitively).
+# NOTE: artifacts defaults to `none` — it MUST be set explicitly.
+signs:
+  - id: checksum
+    cmd: cosign
+    artifacts: checksum
+    signature: "${artifact}.sigstore.json"
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--bundle=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+      - "--yes"
+    output: true
+
+# Sign the published images/manifests with cosign keyless (by digest).
+docker_signs:
+  - id: images
+    cmd: cosign
+    artifacts: all
+    args:
+      - sign
+      - "${artifact}@${digest}"
+      - "--yes"
+    output: true
+
+# --- Package managers (dedicated tap/bucket repos) --------------------------
+# `homebrew_casks` (NOT the deprecated `brews`) is the supported mechanism for a
+# prebuilt CLI binary. skip_upload: auto keeps prereleases off the stable channel.
+homebrew_casks:
+  - name: rune
+    repository:
+      owner: glapsfun
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/glapsfun/rune"
+    description: "A shared task runner for humans and AI agents"
+    skip_upload: auto
+    commit_author:
+      name: rune-release-bot
+      email: rune-release-bot@users.noreply.github.com
+    # The binary is not Apple-notarized (see docs/releasing.md follow-ups);
+    # strip the quarantine attribute so it runs without a Gatekeeper prompt.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/rune"]
+          end
+
+scoops:
+  - name: rune
+    repository:
+      owner: glapsfun
+      name: scoop-bucket
+      branch: main
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/glapsfun/rune"
+    description: "A shared task runner for humans and AI agents"
+    license: MIT
+    skip_upload: auto
+    commit_author:
+      name: rune-release-bot
+      email: rune-release-bot@users.noreply.github.com

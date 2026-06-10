@@ -1,0 +1,163 @@
+name: Release
+
+# Maintainer-initiated release: pick a bump (and optionally a prerelease); this workflow
+# computes the next vX.Y.Z, updates the changelog, tags, and publishes everything via
+# GoReleaser. See specs/006-release-automation/contracts/release-workflow.md.
+#
+# TODO(hardening): pin all third-party actions to commit SHAs (Dependabot keeps them
+# fresh). Floating major tags are used here for readability; see research.md §J.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Semver component to bump"
+        type: choice
+        options: [patch, minor, major]
+        required: true
+      prerelease:
+        description: "Cut a prerelease (-rc.N)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write # create the release, push the tag + changelog commit
+  packages: write # push images to GHCR
+  id-token: write # cosign keyless + attestation OIDC
+  attestations: write # GitHub build-provenance attestations
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    environment: release # protected env with required reviewers (authorized maintainers)
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          # Prefer a bot/App token that may bypass branch protection for the changelog
+          # commit; falls back to the default token if RELEASE_TOKEN is unset.
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Guard — clean tree and green CI for HEAD
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::working tree is dirty; refusing to release"; exit 1
+          fi
+          ok=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs" \
+                 --jq '[.check_runs[].conclusion] | (length > 0) and all(. == "success")')
+          if [ "$ok" != "true" ]; then
+            echo "::error::CI is not green for ${{ github.sha }}; refusing to release"; exit 1
+          fi
+
+      - name: Compute next version
+        id: ver
+        run: |
+          set -euo pipefail
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          latest=${latest:-v0.0.0}
+          base=${latest#v}; base=${base%%-*}
+          MA=${base%%.*}; rest=${base#*.}; MI=${rest%%.*}; PA=${rest##*.}
+          case "${{ inputs.bump }}" in
+            major) MA=$((MA + 1)); MI=0; PA=0 ;;
+            minor) MI=$((MI + 1)); PA=0 ;;
+            patch) PA=$((PA + 1)) ;;
+          esac
+          next="v${MA}.${MI}.${PA}"
+          if [ "${{ inputs.prerelease }}" = "true" ]; then
+            n=$(git tag --list "${next}-rc.*" | wc -l | tr -d ' ')
+            next="${next}-rc.$((n + 1))"
+          fi
+          if git rev-parse -q --verify "refs/tags/${next}" >/dev/null 2>&1; then
+            echo "::error::tag ${next} already exists; refusing to re-release"; exit 1
+          fi
+          echo "tag=${next}" >> "$GITHUB_OUTPUT"
+          echo "Releasing ${next} (from ${latest})"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          check-latest: true
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Update CHANGELOG.md and render release notes
+        run: |
+          set -euo pipefail
+          git cliff --unreleased --tag "${{ steps.ver.outputs.tag }}" --prepend CHANGELOG.md
+          git cliff --latest --tag "${{ steps.ver.outputs.tag }}" --strip header > /tmp/release-notes.md
+          echo "----- release notes -----"; cat /tmp/release-notes.md
+
+      - name: Commit changelog and create tag
+        run: |
+          set -euo pipefail
+          git config user.name  "rune-release-bot"
+          git config user.email "rune-release-bot@users.noreply.github.com"
+          if [ -n "$(git status --porcelain CHANGELOG.md)" ]; then
+            git add CHANGELOG.md
+            git commit -m "chore(release): ${{ steps.ver.outputs.tag }}"
+            git push origin HEAD:main
+          fi
+          git tag -a "${{ steps.ver.outputs.tag }}" -m "${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --release-notes=/tmp/release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+
+      - name: Attest binary provenance (covers all archives via checksums)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-checksums: dist/checksums.txt
+
+      - name: Resolve published image digest
+        id: image
+        run: |
+          set -euo pipefail
+          digest=$(docker buildx imagetools inspect \
+            "ghcr.io/glapsfun/rune:${{ steps.ver.outputs.tag }}" \
+            --format '{{ .Manifest.Digest }}')
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Attest image provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/glapsfun/rune
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true

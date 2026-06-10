@@ -50,14 +50,24 @@ If you've used `make` or `just`, Rune will feel familiar — with a few delibera
 ## Install
 
 ```sh
+# Install script (Linux/macOS) — verifies the checksum:
+curl -sSfL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh | sh
+
+# Homebrew (macOS/Linux):
+brew install glapsfun/tap/rune
+
+# Scoop (Windows):
+scoop bucket add rune https://github.com/glapsfun/scoop-bucket && scoop install rune
+
+# From source:
 go install github.com/rune-task-runner/rune/cmd/rune@latest
 ```
 
-Or grab a prebuilt binary from [Releases](https://github.com/rune-task-runner/rune/releases),
+Or grab a prebuilt binary from [Releases](https://github.com/glapsfun/rune/releases),
 or run it in a container:
 
 ```sh
-docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune --list
+docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune --list
 ```
 
 Full instructions: **[Installation guide](docs/installation.md)**.
