@@ -104,8 +104,10 @@ func (l *lexer) advance() byte {
 func (l *lexer) lexLine() {
 	width, raw, hasTab, hasSpace := l.scanIndent()
 
-	// Blank line (only whitespace before newline/EOF).
-	if c := l.at(l.pos); c == '\n' || c == 0 {
+	// Blank line (only whitespace before newline/EOF). Use a real end-of-input
+	// check, not byte==0: an embedded NUL is not EOF and must not be treated as a
+	// blank line, or the run() loop would spin without consuming it.
+	if c := l.at(l.pos); c == '\n' || l.pos >= len(l.src) {
 		if c == '\n' {
 			l.advance()
 		}
@@ -276,11 +278,14 @@ func indentKind(tab, space bool) string {
 // zero (group continuations span physical lines transparently).
 func (l *lexer) lexStructural() {
 	for {
-		c := l.at(l.pos)
-		switch {
-		case c == 0:
+		// True end of input (not an embedded NUL, which is handled as an illegal
+		// character below so the scanner always makes progress).
+		if l.pos >= len(l.src) {
 			l.emit0(token.NEWLINE, "")
 			return
+		}
+		c := l.at(l.pos)
+		switch {
 		case c == '\n':
 			if l.groupDepth > 0 {
 				l.advance()

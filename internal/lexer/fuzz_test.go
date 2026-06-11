@@ -15,6 +15,16 @@ func FuzzLexer(f *testing.F) {
 		"deploy: docker::push\n  echo done\n",
 		"\t \t mixed\n",
 		"\"\"\"\ntriple\n\"\"\"\n",
+		// Regression: embedded NUL bytes must not be mistaken for EOF (they once
+		// caused a non-terminating loop). The lexer must still terminate with EOF.
+		"\x00",
+		"a\x00b\n",
+		"\t \tx\x00y\n",
+		// Regression: a trailing backslash at EOF in a double-quoted string must
+		// not read past the input (was an index-out-of-range panic).
+		"\"\\",
+		"0\"\\",
+		"x := \"ab\\",
 	}
 	for _, s := range seeds {
 		f.Add(s)

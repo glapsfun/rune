@@ -70,3 +70,37 @@ jobs:
           distribution: goreleaser
           version: "~> v2"
           args: release --snapshot --clean --skip=sign,sbom,docker
+
+  golden:
+    name: golden
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          check-latest: true
+      # Regenerate the golden-bearing packages, then fail if anything drifted —
+      # ensures committed goldens match a fresh regeneration (never hand-edited).
+      - name: Regenerate goldens
+        run: go test ./internal/diag ./internal/lexer ./internal/parser ./internal/cli ./test/corpus -update
+      - name: Check goldens are committed
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::Goldens are out of date. Regenerate deliberately with -update (never hand-edit); if the grammar changed, update docs/GRAMMAR.md too."
+            exit 1
+          fi
+
+  fuzz-smoke:
+    name: fuzz-smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          check-latest: true
+      - name: Fuzz lexer (smoke)
+        run: go test -run=xxx -fuzz=FuzzLexer -fuzztime=20s ./internal/lexer
+      - name: Fuzz parser (smoke)
+        run: go test -run=xxx -fuzz=FuzzParser -fuzztime=20s ./internal/parser

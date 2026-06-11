@@ -34,9 +34,17 @@ func (l *lexer) lexString() {
 			return
 		}
 		if quote == '"' && c == '\\' {
-			l.advance()
+			l.advance() // backslash
+			// A backslash with nothing after it (EOF) is a dangling escape: the
+			// string is unterminated. Advancing again here would read past the
+			// end of src (advance() is not bounds-checked).
+			if l.pos >= len(l.src) {
+				l.diags.Errorf(token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated string literal")
+				l.emit(token.STRING, b.String(), start, l.pin())
+				return
+			}
 			b.WriteByte(unescape(l.at(l.pos)))
-			l.advance()
+			l.advance() // escaped char
 			continue
 		}
 		b.WriteByte(c)
