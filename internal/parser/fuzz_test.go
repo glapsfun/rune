@@ -15,6 +15,11 @@ func FuzzParser(f *testing.F) {
 		"x := if a == \"1\" { \"y\" } else { \"z\" }\n",
 		"deploy: docker::push\n    echo done\n",
 		"mod sub \"sub.rune\"\nimport? \"opt.rune\"\n",
+		// Regression: an unparseable token inside a dependency-call argument list
+		// must not loop forever (parsePrimary now consumes it) — was an OOM.
+		"a:(o i {{e}}",
+		"a:(b {\n",
+		"x := (}\n",
 	}
 	for _, s := range seeds {
 		f.Add(s)

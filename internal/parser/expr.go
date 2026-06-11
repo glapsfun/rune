@@ -50,8 +50,12 @@ func (p *parser) parsePrimary() ast.Expr {
 	case token.IF:
 		return p.parseConditional()
 	default:
-		p.errorf(p.cur().Span, "expected an expression, found %s", describe(p.cur()))
-		t := p.cur()
+		// Consume the unexpected token (error recovery): every loop that parses a
+		// sequence of expressions relies on parsePrimary making progress. Returning
+		// without advancing here let callers (e.g. dependency/func-call arguments)
+		// spin forever, appending nodes until OOM. advance() is a no-op at EOF.
+		t := p.advance()
+		p.errorf(t.Span, "expected an expression, found %s", describe(t))
 		return &ast.StringLit{Value: "", Sp: t.Span}
 	}
 }
