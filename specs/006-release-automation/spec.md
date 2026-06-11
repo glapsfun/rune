@@ -15,6 +15,10 @@
 - Q: Commits are free-form today; how should changelog notes be categorized into Added/Changed/Fixed? → A: Adopt Conventional Commits enforced on squash-merge PR titles; the changelog is auto-grouped from those titles.
 - Q: Where should the Homebrew formula and Scoop manifest be hosted? → A: Dedicated public tap & bucket repos the project owns (e.g. `homebrew-tap`, `scoop-bucket`), auto-updated by each stable release via a push token.
 
+### Session 2026-06-11
+
+- Q: FR-002 said the next version is computed from "the most recent release tag," which contradicts the shipped behavior; how should the version lifecycle read? → A: Compute from the most recent **stable** tag (ignoring pre-releases). The same change kind then drives the whole lifecycle — with pre-release selected, repeated runs iterate `…-rc.1`, `…-rc.2`, … of the same target; without pre-release, the run promotes that target to its stable version.
+
 ## User Scenarios & Testing *(mandatory)*
 
 This feature serves two audiences:
@@ -126,10 +130,10 @@ Beyond raw downloads, consumers can install the released version through the pat
 #### Versioning & tagging
 
 - **FR-001**: Release versions MUST follow semantic versioning with a leading `v` (`vMAJOR.MINOR.PATCH`, e.g. `v0.0.1`).
-- **FR-002**: A maintainer MUST be able to initiate a release by selecting the change kind (major, minor, or patch); the system MUST compute the next version from the most recent release tag.
+- **FR-002**: A maintainer MUST be able to initiate a release by selecting the change kind (major, minor, or patch) and whether it is a pre-release; the system MUST compute the next version from the most recent **stable** release tag (ignoring pre-release tags) plus the chosen change kind.
 - **FR-003**: The system MUST create and publish the version tag automatically as part of the release; the maintainer MUST NOT have to hand-create the tag.
 - **FR-004**: The system MUST refuse to (re)release a version whose tag already exists, and MUST NOT produce duplicate tags.
-- **FR-005**: The system MUST support pre-release versions (e.g. `v1.2.0-rc.1`) and MUST mark them as pre-releases.
+- **FR-005**: The system MUST support pre-release versions (e.g. `v1.2.0-rc.1`) and MUST mark them as pre-releases. Because the target is derived from the most recent **stable** tag, the same change kind drives the whole lifecycle: with pre-release selected, repeated runs MUST iterate `…-rc.1`, `…-rc.2`, … of the same target; with pre-release not selected, the run MUST promote that target to its stable version (`vMAJOR.MINOR.PATCH`).
 - **FR-006**: Each released artifact MUST report the exact released version when asked (version embedded at build time, including the source revision).
 
 #### Build artifacts
