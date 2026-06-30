@@ -1,30 +1,39 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
-	"os/exec"
-	"strconv"
-	"strings"
+	"context"
+	"errors"
+	"os"
+	"runtime"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mattn/go-isatty"
+
+	"github.com/rune-task-runner/rune/internal/tui"
 )
 
-// chooseAndRun presents an interactive task picker (--choose), then runs the
-// selected task. It uses fzf when available, else a minimal built-in picker.
+// chooseAndRun presents the interactive task picker (--choose), then runs the
+// selected task. Order matters: the Runefile is loaded and analyzed first, so
+// static errors are reported with zero side effects (Principle II) before any
+// UI; a non-interactive terminal or an empty task set fails with a clear usage
+// error rather than a broken UI. On selection the picker tears itself down and
+// the task runs through the same execution path as a direct `rune <task>`.
 func chooseAndRun(opts Options, runefile string, args []string) error {
 	mod, err := loadModule(opts, runefile)
 	if err != nil {
 		return err
 	}
-	var names []string
-	for _, t := range mod.file.Tasks {
-		if !t.IsPrivate() {
-			names = append(names, t.Name)
-		}
+
+	if !interactiveTerminal(opts) {
+		return usagef("--choose requires an interactive terminal")
 	}
-	if len(names) == 0 {
+
+	items := pickerItems(mod)
+	if len(items) == 0 {
 		return usagef("no tasks to choose from")
 	}
-	picked, err := pickTask(opts, names)
+
+	picked, err := runPicker(opts, items)
 	if err != nil {
 		return err
 	}
@@ -34,37 +43,62 @@ func chooseAndRun(opts Options, runefile string, args []string) error {
 	return execute(opts, runefile, append([]string{picked}, args...))
 }
 
-func pickTask(opts Options, names []string) (string, error) {
-	if path, err := exec.LookPath("fzf"); err == nil {
-		return pickWithFzf(path, opts, names)
+// pickerItems projects the loaded module's tasks into selectable rows, applying
+// the same visibility rules as `--list` and shell completion: non-private and
+// matching the current OS. Order follows the Runefile.
+func pickerItems(mod *loadedModule) []tui.PickerItem {
+	var items []tui.PickerItem
+	for _, t := range mod.file.Tasks {
+		if t.IsPrivate() || !osMatches(t, runtime.GOOS) {
+			continue
+		}
+		items = append(items, tui.PickerItem{
+			Name: t.Name,
+			Desc: firstLine(t.Doc),
+			Doc:  t.Doc,
+		})
 	}
-	return pickBuiltin(opts, names)
+	return items
 }
 
-func pickWithFzf(path string, opts Options, names []string) (string, error) {
-	cmd := exec.CommandContext(opts.ctx(), path, "--prompt", "task> ")
-	cmd.Stdin = strings.NewReader(strings.Join(names, "\n"))
-	cmd.Stderr = opts.Stderr
-	out, err := cmd.Output()
+// interactiveTerminal reports whether both stdin and stdout are connected to an
+// interactive terminal. The picker requires a real TTY; in any piped,
+// redirected, or CI context this returns false so the caller errors instead of
+// rendering control sequences into captured output (FR-011).
+func interactiveTerminal(opts Options) bool {
+	in, okIn := opts.Stdin.(*os.File)
+	out, okOut := opts.Stdout.(*os.File)
+	if !okIn || !okOut {
+		return false
+	}
+	return isTTY(in.Fd()) && isTTY(out.Fd())
+}
+
+func isTTY(fd uintptr) bool {
+	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+}
+
+// runPicker runs the Bubble Tea program to completion and returns the selected
+// task name ("" if cancelled). The program renders to stderr (where Rune's own
+// output goes), keeping stdout clean for the task that runs afterward. It is
+// run with the invocation context so an external SIGINT cancels it cleanly.
+func runPicker(opts Options, items []tui.PickerItem) (string, error) {
+	prog := tea.NewProgram(
+		tui.New(items, opts.Color),
+		tea.WithContext(opts.ctx()),
+		tea.WithAltScreen(),
+		tea.WithInput(opts.Stdin),
+		tea.WithOutput(opts.Stderr),
+	)
+	final, err := prog.Run()
 	if err != nil {
-		return "", nil // user aborted the picker
+		if errors.Is(err, context.Canceled) || errors.Is(err, tea.ErrProgramKilled) {
+			return "", &Interrupted{}
+		}
+		return "", &UsageError{Err: err}
 	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-func pickBuiltin(opts Options, names []string) (string, error) {
-	if opts.Stdin == nil {
-		return "", usagef("--choose requires an interactive terminal")
+	if m, ok := final.(tui.Model); ok {
+		return m.Selected(), nil
 	}
-	fmt.Fprintln(opts.Stderr, "Select a task:")
-	for i, n := range names {
-		fmt.Fprintf(opts.Stderr, "  %d) %s\n", i+1, n)
-	}
-	fmt.Fprint(opts.Stderr, "> ")
-	line, _ := bufio.NewReader(opts.Stdin).ReadString('\n')
-	idx, err := strconv.Atoi(strings.TrimSpace(line))
-	if err != nil || idx < 1 || idx > len(names) {
-		return "", usagef("invalid selection")
-	}
-	return names[idx-1], nil
+	return "", nil
 }

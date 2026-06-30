@@ -53,7 +53,7 @@ A clean exit `0` means the Runefile is valid; exit `3` means a static error (wit
 | `--format <fmt>` | Output format for `--dump` (currently `json`). |
 | `--set <NAME=VALUE>` | Override a variable. The positional `NAME=VALUE` form (above) is the primary mechanism. |
 | `--watch` | Re-run the requested task(s) when files change. |
-| `--choose` | Interactive task picker. |
+| `--choose` | Open the interactive task picker (requires a terminal). |
 | `--yes` | Auto-approve `[confirm]` tasks (non-interactive). |
 | `--quiet` | Suppress command echo. |
 | `--fmt` | Rewrite the Runefile in canonical formatting. |
@@ -74,6 +74,22 @@ rune --watch test                # re-run tests on file changes
 rune --yes clean                 # run a [confirm] task without prompting
 rune --clear-cache               # drop the [cache] fingerprints
 ```
+
+### Interactive task picker
+
+`rune --choose` opens a full-screen, styled picker that lists the non-private
+tasks in your Runefile. Move the highlight with the arrow keys (or `j`/`k`), type
+to filter by task name or description, read the highlighted task's documentation
+in the detail pane, and press `Enter` to run it; press `q` or `Ctrl-C` to cancel
+without running anything.
+
+The picker is opt-in and interactive-only: bare `rune` never opens it, and it
+activates only when standard input and output are a terminal. In a pipe,
+redirect, or CI environment, `--choose` reports
+`--choose requires an interactive terminal` (exit `2`) rather than emitting UI.
+On selection the picker exits and hands the terminal to the task, so output,
+colors, and `Ctrl-C` behave exactly as a direct `rune <task>` run. Set
+`NO_COLOR` to render the picker without color.
 
 ## Subcommands
 

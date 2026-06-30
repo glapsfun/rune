@@ -1,7 +1,9 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/006-release-automation/plan.md` (Release Automation —
-GoReleaser v2 + GitHub Actions tag-driven release: cross-platform binaries, multi-arch
-GHCR images, cosign/SBOM/provenance, git-cliff changelog, Homebrew/Scoop, install script).
+Active feature plan: `specs/007-interactive-tui/plan.md` (Interactive Task Picker —
+replace the `--choose` fzf/numbered picker with a modern, styled in-terminal task
+picker built on Bubble Tea + Bubbles + Lip Gloss; opt-in via `--choose`, tears down
+and hands off to the existing `execute()` path on selection, non-interactive/CI
+paths unchanged; new pure `internal/tui` package wired from `internal/cli/choose.go`).
 For additional context about technologies to be used, project structure, shell commands,
 and other important information, read the current plan and its `research.md`.
 <!-- SPECKIT END -->
