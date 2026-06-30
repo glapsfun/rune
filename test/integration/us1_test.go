@@ -68,6 +68,25 @@ func TestUS1_List(t *testing.T) {
 	}
 }
 
+// TestUS1_ListStyledMatchesPlain proves the styled --list adds only zero-width
+// emphasis: with --color=always it emits ANSI, and stripping that ANSI yields
+// the exact plain bytes — so task names/groups/docs are distinguished while the
+// "#" column and every other byte stay aligned (FR-013, SC-002).
+func TestUS1_ListStyledMatchesPlain(t *testing.T) {
+	dir := writeRunefile(t, us1Runefile)
+	plain := run(t, dir, nil, "--list")
+	styled := run(t, dir, nil, "--color=always", "--list")
+	if styled.code != 0 {
+		t.Fatalf("styled --list exit = %d, stderr=%q", styled.code, styled.stderr)
+	}
+	if !hasANSI(styled.stdout) {
+		t.Errorf("--color=always --list emitted no ANSI: %q", styled.stdout)
+	}
+	if got := stripANSI(styled.stdout); got != plain.stdout {
+		t.Errorf("styled --list visible text != plain:\n stripped=%q\n plain   =%q", got, plain.stdout)
+	}
+}
+
 func TestUS1_FailingTaskExitsNonZero(t *testing.T) {
 	dir := writeRunefile(t, "boom:\n    exit 7\n")
 	r := run(t, dir, nil, "boom")

@@ -49,3 +49,37 @@ func TestUS1Version_ParityWithFlag(t *testing.T) {
 		t.Errorf("`rune version` (%q) != `rune --version` (%q)", cmd.stdout, flag.stdout)
 	}
 }
+
+// TestUS6_HelpRedesign: the root help has grouped sections and a worked example
+// for each common workflow, renders ANSI-free when piped, and colorizes section
+// headings under --color=always (FR-019, FR-020, FR-021, SC-006).
+func TestUS6_HelpRedesign(t *testing.T) {
+	dir := writeRunefile(t, "build:\n    @echo hi\n")
+	r := run(t, dir, nil, "--help")
+	if r.code != 0 {
+		t.Fatalf("--help exit = %d; stderr=%s", r.code, r.stderr)
+	}
+	for _, sec := range []string{"Usage:", "Commands:", "Examples:", "Flags:"} {
+		if !strings.Contains(r.stdout, sec) {
+			t.Errorf("--help missing section %q; got:\n%s", sec, r.stdout)
+		}
+	}
+	for _, ex := range []string{"rune --list", "rune build", "rune --choose", "rune serve"} {
+		if !strings.Contains(r.stdout, ex) {
+			t.Errorf("--help missing example %q; got:\n%s", ex, r.stdout)
+		}
+	}
+	if !strings.Contains(r.stdout, "--color") {
+		t.Errorf("--help should document --color; got:\n%s", r.stdout)
+	}
+	if hasANSI(r.stdout) {
+		t.Errorf("piped --help contained ANSI: %q", r.stdout)
+	}
+	styled := run(t, dir, nil, "--color=always", "--help")
+	if !hasANSI(styled.stdout) {
+		t.Errorf("--color=always --help emitted no ANSI: %q", styled.stdout)
+	}
+	if stripANSI(styled.stdout) != r.stdout {
+		t.Errorf("styled --help (stripped) != plain:\n stripped=%q\n plain=%q", stripANSI(styled.stdout), r.stdout)
+	}
+}

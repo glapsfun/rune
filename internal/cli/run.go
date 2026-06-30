@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rune-task-runner/rune/internal/analyzer"
 	"github.com/rune-task-runner/rune/internal/ast"
@@ -25,6 +26,7 @@ import (
 	"github.com/rune-task-runner/rune/internal/runtime/interp"
 	"github.com/rune-task-runner/rune/internal/runtime/scheduler"
 	"github.com/rune-task-runner/rune/internal/runtime/shell"
+	"github.com/rune-task-runner/rune/internal/style"
 	"github.com/rune-task-runner/rune/internal/token"
 )
 
@@ -122,6 +124,7 @@ func execute(opts Options, runefile string, args []string) error {
 		root:      root,
 		env:       env,
 		opts:      opts,
+		theme:     opts.themeStderr(),
 		plan:      plan,
 		now:       func() string { return time.Now().UTC().Format(time.RFC3339) },
 		ctx:       opts.ctx(),
@@ -160,6 +163,7 @@ type engine struct {
 	root      string // directory containing the Runefile (cache root)
 	env       []string
 	opts      Options
+	theme     style.Theme // stderr styling for status/echo/cache lines
 	plan      planMode
 	now       func() string
 	ctx       context.Context
@@ -233,7 +237,8 @@ func (e *engine) Execute(task *ast.Task, params map[string]string) error {
 				label = "would skip (cached)"
 			}
 		}
-		fmt.Fprintf(e.opts.Stderr, "%s: %s\n", label, task.Name)
+		// Dry-run notices are meta: dim the whole line (plain when color is off).
+		fmt.Fprintf(e.opts.Stderr, "%s\n", e.theme.Muted.Render(fmt.Sprintf("%s: %s", label, task.Name)))
 		return nil
 	}
 
@@ -241,16 +246,18 @@ func (e *engine) Execute(task *ast.Task, params map[string]string) error {
 		spec := e.cacheSpec(task, params, cacheAttr)
 		d, derr := cache.Decide(spec)
 		if derr == nil && d.Skip {
-			fmt.Fprintf(e.opts.Stderr, "cached: %s\n", task.Name)
+			// Cache-hit notice is dimmed so real output stands out (FR-014).
+			fmt.Fprintf(e.opts.Stderr, "%s\n", e.theme.Muted.Render(fmt.Sprintf("cached: %s", task.Name)))
 			return nil
 		}
-		fmt.Fprintf(e.opts.Stderr, "running: %s\n", task.Name)
+		// "running" is an active status label (FR-014).
+		fmt.Fprintf(e.opts.Stderr, "%s: %s\n", e.theme.Success.Render("running"), task.Name)
 		if err := e.runBody(task, params); err != nil {
 			return err
 		}
 		if derr == nil {
 			if cerr := cache.Store(spec, d.Hash, e.now()); cerr != nil {
-				fmt.Fprintf(e.opts.Stderr, "warning: failed to write cache for %s: %v\n", task.Name, cerr)
+				fmt.Fprintf(e.opts.Stderr, "%s: failed to write cache for %s: %v\n", e.theme.Warning.Render("warning"), task.Name, cerr)
 			}
 		}
 		return nil
@@ -287,12 +294,13 @@ func (e *engine) runBody(task *ast.Task, params map[string]string) error {
 		err = e.executeAgent(task, lines, dir, env)
 	case rt.KindShell:
 		err = shell.Run(e.ctx, task.Name, lines, shell.Options{
-			Stdin:  e.opts.Stdin,
-			Stdout: e.opts.Stdout,
-			Stderr: e.opts.Stderr,
-			Dir:    dir,
-			Env:    env,
-			Quiet:  e.settings.Quiet || e.opts.Quiet,
+			Stdin:     e.opts.Stdin,
+			Stdout:    e.opts.Stdout,
+			Stderr:    e.opts.Stderr,
+			Dir:       dir,
+			Env:       env,
+			Quiet:     e.settings.Quiet || e.opts.Quiet,
+			EchoStyle: func(s string) string { return e.theme.Muted.Render(s) },
 		})
 	case rt.KindInterp:
 		script := joinBody(lines)
@@ -623,16 +631,29 @@ func listTasks(opts Options, f *ast.File) {
 		}
 	}
 
-	fmt.Fprintln(opts.Stdout, "Available tasks:")
+	// Styling is additive and stream-gated: when color is off, the theme roles
+	// are no-ops AND the plain branch below reproduces the exact pre-feature
+	// bytes (byte-for-byte invariance, FR-010). When color is on, the doc rows
+	// pad by visible rune width so the "#" column stays aligned despite the
+	// zero-width ANSI escapes (FR-012/SC-002).
+	th := opts.themeStdout()
+	fmt.Fprintln(opts.Stdout, th.Heading.Render("Available tasks:"))
 	for _, g := range order {
 		if g != "" {
-			fmt.Fprintf(opts.Stdout, "  [%s]\n", g)
+			fmt.Fprintf(opts.Stdout, "  %s\n", th.Heading.Render("["+g+"]"))
 		}
 		for _, r := range groups[g] {
-			if r.doc != "" {
+			switch {
+			case r.doc == "":
+				fmt.Fprintf(opts.Stdout, "    %s\n", th.TaskName.Render(r.name))
+			case opts.ColorStdout:
+				// Pad by visible rune width (task names are ASCII today, so this
+				// equals the byte width %-*s uses, but it stays correct if the ANSI
+				// styling or names ever widen).
+				pad := strings.Repeat(" ", width-utf8.RuneCountInString(r.name))
+				fmt.Fprintf(opts.Stdout, "    %s%s  %s\n", th.TaskName.Render(r.name), pad, th.Muted.Render("# "+r.doc))
+			default:
 				fmt.Fprintf(opts.Stdout, "    %-*s  # %s\n", width, r.name, r.doc)
-			} else {
-				fmt.Fprintf(opts.Stdout, "    %s\n", r.name)
 			}
 		}
 	}
@@ -699,7 +720,7 @@ func newSourceProvider(mainPath string, mainSrc []byte) diag.SourceProvider {
 }
 
 func renderDiags(opts Options, diags diag.List, src diag.SourceProvider) {
-	fmt.Fprintln(opts.Stderr, diag.RenderAll(diags, src, opts.Color))
+	fmt.Fprintln(opts.Stderr, diag.RenderAll(diags, src, opts.themeStderr()))
 }
 
 func countErrors(diags diag.List) int {
