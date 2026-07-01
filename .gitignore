@@ -23,6 +23,7 @@ coverage.txt
 .claude/*
 .agents/*
 .specify/*
+.help
 # …but the project constitution is a committed, reviewable artifact.
 !.specify/memory/
 !.specify/memory/constitution.md
