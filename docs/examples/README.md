@@ -7,6 +7,12 @@
 New to Rune? Read **[What is Rune?](../overview.md)** and **[Getting started](../getting-started.md)**
 first, then pick the example closest to your project below.
 
+> [!TIP]
+> Want a guided walkthrough instead of a bare example? See the
+> **[use-case walkthroughs](../use-cases/README.md)** for [Python](../use-cases/python-project.md),
+> [Node](../use-cases/node-project.md), and [AI agents (MCP)](../use-cases/mcp-agents.md) —
+> each explains *why* the Runefile is written the way it is.
+
 ## Basics
 
 | Example | What it shows |

@@ -6,7 +6,7 @@ glance. This guide is a practical, example-driven tour; the formal grammar lives
 [`GRAMMAR.md`](GRAMMAR.md) (the parser is the source of truth).
 
 New to Rune? Read [What is Rune?](overview.md) and [Getting started](getting-started.md) first.
-For task-oriented deep dives on a single capability, see the [guides](guides/README.md); for
+For task-oriented deep dives on a single capability, see the [guides](how-to/README.md); for
 runnable starting points, the [examples](examples/README.md).
 
 > The Runefile expression language is intentionally **total** (no loops, no recursion).
@@ -241,7 +241,7 @@ rune --fmt
 
 ## See also
 
-- [Guides](guides/README.md) — task-oriented deep dives (dependencies, caching, executors, …)
+- [Guides](how-to/README.md) — task-oriented deep dives (dependencies, caching, executors, …)
 - [Examples](examples/README.md) — runnable starting points by use case
 - [CLI reference](cli.md) — flags, subcommands, exit codes
 - [Troubleshooting](troubleshooting.md) — errors, diagnostics, and exit codes
