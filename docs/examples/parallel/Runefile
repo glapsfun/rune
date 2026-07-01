@@ -1,5 +1,4 @@
 # [parallel] runs a task's independent dependencies concurrently (bounded).
-set default := "checks"
 
 # lint, test, and typecheck have no dependencies on each other, so they run
 # concurrently; `checks` runs after all three finish.

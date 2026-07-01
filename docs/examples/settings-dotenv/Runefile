@@ -2,7 +2,6 @@
 # `set export` makes Runefile variables available to bodies as env vars; values
 # in .env (here GREETING) are loaded too. Secrets come from the environment,
 # never hard-coded here.
-set default := "show"
 set export
 
 app := "demo"

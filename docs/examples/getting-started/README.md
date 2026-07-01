@@ -28,8 +28,6 @@ or `rune --list` to see both tasks with their descriptions.
 ## How it works
 
 ```rune
-set default := "greet"
-
 # Greet someone by name (defaults to "world").
 greet name="world":
     @echo "Hello, {{name}}! This is your first Rune task."
@@ -39,7 +37,6 @@ check: greet
     @echo "All good ✓"
 ```
 
-- `set default := "greet"` runs `greet` when you type `rune` with no task.
 - `name="world"` is a parameter with a default; `{{name}}` interpolates it.
 - `check: greet` declares a dependency — `greet` runs first, at most once per invocation.
 - The leading `@` suppresses echoing the command line before it runs.

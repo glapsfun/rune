@@ -113,6 +113,14 @@ func execute(opts Options, runefile string, args []string) error {
 		plan = planSummary
 	}
 
+	// Bare `rune` (a real run with no task requested) prints the version + task
+	// overview instead of running anything — Rune no longer auto-runs a default
+	// task. (`--dry-run`/`--summary` with no task still error via resolveRoots.)
+	if plan == planRun && len(rawInvs) == 0 {
+		printOverview(opts, file)
+		return nil
+	}
+
 	eng := &engine{
 		file:      file,
 		tasks:     tasks,
@@ -131,7 +139,7 @@ func execute(opts Options, runefile string, args []string) error {
 		src:       srcProvider,
 	}
 
-	invs, err := eng.resolveRoots(rawInvs, settings)
+	invs, err := eng.resolveRoots(rawInvs)
 	if err != nil {
 		return err
 	}
@@ -170,16 +178,12 @@ type engine struct {
 	src       diag.SourceProvider
 }
 
-// resolveRoots turns CLI invocations (or the default task) into scheduler roots.
-func (e *engine) resolveRoots(raw []rawInvocation, settings config.Settings) ([]scheduler.Invocation, error) {
+// resolveRoots turns CLI task invocations into scheduler roots. Bare `rune`
+// (no invocation) is handled earlier in execute by printOverview, so reaching
+// here with no task means an action flag (e.g. --dry-run) was given without one.
+func (e *engine) resolveRoots(raw []rawInvocation) ([]scheduler.Invocation, error) {
 	if len(raw) == 0 {
-		if settings.Default == "" {
-			return nil, usagef("no task specified and no default task set; run with --list to see tasks")
-		}
-		if _, ok := e.tasks[settings.Default]; !ok {
-			return nil, usagef("default task %q is not defined", settings.Default)
-		}
-		raw = []rawInvocation{{name: settings.Default}}
+		return nil, usagef("no task specified; run 'rune' for an overview or 'rune --list' to see tasks")
 	}
 	var invs []scheduler.Invocation
 	for _, r := range raw {
@@ -605,6 +609,34 @@ func buildEnv(settings config.Settings, scope *eval.Scope, root string) []string
 		}
 	}
 	return env
+}
+
+// docsURL is where the overview points users when a Runefile defines no tasks.
+const docsURL = "https://github.com/glapsfun/rune/tree/main/docs"
+
+// printOverview renders the screen shown for bare `rune`: a version header
+// followed by the available-task listing, or a friendly pointer to --help and
+// the docs when the Runefile exposes no runnable tasks.
+func printOverview(opts Options, f *ast.File) {
+	fmt.Fprintf(opts.Stdout, "rune version: %s\n", opts.Version)
+	if hasVisibleTasks(f) {
+		listTasks(opts, f)
+		return
+	}
+	fmt.Fprintln(opts.Stdout, "No available tasks found in this Runefile.")
+	fmt.Fprintln(opts.Stdout, "Use 'rune --help' to see commands, and read the docs:")
+	fmt.Fprintln(opts.Stdout, "  "+docsURL)
+}
+
+// hasVisibleTasks reports whether the file exposes at least one non-private task
+// that matches the current OS (the same visibility filter listTasks applies).
+func hasVisibleTasks(f *ast.File) bool {
+	for _, t := range f.Tasks {
+		if !t.IsPrivate() && osMatches(t, runtime.GOOS) {
+			return true
+		}
+	}
+	return false
 }
 
 // listTasks prints non-private tasks, grouped by [group("...")], excluding tasks

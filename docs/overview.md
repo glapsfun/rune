@@ -18,8 +18,6 @@ A `Runefile` is **named blocks of commands**. You run a block by name; you decla
 blocks depend on others. That's the whole model:
 
 ```rune
-set default := "build"
-
 # Build the project.
 build:
     @echo "building…"
@@ -29,8 +27,9 @@ test: build
     @echo "testing…"
 ```
 
-Run `rune` with no arguments and the default (`build`) runs. Run `rune test` and Rune runs
-`build` first, then `test`. Run `rune --list` and you see both, with their descriptions.
+Run `rune` with no arguments and you get the version plus the list of available tasks
+(nothing runs). Run `rune build` to run a task; run `rune test` and Rune runs `build`
+first, then `test`. Run `rune --list` and you see both, with their descriptions.
 
 Two things make this more than a pile of shell scripts:
 

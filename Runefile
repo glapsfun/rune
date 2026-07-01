@@ -2,8 +2,6 @@
 # Run `rune --list` to see them. Tests run inside Docker per project policy
 # (see CONTRIBUTING.md). Use `go run ./cmd/rune <task>` if rune isn't installed.
 
-set default := "lint"
-
 # Format all Go code (gofmt + gofumpt + goimports via golangci-lint).
 fmt:
     golangci-lint fmt

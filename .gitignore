@@ -1,6 +1,9 @@
 # Rune build & cache artifacts
 /dist/
 .rune/
+# Stray host binary from `go build ./cmd/rune` without -o (real output is dist/rune).
+/rune
+/rune.exe
 
 # Go
 *.test

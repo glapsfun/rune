@@ -1,6 +1,5 @@
 # Dependencies run BEFORE a task; post-hooks (after &&) run AFTER it succeeds.
 # Each task runs at most once per invocation, even via multiple paths.
-set default := "deploy"
 
 # `build` and `test` run first; `notify` runs after `deploy` succeeds.
 deploy: build test && notify

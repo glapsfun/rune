@@ -16,14 +16,54 @@ build: greet
     @echo "building..."
 `
 
-func TestUS1_DefaultTask(t *testing.T) {
+// TestUS1_BareShowsOverview: bare `rune` prints a version header + the available
+// task listing and runs nothing (it no longer auto-runs a default task).
+func TestUS1_BareShowsOverview(t *testing.T) {
 	dir := writeRunefile(t, us1Runefile)
 	r := run(t, dir, nil)
 	if r.code != 0 {
 		t.Fatalf("exit = %d, stderr=%s", r.code, r.stderr)
 	}
-	if strings.TrimSpace(r.stdout) != "hello, world" {
-		t.Errorf("stdout = %q, want 'hello, world'", r.stdout)
+	if !strings.Contains(r.stdout, "rune version:") {
+		t.Errorf("bare rune missing version header: %q", r.stdout)
+	}
+	if !strings.Contains(r.stdout, "Available tasks:") || !strings.Contains(r.stdout, "greet") {
+		t.Errorf("bare rune should list tasks: %q", r.stdout)
+	}
+	// It must NOT run the (formerly default) task.
+	if strings.Contains(r.stdout, "hello, world") {
+		t.Errorf("bare rune should not run a task: %q", r.stdout)
+	}
+}
+
+// TestUS1_PlanFlagsNoTaskError: --dry-run/--summary with no task still error —
+// there is no default task to plan (only bare `rune` shows the overview).
+func TestUS1_PlanFlagsNoTaskError(t *testing.T) {
+	dir := writeRunefile(t, us1Runefile)
+	for _, flag := range []string{"--dry-run", "--summary"} {
+		r := run(t, dir, nil, flag)
+		if r.code == 0 {
+			t.Errorf("%s with no task should exit non-zero, got 0 (stdout=%q)", flag, r.stdout)
+		}
+		if !strings.Contains(r.stderr, "no task specified") {
+			t.Errorf("%s with no task: stderr = %q, want 'no task specified'", flag, r.stderr)
+		}
+	}
+}
+
+// TestUS1_BareNoTasksPointsToHelpAndDocs: when the Runefile exposes no runnable
+// tasks, bare `rune` shows the version header, a not-found line, and pointers to
+// --help and the docs.
+func TestUS1_BareNoTasksPointsToHelpAndDocs(t *testing.T) {
+	dir := writeRunefile(t, "_hidden:\n    @echo hi\n")
+	r := run(t, dir, nil)
+	if r.code != 0 {
+		t.Fatalf("exit = %d, stderr=%s", r.code, r.stderr)
+	}
+	for _, want := range []string{"rune version:", "No available tasks", "rune --help", "https://github.com/glapsfun/rune/tree/main/docs"} {
+		if !strings.Contains(r.stdout, want) {
+			t.Errorf("no-tasks overview missing %q; got:\n%s", want, r.stdout)
+		}
 	}
 }
 

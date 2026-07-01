@@ -1,7 +1,6 @@
 # Tasks for a Go service: fetch → build → test → run.
 # Bodies echo the real commands so this example runs anywhere; swap the echoes
 # for the real `go ...` lines in your project.
-set default := "build"
 
 # Download dependencies.
 fetch:

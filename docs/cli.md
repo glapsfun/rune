@@ -15,7 +15,7 @@ tasks and interleave `VAR=VALUE` variable overrides between them.
 ## Running tasks
 
 ```sh
-rune                 # run the default task (set default := "...")
+rune                 # show the version + available tasks (runs nothing)
 rune build           # run the `build` task
 rune build test      # run `build`, then `test`
 rune greet Ada       # run `greet` passing "Ada" as its first argument

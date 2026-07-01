@@ -1,7 +1,6 @@
 # Rune never skips work by timestamp. Caching is an explicit, per-task opt-in:
 # a fingerprint over the declared inputs + body + variables + executor. A cache
 # hit is logged ("cached"), never silent. Clear it with `rune --clear-cache`.
-set default := "build"
 
 # Re-running with an unchanged VERSION is reported as cached and skipped.
 [cache(inputs = ["VERSION"], outputs = ["dist/app"])]

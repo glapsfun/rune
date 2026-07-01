@@ -1,6 +1,5 @@
 # Tasks for a Python project. The `version` task body runs under the python
 # executor (real Python); the rest echo the commands to adapt.
-set default := "test"
 
 # Create a virtualenv and install dependencies.
 install:

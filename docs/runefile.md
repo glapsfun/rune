@@ -105,7 +105,6 @@ out := "dist"
 bin := out / "app"          # `/` joins paths (forward slash on every OS)
 
 # Settings:
-set default := "build"      # task to run when none is given
 set export                  # export Runefile variables into task environments
 set shell := ["bash", "-cu"]  # override the shell for (sh) bodies
 ```
