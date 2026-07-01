@@ -129,5 +129,5 @@ errors are rendered with `file:line:col` and a caret-underlined source span.
 ## See also
 
 - [Runefile language guide](runefile.md) — the file format these commands run.
-- [Guides](guides/README.md) — task-oriented deep dives per capability.
+- [Guides](how-to/README.md) — task-oriented deep dives per capability.
 - [Troubleshooting](troubleshooting.md) — what each error and exit code means.

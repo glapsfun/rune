@@ -1,6 +1,22 @@
+<div align="center">
+
 # Rune
 
 **A shared task runner for humans and AI agents.**
+
+<p align="center">
+  <a href="https://github.com/glapsfun/rune/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/glapsfun/rune/ci.yml?branch=main"></a>
+  <a href="https://github.com/glapsfun/rune/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/glapsfun/rune?sort=semver"></a>
+  <a href="https://github.com/glapsfun/rune/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/glapsfun/rune">
+  <a href="https://goreportcard.com/report/github.com/rune-task-runner/rune"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/rune-task-runner/rune"></a>
+  <a href="https://pkg.go.dev/github.com/rune-task-runner/rune"><img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/rune-task-runner/rune.svg"></a>
+  <a href="https://github.com/glapsfun/rune/blob/main/docs/README.md"><img alt="Docs" src="https://img.shields.io/badge/docs-README-blue"></a>
+</p>
+
+**[Docs](docs/README.md)** · **[Getting started](docs/getting-started.md)** · **[Examples](docs/examples/README.md)** · **[CLI reference](docs/cli.md)**
+
+</div>
 
 Rune runs your project's commands — `lint`, `test`, `build`, `deploy` — from one readable
 file, the `Runefile`. Humans run tasks from the CLI; AI agents and IDEs run the *same*
@@ -73,15 +89,21 @@ Full instructions: **[Installation guide](docs/installation.md)**.
 
 ## Documentation
 
+**Start at the [documentation index](docs/README.md)** — it routes you to the right page by
+goal ("I want to…"). Highlights:
+
 | Guide | What's inside |
 |-------|---------------|
+| [Docs index](docs/README.md) | Find any page by what you want to do |
 | [What is Rune?](docs/overview.md) | The idea, the mental model, and when to use it |
 | [Getting started](docs/getting-started.md) | Zero → your first task in minutes |
+| [User guide](docs/user-guide/README.md) | A guided tour of every capability, in order |
+| [How-to guides](docs/how-to/README.md) | Task-oriented guides, one per capability |
+| [Use cases](docs/use-cases/README.md) | Full walkthroughs: Python, Node, AI agents (MCP) |
 | [Examples](docs/examples/README.md) | Runnable starting points for real project shapes |
 | [Installation](docs/installation.md) | Binary, source, and container install per OS |
 | [CLI reference](docs/cli.md) | Every command, flag, and exit code |
 | [Runefile language](docs/runefile.md) | Tasks, deps, params, caching, executors, dotenv |
-| [Guides](docs/guides/README.md) | Task-oriented deep dives, one per capability |
 | [AI agents (MCP)](docs/mcp.md) | Expose tasks to agents; the security model |
 | [Docker](docs/docker.md) | Run Rune install-free in a container |
 | [Troubleshooting](docs/troubleshooting.md) | Errors, diagnostics, and exit codes |

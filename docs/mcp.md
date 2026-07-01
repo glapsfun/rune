@@ -97,4 +97,4 @@ an explicit opt-in.
 - [agent-driven example](examples/agent-driven/README.md) — a runnable agent task + gating
 - [CLI reference](cli.md) — `rune mcp` / `rune serve` flags
 - [Runefile language guide](runefile.md) — `[private]`, `[confirm]`, `[network]`, executors
-- [Guides](guides/README.md) — the rest of the capability deep dives
+- [Guides](how-to/README.md) — the rest of the capability deep dives

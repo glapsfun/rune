@@ -10,10 +10,24 @@ import (
 // complete, self-contained Runefile and therefore MUST statically validate.
 // Pages with deliberate fragments (lone expressions, partial snippets) fence
 // them as ```text and are not listed here. As more pages are brought into
-// compliance (US3 / T042), add them so coverage tightens over time.
+// compliance, add them so coverage tightens over time.
 var selfContainedPages = []string{
 	"docs/overview.md",
 	"docs/getting-started.md",
+	// How-to guides (folded from docs/guides) — self-contained ```rune blocks.
+	// dependencies-and-hooks and imports-and-modules are intentionally excluded:
+	// their ```rune blocks are deliberate fragments (multi-file imports needing
+	// sibling files; partial snippets), per the convention above.
+	"docs/how-to/caching.md",
+	"docs/how-to/executors.md",
+	"docs/how-to/os-filtering.md",
+	"docs/how-to/parallelism.md",
+	"docs/how-to/parameters.md",
+	"docs/how-to/settings-and-dotenv.md",
+	// Use-case walkthroughs — each shows a complete, runnable Runefile.
+	"docs/use-cases/python-project.md",
+	"docs/use-cases/node-project.md",
+	"docs/use-cases/mcp-agents.md",
 }
 
 // TestRuneCodeBlocksValidate extracts every ```rune block from the

@@ -52,7 +52,7 @@ Runefile:2:11: error: undefined variable: nope
 ```
 
 **Fix:** define it with `name := "value"`, pass it as a parameter, or override it on the
-command line (`rune task NAME=value`). See [Settings & dotenv](guides/settings-and-dotenv.md).
+command line (`rune task NAME=value`). See [Settings & dotenv](how-to/settings-and-dotenv.md).
 
 ### "dependency cycle" — exit 3
 
@@ -65,7 +65,7 @@ Runefile:3:1: error: dependency cycle: a → b → a
 ```
 
 **Fix:** break the loop — extract the shared work into a third task both can depend on. See
-[Dependencies & post-hooks](guides/dependencies-and-hooks.md).
+[Dependencies & post-hooks](how-to/dependencies-and-hooks.md).
 
 ### Argument count mismatch (arity) — exit 3
 
@@ -78,7 +78,7 @@ Runefile:3:7: error: task "greet" expects at least 1 argument(s), got 0
 ```
 
 **Fix:** pass the required argument — e.g. `(greet "Ada")` in the dependency, or give the
-parameter a default. See [Parameters](guides/parameters.md).
+parameter a default. See [Parameters](how-to/parameters.md).
 
 ### "no Runefile found" — exit 2
 
@@ -108,13 +108,13 @@ absent, the task fails with an actionable error naming the missing interpreter (
 
 **Fix:** install the interpreter, or run in an environment that has it. Note the
 [container image](docker.md) ships only the static binary — see its caveat. See
-[Executors](guides/executors.md).
+[Executors](how-to/executors.md).
 
 ### A cached task ran when you expected a skip
 
 `[cache]` re-runs (rather than falsely skipping) when a declared **output is missing** or an
 **input can't be resolved** — by design. Clear stale fingerprints with `rune --clear-cache`.
-See [Caching](guides/caching.md).
+See [Caching](how-to/caching.md).
 
 ## Still stuck?
 
