@@ -58,7 +58,7 @@ A clean exit `0` means the Runefile is valid; exit `3` means a static error (wit
 | `--quiet` | Suppress command echo. |
 | `--fmt` | Rewrite the Runefile in canonical formatting. |
 | `--clear-cache` | Remove the project-local `.rune/cache` directory. |
-| `--color <when>` | When to colorize output: `auto` (default; color only on a terminal), `always` (force color, even through a pipe), or `never`. Honors `NO_COLOR`. |
+| `--color <when>` | When to colorize output: `auto` (default; color only on a terminal), `always` (force color, even through a pipe), or `never`. Under `auto`, `NO_COLOR` disables color; an explicit `always`/`never` takes precedence over `NO_COLOR`. |
 | `--version` | Print version and commit. |
 | `-h`, `--help` | Show help. |
 
