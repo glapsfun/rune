@@ -1,11 +1,15 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/007-interactive-tui/plan.md` (Interactive Task Picker —
-replace the `--choose` fzf/numbered picker with a modern, styled in-terminal task
-picker built on Bubble Tea + Bubbles + Lip Gloss; opt-in via `--choose`, tears down
-and hands off to the existing `execute()` path on selection, non-interactive/CI
-paths unchanged; new pure `internal/tui` package wired from `internal/cli/choose.go`).
-For additional context about technologies to be used, project structure, shell commands,
-and other important information, read the current plan and its `research.md`.
+Active feature plan: `specs/008-styled-cli-output/plan.md` (Styled CLI Output &
+Friendlier Help — add a restrained semantic palette to non-interactive output
+(`--list`, status/echo/cache, diagnostics) and redesign `--help`, without changing
+any byte scripts/CI see except the deliberately-rewritten help. New leaf
+`internal/style` package owns the palette + Lip Gloss `Theme` (plain when color
+off); a new `--color=auto|always|never` flag drives a per-stream color decision
+(`ColorStdout` for `--list`/`--help`, `ColorStderr` for status/diagnostics)
+resolved in `cmd/rune/root.go`; diagnostic colors re-homed into the shared theme
+with plain output byte-identical). For additional context about technologies,
+project structure, shell commands, and constraints, read the current plan and its
+`research.md`.
 <!-- SPECKIT END -->
 
 ## Development workflow

@@ -1,6 +1,5 @@
 # A container workflow. Bodies echo the docker commands so the example is safe
 # to run; swap the echoes for real `docker ...` lines in your project.
-set default := "build"
 
 image := "myapp:local"
 

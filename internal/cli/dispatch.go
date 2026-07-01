@@ -6,10 +6,18 @@ import (
 	"io"
 
 	"github.com/rune-task-runner/rune/internal/config"
+	"github.com/rune-task-runner/rune/internal/style"
 )
 
 // errorf is a thin wrapper kept package-local so error construction is uniform.
 func errorf(format string, args ...any) error { return fmt.Errorf(format, args...) }
+
+// themeStdout builds the styling theme for stdout surfaces (--list, --help).
+func (o Options) themeStdout() style.Theme { return style.New(o.ColorStdout, o.Stdout) }
+
+// themeStderr builds the styling theme for stderr surfaces (status/echo/cache,
+// diagnostics).
+func (o Options) themeStderr() style.Theme { return style.New(o.ColorStderr, o.Stderr) }
 
 // Options carries the resolved global CLI flags and I/O streams for one
 // invocation. main.go populates it from cobra and passes it to Run.
@@ -28,13 +36,17 @@ type Options struct {
 	Fmt        bool
 	ClearCache bool
 
-	Color   bool // resolved: emit ANSI color
-	Version string
-	Cwd     string
-	Ctx     context.Context // cancelled on SIGINT (nil => Background)
-	Stdin   io.Reader
-	Stdout  io.Writer
-	Stderr  io.Writer
+	// Resolved per-stream color decisions (see cmd/rune): ColorStdout gates
+	// --list and --help (which write to stdout); ColorStderr gates Rune's own
+	// messages — status/echo/cache lines and diagnostics — on stderr.
+	ColorStdout bool
+	ColorStderr bool
+	Version     string
+	Cwd         string
+	Ctx         context.Context // cancelled on SIGINT (nil => Background)
+	Stdin       io.Reader
+	Stdout      io.Writer
+	Stderr      io.Writer
 
 	// Commands are the reserved subcommand names (and aliases). They are used
 	// only to enrich the "unknown task" error with a did-you-mean suggestion.

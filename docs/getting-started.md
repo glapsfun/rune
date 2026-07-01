@@ -25,8 +25,6 @@ rune --version
 Create a file named `Runefile` in your project root:
 
 ```rune
-set default := "greet"
-
 # Greet someone by name (defaults to "world").
 greet name="world":
     @echo "Hello, {{name}}!"
@@ -34,7 +32,6 @@ greet name="world":
 
 A few things to notice:
 
-- `set default := "greet"` makes `greet` run when you type `rune` with no arguments.
 - The comment directly above a task becomes its documentation (shown by `rune --list`).
 - `name="world"` is a parameter with a default value; `{{name}}` interpolates it.
 - The leading `@` tells Rune not to echo the command line before running it.
@@ -47,8 +44,7 @@ Bodies use **significant indentation** (like Python): indent the command lines u
 ## 3. Run it
 
 ```sh
-rune              # runs the default task (greet)
-# → Hello, world!
+rune              # show the version + available tasks (runs nothing)
 
 rune greet        # run a task by name
 # → Hello, world!
@@ -64,8 +60,6 @@ That's it — you've installed Rune and run a task.
 Tasks can depend on other tasks, which run first (each at most once per invocation):
 
 ```rune
-set default := "greet"
-
 greet name="world":
     @echo "Hello, {{name}}!"
 

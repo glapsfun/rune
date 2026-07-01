@@ -84,7 +84,7 @@ func isTTY(fd uintptr) bool {
 // run with the invocation context so an external SIGINT cancels it cleanly.
 func runPicker(opts Options, items []tui.PickerItem) (string, error) {
 	prog := tea.NewProgram(
-		tui.New(items, opts.Color),
+		tui.New(items, opts.ColorStderr),
 		tea.WithContext(opts.ctx()),
 		tea.WithAltScreen(),
 		tea.WithInput(opts.Stdin),

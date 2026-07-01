@@ -8,7 +8,6 @@ import (
 
 // Settings holds the resolved module settings that influence execution.
 type Settings struct {
-	Default    string   // set default := "task"
 	WorkingDir string   // set working-directory := "path"
 	Quiet      bool     // set quiet
 	Export     bool     // set export (export all variables to the task env)
@@ -58,8 +57,6 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 
 	for _, set := range f.Settings {
 		switch set.Name {
-		case "default":
-			s.Default = evalStr(set)
 		case "working-directory":
 			s.WorkingDir = evalStr(set)
 		case "quiet":

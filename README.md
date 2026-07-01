@@ -8,8 +8,6 @@ tasks through the Model Context Protocol (MCP). It ships as a single static bina
 runtime dependencies.
 
 ```rune
-set default := "build"
-
 # Build the project.
 build target="release": fetch
     go build -tags {{target}} ./...
@@ -24,7 +22,8 @@ test: build
 ```
 
 ```sh
-rune              # runs the default task (build)
+rune              # show the version + available tasks (runs nothing)
+rune build        # run the `build` task
 rune test         # runs `build` (a dependency), then `test`
 rune --list       # shows documented tasks
 ```

@@ -15,7 +15,7 @@ tasks and interleave `VAR=VALUE` variable overrides between them.
 ## Running tasks
 
 ```sh
-rune                 # run the default task (set default := "...")
+rune                 # show the version + available tasks (runs nothing)
 rune build           # run the `build` task
 rune build test      # run `build`, then `test`
 rune greet Ada       # run `greet` passing "Ada" as its first argument
@@ -58,6 +58,7 @@ A clean exit `0` means the Runefile is valid; exit `3` means a static error (wit
 | `--quiet` | Suppress command echo. |
 | `--fmt` | Rewrite the Runefile in canonical formatting. |
 | `--clear-cache` | Remove the project-local `.rune/cache` directory. |
+| `--color <when>` | When to colorize output: `auto` (default; color only on a terminal), `always` (force color, even through a pipe), or `never`. Under `auto`, `NO_COLOR` disables color; an explicit `always`/`never` takes precedence over `NO_COLOR`. |
 | `--version` | Print version and commit. |
 | `-h`, `--help` | Show help. |
 

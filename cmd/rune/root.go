@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 
 	"github.com/rune-task-runner/rune/internal/cli"
@@ -16,18 +14,12 @@ import (
 // are registered as subcommands by the caller. Any first positional that does
 // not match a subcommand is a dynamic task invocation handled by RunE.
 func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
+	var colorFlag string
 	root := &cobra.Command{
 		Use:   "rune [global flags] [VAR=VALUE ...] [TASK [ARGS...]] ...",
 		Short: "A shared task runner for humans and AI agents",
-		Long: `Rune runs tasks defined in a Runefile — for humans on the CLI and for AI
-agents and IDEs over MCP.
-
-The built-in commands are listed below. Tasks are dynamic: run 'rune --list' to
-see the tasks in your Runefile, then 'rune <task> [args]' to run one. A task
-whose name collides with a built-in command stays reachable via 'rune -- <task>'.`,
-		Example: `  rune --list           # show the tasks defined in your Runefile
-  rune build            # run the 'build' task
-  rune build --watch    # flags after the task name are passed to the task`,
+		// The root command's --help is rendered by applyHelp (see help.go), so
+		// no Long/Example is set here; Short is still used in completions.
 		Version:       fmt.Sprintf("%s (commit %s)", version, commit),
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -51,11 +43,19 @@ whose name collides with a built-in command stays reachable via 'rune -- <task>'
 		// Resolve streams/context once, before the task path OR any subcommand,
 		// so every command observes the same I/O and cancellation.
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			mode, err := parseColorMode(colorFlag)
+			if err != nil {
+				return &cli.UsageError{Err: err}
+			}
 			opts.Cwd, _ = os.Getwd()
 			opts.Stdin = cmd.InOrStdin()
 			opts.Stdout = cmd.OutOrStdout()
 			opts.Stderr = cmd.ErrOrStderr()
-			opts.Color = useColor()
+			// Per-stream color decisions: --list/--help write to stdout, Rune's
+			// own messages (status/echo/diagnostics) to stderr. Each uses the TTY
+			// status of the stream it targets (FR-004).
+			opts.ColorStdout = resolveColor(mode, streamIsTTY(opts.Stdout))
+			opts.ColorStderr = resolveColor(mode, streamIsTTY(opts.Stderr))
 			opts.Version = version
 			opts.Ctx = cmd.Context()
 			opts.Commands = subcommandNames(cmd.Root())
@@ -92,6 +92,7 @@ whose name collides with a built-in command stays reachable via 'rune -- <task>'
 	f.BoolVar(&opts.Quiet, "quiet", false, "suppress command echo")
 	f.BoolVar(&opts.Fmt, "fmt", false, "rewrite the Runefile in canonical formatting")
 	f.BoolVar(&opts.ClearCache, "clear-cache", false, "remove the project-local .rune/cache directory")
+	f.StringVar(&colorFlag, "color", "auto", "when to colorize output: auto|always|never")
 
 	return root
 }
@@ -108,16 +109,4 @@ func subcommandNames(root *cobra.Command) []string {
 		names = append(names, c.Aliases...)
 	}
 	return names
-}
-
-// useColor reports whether ANSI color should be emitted on stderr (where Rune's
-// own messages go): a TTY, NO_COLOR unset, and color globally enabled.
-func useColor() bool {
-	if color.NoColor {
-		return false
-	}
-	if os.Getenv("NO_COLOR") != "" {
-		return false
-	}
-	return isatty.IsTerminal(os.Stderr.Fd()) || isatty.IsCygwinTerminal(os.Stderr.Fd())
 }

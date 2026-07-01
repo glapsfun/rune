@@ -1,6 +1,5 @@
 # Tasks for a Node/JavaScript project. The `version` task body runs under the
 # node executor (real JavaScript); the rest echo the npm commands to adapt.
-set default := "build"
 
 # Install dependencies.
 install:

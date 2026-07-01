@@ -36,6 +36,7 @@ func run(args []string) int {
 	// Built-in subcommands. Registering any subcommand also makes Cobra add its
 	// `help` command automatically; `completion` is our own (newCompletionCmd).
 	root.AddCommand(newServeCmd(&opts), newVersionCmd(), newCompletionCmd())
+	applyHelp(root)
 
 	// Rune's own messages go to stderr so stdout stays clean for piping.
 	root.SetOut(os.Stdout)

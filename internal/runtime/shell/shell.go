@@ -35,6 +35,11 @@ type Options struct {
 	Dir    string   // working directory ("" => current)
 	Env    []string // KEY=VALUE pairs (nil => inherit os.Environ)
 	Quiet  bool     // suppress command echo
+	// EchoStyle, if non-nil, wraps each echoed command line for display (e.g.
+	// dimming). It is applied only AFTER the NoEcho/Quiet suppression check, so
+	// it never causes a suppressed line to appear, and must add only zero-width
+	// styling without altering the line's text.
+	EchoStyle func(string) string
 }
 
 // ExecError reports a body-line failure: the task, the offending line, and the
@@ -94,7 +99,11 @@ func Run(ctx context.Context, taskName string, lines []Line, opts Options) error
 			continue
 		}
 		if !ln.NoEcho && !opts.Quiet {
-			fmt.Fprintln(stderr, ln.Text)
+			echo := ln.Text
+			if opts.EchoStyle != nil {
+				echo = opts.EchoStyle(echo)
+			}
+			fmt.Fprintln(stderr, echo)
 		}
 		prog, perr := parser.Parse(strings.NewReader(ln.Text), taskName)
 		if perr != nil {

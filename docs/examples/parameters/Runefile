@@ -1,5 +1,4 @@
 # Parameters: defaulted, required, and variadic — interpolated with {{ }}.
-set default := "greet"
 
 # Defaulted parameter (rune greet  /  rune greet Ada).
 greet name="world":
