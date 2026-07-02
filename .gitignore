@@ -21,8 +21,13 @@ coverage.txt
 
 # ai
 .claude/*
+# …but the release-guru skill is a committed, reviewable artifact. Re-including a
+# nested path requires un-ignoring each parent dir first (git can't descend into an
+# excluded dir), then re-ignoring the other (symlinked) skills.
+!.claude/skills
+.claude/skills/*
 !.claude/skills/release-guru
-!.claude/skills/release-guru/*
+!.claude/skills/release-guru/**
 .agents/*
 .specify/*
 .help
