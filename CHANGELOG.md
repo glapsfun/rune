@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.2.0] - 2026-07-02
+
+### Added
+- Interactive task picker (--choose) on Bubble Tea (#9) (#9)
+- Styled output, friendlier --help, and version/task overview for bare `rune` (#10) (#10)
+
+### Documentation
+- Sync FR-002/FR-005 with shipped versioning behavior
+- Modern, example-rich docs & README status badges (#11) (#11)
+
+### Fixed
+- Harden lexer/parser against malformed input; wire up fuzz + golden CI gates (#8) (#8)
+
 ## [0.1.0] - 2026-06-10
 
 ### Added
