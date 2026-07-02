@@ -22,6 +22,7 @@ coverage.txt
 # ai
 .claude/*
 !.claude/skills/release-guru
+!.claude/skills/release-guru/*
 .agents/*
 .specify/*
 .help
