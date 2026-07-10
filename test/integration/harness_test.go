@@ -33,7 +33,10 @@ func TestMain(m *testing.M) {
 	if runtime.GOOS == "windows" {
 		bin += ".exe" // go build writes -o verbatim; Windows needs the extension to exec.
 	}
-	build := exec.Command("go", "build", "-o", bin, "./cmd/rune")
+	// Build with -tags runetest so RUNE_TEST_VERSION can inject the installed
+	// version for the minimum_version gate; production builds omit this tag and
+	// never honor the env var.
+	build := exec.Command("go", "build", "-tags", "runetest", "-o", bin, "./cmd/rune")
 	build.Dir = root
 	build.Env = append(os.Environ(), "CGO_ENABLED=0")
 	if out, err := build.CombinedOutput(); err != nil {

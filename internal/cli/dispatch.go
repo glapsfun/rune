@@ -36,6 +36,14 @@ type Options struct {
 	Fmt        bool
 	ClearCache bool
 
+	// IgnoreVersion bypasses the Runefile's minimum_version gate for this run
+	// (the CLI-only --ignore-version flag). It is never settable from a Runefile.
+	IgnoreVersion bool
+	// MCPAllowIgnoreVersion lets the MCP/agent server run despite an unmet
+	// minimum_version. It is an operator-only opt (a `rune serve` flag), disabled
+	// by default, and never settable from a Runefile.
+	MCPAllowIgnoreVersion bool
+
 	// Resolved per-stream color decisions (see cmd/rune): ColorStdout gates
 	// --list and --help (which write to stdout); ColorStderr gates Rune's own
 	// messages — status/echo/cache lines and diagnostics — on stderr.

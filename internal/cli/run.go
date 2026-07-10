@@ -57,6 +57,13 @@ func execute(opts Options, runefile string, args []string) error {
 	file, diags := parser.Parse(runefile, string(source))
 	srcProvider := newSourceProvider(runefile, source)
 
+	// Enforce the root Runefile's minimum_version before imports/analysis/execution
+	// (FR-004). Reading the root file's own settings pre-compose is what keeps a
+	// child/imported file from imposing or relaxing the requirement (FR-012).
+	if err := enforceMinimumVersion(opts, file, srcProvider, opts.IgnoreVersion); err != nil {
+		return err
+	}
+
 	// Splice imports and namespace submodules before analysis.
 	cdiags := config.Compose(file, srcProvider)
 	diags = append(diags, cdiags...)

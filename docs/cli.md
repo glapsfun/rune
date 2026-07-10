@@ -58,6 +58,7 @@ A clean exit `0` means the Runefile is valid; exit `3` means a static error (wit
 | `--quiet` | Suppress command echo. |
 | `--fmt` | Rewrite the Runefile in canonical formatting. |
 | `--clear-cache` | Remove the project-local `.rune/cache` directory. |
+| `--ignore-version` | Bypass the Runefile's `minimum_version` check for this run, printing a warning. Cannot be enabled from a Runefile. |
 | `--color <when>` | When to colorize output: `auto` (default; color only on a terminal), `always` (force color, even through a pipe), or `never`. Under `auto`, `NO_COLOR` disables color; an explicit `always`/`never` takes precedence over `NO_COLOR`. |
 | `--version` | Print version and commit. |
 | `-h`, `--help` | Show help. |
@@ -103,7 +104,7 @@ any command.
 |---------|-------------|
 | `rune serve [--http] [--addr <addr>] [--token-file <file>]` | Start the MCP server. Stdio by default; `--http` enables the Streamable HTTP transport (which requires `--token-file`), and `--addr` sets the bind address. |
 | `rune mcp` | Alias for `rune serve` over **stdio** (for local agents/IDEs). |
-| `rune version` | Print the version and build commit (identical to `--version`). |
+| `rune version` | Print the version (first line identical to `--version`) plus the Runefile language version. Add `--check` to report whether the installed binary satisfies the Runefile's `minimum_version`, and `--json` for machine-readable output. |
 | `rune completion <bash\|zsh\|fish\|powershell>` | Print a shell-completion script for the given shell (a shell argument is required; an unsupported shell is an error). Completions include your Runefile's task names; run `rune completion --help` for install steps. |
 | `rune help [command]` | Help about any command. |
 

@@ -1,0 +1,8 @@
+Runefile:1:24: error: this Runefile requires Rune >= 0.8.0
+1 | set minimum_version := "0.8.0"
+  |                        ^^^^^^^
+    installed version: 0.7.2
+    required version:  0.8.0
+    upgrade:           https://github.com/glapsfun/rune/releases
+
+nothing was executed

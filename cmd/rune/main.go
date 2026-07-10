@@ -32,10 +32,14 @@ func run(args []string) int {
 
 	var opts cli.Options
 
-	root := newRootCmd(&opts, version, commit)
+	// installedVersion is the build-stamped version in production; only a binary
+	// built with `-tags runetest` lets integration tests override it via
+	// RUNE_TEST_VERSION (see versionhook*.go). A released binary's version is
+	// authoritative and cannot be spoofed at runtime.
+	root := newRootCmd(&opts, installedVersion(version), commit)
 	// Built-in subcommands. Registering any subcommand also makes Cobra add its
 	// `help` command automatically; `completion` is our own (newCompletionCmd).
-	root.AddCommand(newServeCmd(&opts), newVersionCmd(), newCompletionCmd())
+	root.AddCommand(newServeCmd(&opts), newVersionCmd(&opts), newCompletionCmd())
 	applyHelp(root)
 
 	// Rune's own messages go to stderr so stdout stays clean for piping.

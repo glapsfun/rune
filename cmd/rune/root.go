@@ -92,6 +92,7 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 	f.BoolVar(&opts.Quiet, "quiet", false, "suppress command echo")
 	f.BoolVar(&opts.Fmt, "fmt", false, "rewrite the Runefile in canonical formatting")
 	f.BoolVar(&opts.ClearCache, "clear-cache", false, "remove the project-local .rune/cache directory")
+	f.BoolVar(&opts.IgnoreVersion, "ignore-version", false, "bypass the Runefile's minimum_version check (prints a warning)")
 	f.StringVar(&colorFlag, "color", "auto", "when to colorize output: auto|always|never")
 
 	return root

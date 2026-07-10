@@ -11,11 +11,9 @@ const CurrentVersion = "1"
 
 // RuneVersion returns the version pragma declared by a file, or "" if none.
 func RuneVersion(f *ast.File) string {
-	for _, s := range f.Settings {
-		if s.Name == "rune_version" {
-			if lit, ok := s.Value.(*ast.StringLit); ok {
-				return lit.Value
-			}
+	if s := findSetting(f, "rune_version"); s != nil {
+		if lit, ok := s.Value.(*ast.StringLit); ok {
+			return lit.Value
 		}
 	}
 	return ""

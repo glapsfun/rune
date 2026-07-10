@@ -85,3 +85,22 @@ set rune_version := "1"
 
 The default interpretation never changes under a user without such a pragma
 (Constitution Governance / FR-033).
+
+## Minimum Rune version
+
+A project can pin the minimum Rune **binary** release it requires — distinct from
+`rune_version`, which pins the Runefile *language* version:
+
+```rune
+set minimum_version := "0.8.0"
+```
+
+The value must be a static string literal holding a single valid semantic version
+(`MAJOR.MINOR.PATCH`, optionally with a `-prerelease`/`+build` suffix); it means
+"requires Rune ≥ this version". Before imports are spliced, before analysis, and
+before any task runs, Rune compares the installed version (SemVer 2.0.0
+precedence) and refuses an older binary with an actionable diagnostic, executing
+nothing. Only the **root** Runefile's `minimum_version` is effective — an imported
+file cannot impose or relax it. A non-static or non-semver value is a static
+error. Ranges are not supported. Use `rune --ignore-version` to bypass the check
+(it prints a warning) and `rune version --check` to report compatibility.
