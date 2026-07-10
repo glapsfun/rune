@@ -46,8 +46,8 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 - [X] T005 [P] Extend `diag.Diagnostic` with `Code string` and `Related []RelatedLocation`, and add the `RelatedLocation` type, in `internal/diag/diagnostic.go` (keep existing constructors working; add code-carrying helpers)
 - [X] T006 [P] Add the RUNE#### code constants catalog per `contracts/diagnostic-codes.md` in `internal/diag/codes.go`
-- [ ] T007 Attach stable codes at every emit site (and `Related` for cycles) in `internal/parser/`, `internal/analyzer/`, `internal/config/`; regenerate affected golden files deliberately
-- [ ] T008 [P] Golden diagnostic tests: one fixture per RUNE#### code asserting `{Code, Severity, Range}` (and `Related` for RUNE2003/RUNE3002) in `internal/analyzer/` / `internal/parser/` testdata
+- [X] T007 Attach stable codes at every emit site (and `Related` for cycles) in `internal/parser/`, `internal/analyzer/`, `internal/config/`; regenerate affected golden files deliberately
+- [X] T008 [P] Golden diagnostic tests: one fixture per RUNE#### code asserting `{Code, Severity, Range}` (and `Related` for RUNE2003/RUNE3002) in `internal/analyzer/` / `internal/parser/` testdata
 
 ### Source overlay & import composition (FR-003)
 
@@ -69,7 +69,7 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 - [ ] T016 [P] Build the single language registry (`Builtin{Name,Kind,Signature,Documentation,IntroducedIn}` for builtins, settings, attributes, executors) in `internal/language/builtin.go`
 - [ ] T017 Refactor analyzer validation for invalid setting/attribute/executor (RUNE2007/2008/2009) to consult the registry so completion and validation agree, in `internal/analyzer/`
-- [ ] T017a Implement the undocumented-public-task check emitting RUNE2010 (warning severity, non-gating per FR-008a) for public tasks with no doc comment, in `internal/analyzer/`, with a golden test
+- [X] T017a Implement the undocumented-public-task check emitting RUNE2010 (warning severity, non-gating per FR-008a) for public tasks with no doc comment, in `internal/analyzer/`, with a golden test
 - [ ] T018 [P] `Symbol` + `SymbolKind` + `ScopeTree`/scope lookup in `internal/language/symbol.go` and `internal/language/scope.go`
 - [ ] T019 `Index` (`ByName`/`ByQualified`/`ByDocument`) built from the composed `*ast.File` — cross-file attribution via `Sp.File`, namespaced (`ns::task`) tasks, private tagging — in `internal/language/index.go`, with unit test
 

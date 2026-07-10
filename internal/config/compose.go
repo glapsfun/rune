@@ -36,7 +36,7 @@ func spliceImports(f *ast.File, seen map[string]bool, diags *diag.List) {
 			if im.Optional {
 				continue
 			}
-			diags.Errorf(im.Sp, "cannot import %q: %v", im.Path, err)
+			diags.Codef(diag.CodeUnresolvedImport, im.Sp, "cannot import %q: %v", im.Path, err)
 			continue
 		}
 		seen[path] = true
@@ -60,7 +60,7 @@ func spliceInto(f, sub *ast.File, diags *diag.List) {
 
 	for _, t := range sub.Tasks {
 		if existingTasks[t.Name] {
-			diags.Errorf(t.Sp, "import collision: task %q is already defined", t.Name)
+			diags.Codef(diag.CodeDuplicateNamespace, t.Sp, "import collision: task %q is already defined", t.Name)
 			continue
 		}
 		existingTasks[t.Name] = true
@@ -68,7 +68,7 @@ func spliceInto(f, sub *ast.File, diags *diag.List) {
 	}
 	for _, a := range sub.Assignments {
 		if existingVars[a.Name] {
-			diags.Errorf(a.Sp, "import collision: variable %q is already defined", a.Name)
+			diags.Codef(diag.CodeDuplicateNamespace, a.Sp, "import collision: variable %q is already defined", a.Name)
 			continue
 		}
 		existingVars[a.Name] = true
@@ -92,12 +92,12 @@ func loadMods(f *ast.File, seen map[string]bool, diags *diag.List) {
 	for _, m := range f.Mods {
 		path := resolveModPath(base, m)
 		if path == "" {
-			diags.Errorf(m.Sp, "cannot find module %q", m.Name)
+			diags.Codef(diag.CodeUnresolvedImport, m.Sp, "cannot find module %q", m.Name)
 			continue
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			diags.Errorf(m.Sp, "cannot load module %q: %v", m.Name, err)
+			diags.Codef(diag.CodeUnresolvedImport, m.Sp, "cannot load module %q: %v", m.Name, err)
 			continue
 		}
 		sub, sdiags := parser.Parse(path, string(data))
@@ -131,7 +131,7 @@ func namespaceInto(f, sub *ast.File, ns string, diags *diag.List) {
 		rewrite(t.PostHooks)
 		t.Name = prefix + t.Name
 		if existing[t.Name] {
-			diags.Errorf(t.Sp, "module collision: task %q already defined", t.Name)
+			diags.Codef(diag.CodeDuplicateNamespace, t.Sp, "module collision: task %q already defined", t.Name)
 			continue
 		}
 		existing[t.Name] = true

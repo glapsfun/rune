@@ -72,6 +72,11 @@ func (l *List) Errorf(span token.Span, format string, args ...any) {
 	l.Add(Diagnostic{Severity: Error, Span: span, Message: sprintf(format, args...)})
 }
 
+// Codef appends an error diagnostic carrying a stable code (spec FR-010).
+func (l *List) Codef(code string, span token.Span, format string, args ...any) {
+	l.Add(Diagnostic{Severity: Error, Span: span, Message: sprintf(format, args...), Code: code})
+}
+
 // HasErrors reports whether any diagnostic is an error.
 func (l List) HasErrors() bool {
 	for _, d := range l {

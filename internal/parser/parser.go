@@ -29,7 +29,7 @@ func ParseExprFragment(file, src string) (ast.Expr, diag.List) {
 	p := &parser{file: file, toks: toks, diags: diags}
 	expr := p.parseExpr()
 	if p.curKind() != token.NEWLINE && p.curKind() != token.EOF {
-		p.errorf(p.cur().Span, "unexpected %s after expression", describe(p.cur()))
+		p.codef(diag.CodeUnexpectedToken, p.cur().Span, "unexpected %s after expression", describe(p.cur()))
 	}
 	return expr, p.diags
 }
@@ -73,12 +73,17 @@ func (p *parser) expect(k token.Kind, context string) (token.Token, bool) {
 	if p.curKind() == k {
 		return p.advance(), true
 	}
-	p.errorf(p.cur().Span, "expected %s%s, found %s", k, ctx(context), describe(p.cur()))
+	p.codef(diag.CodeUnexpectedToken, p.cur().Span, "expected %s%s, found %s", k, ctx(context), describe(p.cur()))
 	return p.cur(), false
 }
 
 func (p *parser) errorf(span token.Span, format string, args ...any) {
 	p.diags.Errorf(span, format, args...)
+}
+
+// codef emits a parse error carrying a stable diagnostic code (spec FR-010).
+func (p *parser) codef(code string, span token.Span, format string, args ...any) {
+	p.diags.Codef(code, span, format, args...)
 }
 
 func ctx(c string) string {
@@ -191,7 +196,7 @@ func (p *parser) parseItem(f *ast.File, doc string) {
 			}
 		}
 	default:
-		p.errorf(p.cur().Span, "unexpected %s at top level", describe(p.cur()))
+		p.codef(diag.CodeUnexpectedToken, p.cur().Span, "unexpected %s at top level", describe(p.cur()))
 		p.recoverToNewline()
 	}
 }

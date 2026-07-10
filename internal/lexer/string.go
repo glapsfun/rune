@@ -3,6 +3,7 @@ package lexer
 import (
 	"strings"
 
+	"github.com/rune-task-runner/rune/internal/diag"
 	"github.com/rune-task-runner/rune/internal/token"
 )
 
@@ -24,7 +25,7 @@ func (l *lexer) lexString() {
 	for {
 		c := l.at(l.pos)
 		if c == 0 || c == '\n' {
-			l.diags.Errorf(token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated string literal")
+			l.diags.Codef(diag.CodeUnterminatedStr, token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated string literal")
 			l.emit(token.STRING, b.String(), start, l.pin())
 			return
 		}
@@ -39,7 +40,7 @@ func (l *lexer) lexString() {
 			// string is unterminated. Advancing again here would read past the
 			// end of src (advance() is not bounds-checked).
 			if l.pos >= len(l.src) {
-				l.diags.Errorf(token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated string literal")
+				l.diags.Codef(diag.CodeUnterminatedStr, token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated string literal")
 				l.emit(token.STRING, b.String(), start, l.pin())
 				return
 			}
@@ -61,7 +62,7 @@ func (l *lexer) lexTripleString(start token.Position, quote byte) {
 	for {
 		c := l.at(l.pos)
 		if c == 0 {
-			l.diags.Errorf(token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated triple-quoted string")
+			l.diags.Codef(diag.CodeUnterminatedStr, token.Span{File: l.file, Start: start, End: l.pin()}, "unterminated triple-quoted string")
 			l.emit(token.STRING, dedent(l.src[begin:l.pos]), start, l.pin())
 			return
 		}

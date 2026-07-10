@@ -139,7 +139,7 @@ func (l *lexer) lexLine() {
 		l.bodyTab = hasTab
 		l.bodySpace = hasSpace
 		if hasTab && hasSpace {
-			l.diags.Errorf(l.wsSpan(width), "inconsistent indentation: mixed tabs and spaces")
+			l.diags.Codef(diag.CodeInvalidIndent, l.wsSpan(width), "inconsistent indentation: mixed tabs and spaces")
 		}
 		l.flushPendingBlanks()
 		l.lexBodyLine(width, raw, hasTab, hasSpace)
@@ -188,13 +188,13 @@ func (l *lexer) flushPendingBlanks() {
 // the body's base indentation, peels leading @/- sigils, and emits BODYTEXT.
 func (l *lexer) lexBodyLine(width int, raw string, hasTab, hasSpace bool) {
 	if hasTab && hasSpace {
-		l.diags.Errorf(l.wsSpan(width), "inconsistent indentation: mixed tabs and spaces")
+		l.diags.Codef(diag.CodeInvalidIndent, l.wsSpan(width), "inconsistent indentation: mixed tabs and spaces")
 	} else if (hasTab && l.bodySpace && !l.bodyTab) || (hasSpace && l.bodyTab && !l.bodySpace) {
-		l.diags.Errorf(l.wsSpan(width), "inconsistent indentation: body uses %s but this line uses %s",
+		l.diags.Codef(diag.CodeInvalidIndent, l.wsSpan(width), "inconsistent indentation: body uses %s but this line uses %s",
 			indentKind(l.bodyTab, l.bodySpace), indentKind(hasTab, hasSpace))
 	}
 	if width < l.bodyWidth {
-		l.diags.Errorf(l.wsSpan(width), "inconsistent indentation in task body")
+		l.diags.Codef(diag.CodeInvalidIndent, l.wsSpan(width), "inconsistent indentation in task body")
 	}
 
 	// Reconstruct text with the body's base indentation stripped (extra
@@ -432,7 +432,7 @@ func (l *lexer) illegal(start token.Position) {
 	ch := l.src[l.pos : l.pos+1]
 	l.advance()
 	l.emit(token.ILLEGAL, ch, start, l.pin())
-	l.diags.Errorf(token.Span{File: l.file, Start: start, End: l.pin()}, "unexpected character %q", ch)
+	l.diags.Codef(diag.CodeUnexpectedToken, token.Span{File: l.file, Start: start, End: l.pin()}, "unexpected character %q", ch)
 }
 
 func isNameStart(c byte) bool {
