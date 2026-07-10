@@ -119,6 +119,23 @@ The default interpretation never changes under you. Opt into versioned semantics
 set rune_version := "1"
 ```
 
+### Minimum Rune version
+
+Pin the minimum Rune **binary** release your project needs (distinct from
+`rune_version`, which is the Runefile *language* version):
+
+```rune
+set minimum_version := "0.8.0"
+```
+
+The value must be a static semantic version and means "requires Rune ≥ this
+version". Rune checks it before running anything and refuses an older binary with
+a clear diagnostic (required vs installed + an upgrade link), executing nothing.
+Only the root Runefile's requirement is effective — imported files cannot change
+it. Pass `rune --ignore-version` to bypass the check (a warning is printed), and
+`rune version --check` (add `--json` for machine-readable output) to report
+whether the installed binary is compatible.
+
 ## Expressions
 
 The expression sublanguage supports string literals, concatenation, path-join,

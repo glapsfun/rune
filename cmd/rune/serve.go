@@ -46,6 +46,7 @@ The 'mcp' alias is shorthand for stdio serving.`,
 	f.StringVar(&addr, "addr", "", "HTTP listen address (with --http)")
 	f.StringVar(&tokenFile, "token-file", "", "bearer-token file for HTTP auth (with --http)")
 	f.BoolVar(&mcpFlag, "mcp", false, "accepted for clarity; MCP is the only protocol")
+	f.BoolVar(&opts.MCPAllowIgnoreVersion, "ignore-version", false, "serve even if the Runefile's minimum_version is unmet (operator opt-in)")
 
 	return cmd
 }

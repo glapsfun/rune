@@ -30,8 +30,10 @@ type loadedModule struct {
 
 // loadModule resolves a Runefile statically (parse → compose → analyze) and
 // builds its scope, settings, and environment. Diagnostics are rendered and a
-// ValidationError returned on failure (exit 3).
-func loadModule(opts Options, runefile string) (*loadedModule, error) {
+// ValidationError returned on failure (exit 3). allowIgnoreVersion downgrades an
+// unmet minimum_version to a warning: callers pass the CLI --ignore-version flag
+// on interactive paths and the operator-only opt on the MCP/agent path.
+func loadModule(opts Options, runefile string, allowIgnoreVersion bool) (*loadedModule, error) {
 	root := filepath.Dir(runefile)
 	source, err := os.ReadFile(runefile)
 	if err != nil {
@@ -39,6 +41,10 @@ func loadModule(opts Options, runefile string) (*loadedModule, error) {
 	}
 	file, diags := parser.Parse(runefile, string(source))
 	src := newSourceProvider(runefile, source)
+	// Enforce minimum_version before imports/analysis on the MCP/agent path too.
+	if err := enforceMinimumVersion(opts, file, src, allowIgnoreVersion); err != nil {
+		return nil, err
+	}
 	diags = append(diags, config.Compose(file, src)...)
 	if diags.HasErrors() {
 		renderDiags(opts, diags, src)
@@ -72,7 +78,9 @@ func loadModule(opts Options, runefile string) (*loadedModule, error) {
 
 // newMCPAdapter builds an mcpserver.Engine from a resolved Runefile.
 func newMCPAdapter(opts Options, runefile string) (*mcpAdapter, error) {
-	mod, err := loadModule(opts, runefile)
+	// On the MCP/agent path, ignoring an unmet minimum_version is an operator-only
+	// opt (disabled by default) — never the CLI --ignore-version flag.
+	mod, err := loadModule(opts, runefile, opts.MCPAllowIgnoreVersion)
 	if err != nil {
 		return nil, err
 	}

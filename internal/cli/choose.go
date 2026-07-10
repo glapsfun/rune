@@ -19,7 +19,9 @@ import (
 // error rather than a broken UI. On selection the picker tears itself down and
 // the task runs through the same execution path as a direct `rune <task>`.
 func chooseAndRun(opts Options, runefile string, args []string) error {
-	mod, err := loadModule(opts, runefile)
+	// --choose is an interactive CLI path, so it honors the CLI --ignore-version
+	// flag (execute() applies the same flag on the run that follows selection).
+	mod, err := loadModule(opts, runefile, opts.IgnoreVersion)
 	if err != nil {
 		return err
 	}

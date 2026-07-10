@@ -28,7 +28,7 @@ func writeRunefile(t *testing.T, content string) (dir, path string) {
 // built-in command (FR-018), since selection runs it as a task.
 func TestPickerItems_FiltersPrivateAndKeepsBuiltinCollision(t *testing.T) {
 	_, path := writeRunefile(t, sampleRunefile)
-	mod, err := loadModule(Options{Stderr: &bytes.Buffer{}}, path)
+	mod, err := loadModule(Options{Stderr: &bytes.Buffer{}}, path, false)
 	if err != nil {
 		t.Fatalf("loadModule: %v", err)
 	}

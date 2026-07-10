@@ -45,8 +45,14 @@ func TestUS1Version_ParityWithFlag(t *testing.T) {
 	if cmd.code != 0 || flag.code != 0 {
 		t.Fatalf("version exit=%d, --version exit=%d; want 0 each", cmd.code, flag.code)
 	}
-	if cmd.stdout != flag.stdout {
-		t.Errorf("`rune version` (%q) != `rune --version` (%q)", cmd.stdout, flag.stdout)
+	// `rune version` now appends a "runefile language N" line, so its FIRST line
+	// (the version string) must still equal `rune --version`.
+	firstLine := strings.SplitN(cmd.stdout, "\n", 2)[0] + "\n"
+	if firstLine != flag.stdout {
+		t.Errorf("`rune version` first line (%q) != `rune --version` (%q)", firstLine, flag.stdout)
+	}
+	if !strings.Contains(cmd.stdout, "runefile language") {
+		t.Errorf("`rune version` missing language line: %q", cmd.stdout)
 	}
 }
 
