@@ -39,7 +39,7 @@ func run(args []string) int {
 	root := newRootCmd(&opts, installedVersion(version), commit)
 	// Built-in subcommands. Registering any subcommand also makes Cobra add its
 	// `help` command automatically; `completion` is our own (newCompletionCmd).
-	root.AddCommand(newServeCmd(&opts), newVersionCmd(&opts), newCompletionCmd())
+	root.AddCommand(newServeCmd(&opts), newVersionCmd(&opts), newCompletionCmd(), newAnalyzeCmd(&opts), newLSPCmd(&opts))
 	applyHelp(root)
 
 	// Rune's own messages go to stderr so stdout stays clean for piping.

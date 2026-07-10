@@ -1,0 +1,9 @@
+output := "dist"
+
+# Build the application.
+build target="debug":
+    go build -tags {{target}} -o {{output}}/app ./...
+
+# Deploy the application.
+deploy env: missing
+    ./deploy.sh {{env}}
