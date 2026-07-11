@@ -51,9 +51,9 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Source overlay & import composition (FR-003)
 
-- [ ] T009 [P] Define `SourceStore` interface + `DiskSourceStore` + `OverlaySourceStore` in `internal/analysis/source.go`
-- [ ] T010 [P] `OpenDocument` type + incremental edit application in `internal/analysis/document.go`, with unit test + fuzz target `FuzzApplyEdits` for edit application
-- [ ] T011 Refactor `config.Compose`/`spliceImports`/`loadMods` to read imports/mods through an injected reader (adapting `SourceStore`) instead of `os.ReadFile`, in `internal/config/compose.go`; update CLI (`internal/cli/run.go`, `internal/cli/serve.go`) to pass a disk-backed store (behavior preserved)
+- [X] T009 [P] Define `SourceStore` interface + `DiskSourceStore` + `OverlaySourceStore` in `internal/analysis/source.go`
+- [X] T010 [P] `OpenDocument` type + incremental edit application in `internal/analysis/document.go`, with unit test + fuzz target `FuzzApplyEdits` for edit application
+- [X] T011 Refactor `config.Compose`/`spliceImports`/`loadMods` to read imports/mods through an injected reader (adapting `SourceStore`) instead of `os.ReadFile`, in `internal/config/compose.go`; update CLI (`internal/cli/run.go`, `internal/cli/serve.go`) to pass a disk-backed store (behavior preserved)
 
 ### Formatter extraction (FR-020)
 
