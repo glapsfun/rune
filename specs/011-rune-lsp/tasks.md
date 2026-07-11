@@ -67,11 +67,11 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Language registry & symbol index (FR-026/027, R6/R9)
 
-- [ ] T016 [P] Build the single language registry (`Builtin{Name,Kind,Signature,Documentation,IntroducedIn}` for builtins, settings, attributes, executors) in `internal/language/builtin.go`
+- [X] T016 [P] Build the single language registry (`Builtin{Name,Kind,Signature,Documentation,IntroducedIn}` for builtins, settings, attributes, executors) in `internal/language/builtin.go`
 - [ ] T017 Refactor analyzer validation for invalid setting/attribute/executor (RUNE2007/2008/2009) to consult the registry so completion and validation agree, in `internal/analyzer/`
 - [X] T017a Implement the undocumented-public-task check emitting RUNE2010 (warning severity, non-gating per FR-008a) for public tasks with no doc comment, in `internal/analyzer/`, with a golden test
-- [ ] T018 [P] `Symbol` + `SymbolKind` + `ScopeTree`/scope lookup in `internal/language/symbol.go` and `internal/language/scope.go`
-- [ ] T019 `Index` (`ByName`/`ByQualified`/`ByDocument`) built from the composed `*ast.File` — cross-file attribution via `Sp.File`, namespaced (`ns::task`) tasks, private tagging — in `internal/language/index.go`, with unit test
+- [X] T018 [P] `Symbol` + `SymbolKind` + `ScopeTree`/scope lookup in `internal/language/symbol.go` and `internal/language/scope.go`
+- [X] T019 `Index` (`ByName`/`ByQualified`/`ByDocument`) built from the composed `*ast.File` — cross-file attribution via `Sp.File`, namespaced (`ns::task`) tasks, private tagging — in `internal/language/index.go`, with unit test
 
 ### Analysis service (FR-002)
 
