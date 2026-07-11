@@ -75,11 +75,11 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Analysis service (FR-002)
 
-- [ ] T020 [P] `Snapshot` type in `internal/analysis/snapshot.go`; `AnalyzeRequest` + service options in `internal/analysis/options.go`
-- [ ] T021 `Workspace` + root detection order (FR-021) + `ImportGraph` (forward/reverse edges) in `internal/analysis/workspace.go`, with unit test for detection order
-- [ ] T022 `Service.Analyze(ctx, req) → *Snapshot` orchestrating parse → compose(via store) → analyze → build index → build import graph, in `internal/analysis/service.go`, with unit test
-- [ ] T023 [P] Safety guarantee (FR-028/SC-005): structural test asserting `internal/analysis`, `internal/language`, `internal/lsp` import no `internal/runtime/*`, `os/exec`, or net packages, plus a behavioral no-side-effects test, in `internal/analysis/safety_test.go`
-- [ ] T024 [P] Implement real benchmark bodies for `BenchmarkParseRunefile`, `BenchmarkAnalyzeRunefile`, `BenchmarkBuildSymbolIndex` (T004)
+- [X] T020 [P] `Snapshot` type in `internal/analysis/snapshot.go`; `AnalyzeRequest` + service options in `internal/analysis/options.go`
+- [X] T021 `Workspace` + root detection order (FR-021) + `ImportGraph` (forward/reverse edges) in `internal/analysis/workspace.go`, with unit test for detection order
+- [X] T022 `Service.Analyze(ctx, req) → *Snapshot` orchestrating parse → compose(via store) → analyze → build index → build import graph, in `internal/analysis/service.go`, with unit test
+- [X] T023 [P] Safety guarantee (FR-028/SC-005): structural test asserting `internal/analysis`, `internal/language`, `internal/lsp` import no `internal/runtime/*`, `os/exec`, or net packages, plus a behavioral no-side-effects test, in `internal/analysis/safety_test.go`
+- [X] T024 [P] Implement real benchmark bodies for `BenchmarkParseRunefile`, `BenchmarkAnalyzeRunefile`, `BenchmarkBuildSymbolIndex` (T004)
 
 **Checkpoint**: `analysis.Service` produces complete snapshots; diagnostics match the execution path. All user stories can now begin.
 

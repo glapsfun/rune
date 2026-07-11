@@ -51,6 +51,14 @@ var builtinFunctions = []Builtin{
 	{Name: "trim_end", Kind: BuiltinFunction, Signature: "trim_end(s) -> string", Documentation: "s with trailing whitespace removed."},
 	{Name: "replace", Kind: BuiltinFunction, Signature: "replace(s, from, to) -> string", Documentation: "s with each occurrence of from replaced by to."},
 	{Name: "replace_regex", Kind: BuiltinFunction, Signature: "replace_regex(s, pattern, repl) -> string", Documentation: "s with regex pattern matches replaced by repl."},
+	{Name: "quote", Kind: BuiltinFunction, Signature: "quote(s) -> string", Documentation: "s quoted for safe use as a single shell argument."},
+	{Name: "require", Kind: BuiltinFunction, Signature: "require(name) -> string", Documentation: "The PATH location of executable name; errors if it is not found."},
+	{Name: "which", Kind: BuiltinFunction, Signature: "which(name) -> string", Documentation: "The PATH location of executable name, or an empty string when not found."},
+	{Name: "datetime", Kind: BuiltinFunction, Signature: "datetime(format?) -> string", Documentation: "The current date/time, optionally formatted by the given layout."},
+	{Name: "uuid", Kind: BuiltinFunction, Signature: "uuid() -> string", Documentation: "A newly generated UUID."},
+	{Name: "error", Kind: BuiltinFunction, Signature: "error(message) -> string", Documentation: "Abort evaluation with the given error message."},
+	{Name: "sha256", Kind: BuiltinFunction, Signature: "sha256(s) -> string", Documentation: "The hex-encoded SHA-256 hash of s."},
+	{Name: "sha256_file", Kind: BuiltinFunction, Signature: "sha256_file(path) -> string", Documentation: "The hex-encoded SHA-256 hash of the file at path."},
 }
 
 // builtinSettings are the valid `set NAME` settings (mirrors config/settings.go).

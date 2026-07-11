@@ -1,10 +1,39 @@
 package language
 
-import "testing"
+import (
+	"testing"
 
-// Benchmarks are stubbed until the index/completion land; bodies filled in
-// T024/T058.
+	"github.com/rune-task-runner/rune/internal/config"
+	"github.com/rune-task-runner/rune/internal/parser"
+)
 
-func BenchmarkBuildSymbolIndex(b *testing.B) { b.Skip("pending T024") }
+const sampleRunefile = `output := "dist"
 
-func BenchmarkCompletion(b *testing.B) { b.Skip("pending T058") }
+# Build.
+build target="debug":
+    @echo {{target}} {{output}}
+
+# Test.
+test: build
+    @echo test
+
+# Deploy.
+deploy env: build test
+    @echo {{env}}
+`
+
+func BenchmarkBuildSymbolIndex(b *testing.B) {
+	f, diags := parser.Parse("Runefile", sampleRunefile)
+	if diags.HasErrors() {
+		b.Fatalf("parse: %v", diags)
+	}
+	config.Compose(f, nil)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = BuildIndex(f)
+	}
+}
+
+func BenchmarkCompletion(b *testing.B) {
+	b.Skip("pending completion engine (T042/T043)")
+}

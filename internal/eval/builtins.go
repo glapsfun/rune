@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -60,6 +61,19 @@ func (e *Evaluator) callBuiltin(fc *ast.FuncCall) (string, *Error) {
 func IsBuiltin(name string) bool {
 	_, ok := builtins()[name]
 	return ok
+}
+
+// BuiltinNames returns the sorted names of every built-in function. It is the
+// authoritative set the language registry (internal/language) verifies itself
+// against so completion/hover/validation never drift from evaluation (FR-027).
+func BuiltinNames() []string {
+	m := builtins()
+	names := make([]string, 0, len(m))
+	for name := range m {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 type builtinFn func(e *Evaluator, args []string, span token.Span) (string, *Error)

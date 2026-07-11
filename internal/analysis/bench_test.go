@@ -1,13 +1,53 @@
 package analysis
 
-import "testing"
+import (
+	"context"
+	"testing"
 
-// Benchmarks are stubbed until the analysis service lands (T022); bodies are
-// filled in T024/T058. They exist now so the perf targets in the plan (SC-010)
-// have named homes and CI can discover them.
+	"github.com/rune-task-runner/rune/internal/parser"
+)
 
-func BenchmarkParseRunefile(b *testing.B) { b.Skip("pending T024") }
+// sampleRunefile is a representative small Runefile used by the benchmarks.
+const sampleRunefile = `output := "dist"
+target := "debug"
 
-func BenchmarkAnalyzeRunefile(b *testing.B) { b.Skip("pending T024") }
+# Build the application.
+build:
+    go build -tags {{target}} -o {{output}}/app ./...
 
-func BenchmarkImportedFileInvalidation(b *testing.B) { b.Skip("pending T058") }
+# Run the tests.
+test: build
+    go test ./...
+
+# Deploy the application.
+deploy env: build test
+    ./deploy.sh {{env}}
+`
+
+func BenchmarkParseRunefile(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, _ = parser.Parse("Runefile", sampleRunefile)
+	}
+}
+
+func BenchmarkAnalyzeRunefile(b *testing.B) {
+	svc := NewService(DiskSourceStore{})
+	ctx := context.Background()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if _, err := svc.Analyze(ctx, AnalyzeRequest{URI: "Runefile", Content: sampleRunefile, Version: 1}); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkImportedFileInvalidation(b *testing.B) {
+	g := NewImportGraph()
+	g.AddEdge("root", "mid")
+	g.AddEdge("mid", "leaf")
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = g.TransitiveImporters("leaf")
+	}
+}
