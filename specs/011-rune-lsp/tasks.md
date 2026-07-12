@@ -211,11 +211,11 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 6 ⚠️ (write first)
 
-- [ ] T051 [P] [US6] Golden document-symbol test for a multi-category fixture, in `internal/lsp/symbols_test.go`
+- [X] T051 [P] [US6] Golden document-symbol test for a multi-category fixture, in `internal/lsp/symbols_test.go`
 
 ### Implementation for User Story 6
 
-- [ ] T052 [US6] `documentSymbol` projection from the `Index` (settings/variables/imports/tasks/modules with range + selectionRange) enabling `documentSymbolProvider`, in `internal/lsp/symbols.go`
+- [X] T052 [US6] `documentSymbol` projection from the `Index` (settings/variables/imports/tasks/modules with range + selectionRange) enabling `documentSymbolProvider`, in `internal/lsp/symbols.go`
 
 **Checkpoint**: Outline reflects file structure.
 

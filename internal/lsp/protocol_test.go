@@ -313,3 +313,53 @@ func TestCompletionOverProtocol(t *testing.T) {
 		t.Errorf("completion should suggest 'build', got %+v", items)
 	}
 }
+
+// TestDocumentSymbolOverProtocol verifies the outline is produced with grouped
+// categories and navigable ranges.
+func TestDocumentSymbolOverProtocol(t *testing.T) {
+	client, done := startServer(t)
+	defer func() { client.notify("exit", nil); <-done }()
+	const uri = "file:///tmp/proj/Runefile"
+
+	initRes := client.request("initialize", InitializeParams{})
+	var ir InitializeResult
+	_ = jsonUnmarshal(initRes.Result, &ir)
+	if !ir.Capabilities.DocumentSymbol {
+		t.Fatal("documentSymbol capability not advertised")
+	}
+	client.notify("initialized", struct{}{})
+
+	doc := "output := \"dist\"\n# Build.\nbuild:\n    @echo b\n# Test.\ntest: build\n    @echo t\n"
+	client.notify("textDocument/didOpen", DidOpenTextDocumentParams{
+		TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: doc},
+	})
+	client.readPublish()
+
+	res := client.request("textDocument/documentSymbol", DocumentSymbolParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+	})
+	var syms []DocumentSymbol
+	if err := jsonUnmarshal(res.Result, &syms); err != nil {
+		t.Fatalf("documentSymbol decode: %v (%s)", err, string(res.Result))
+	}
+	groups := map[string]DocumentSymbol{}
+	for _, g := range syms {
+		groups[g.Name] = g
+	}
+	if _, ok := groups["variables"]; !ok {
+		t.Errorf("outline missing variables group: %+v", syms)
+	}
+	tasks, ok := groups["tasks"]
+	if !ok || len(tasks.Children) != 2 {
+		t.Fatalf("tasks group = %+v, want 2 children", tasks)
+	}
+	// SelectionRange must be inside Range (LSP requirement).
+	for _, c := range tasks.Children {
+		if positionLess(c.Range.End, c.SelectionRange.Start) {
+			t.Errorf("child %q selectionRange not within range", c.Name)
+		}
+		if c.Kind != SKFunction {
+			t.Errorf("task %q kind = %d, want %d", c.Name, c.Kind, SKFunction)
+		}
+	}
+}

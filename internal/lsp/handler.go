@@ -28,6 +28,8 @@ func (s *Server) dispatch(msg *Message) (stop bool) {
 		s.hover(msg.ID, msg.Params)
 	case "textDocument/formatting":
 		s.formatting(msg.ID, msg.Params)
+	case "textDocument/documentSymbol":
+		s.documentSymbol(msg.ID, msg.Params)
 	case "$/cancelRequest":
 		// best-effort: handled implicitly by version guarding
 	default:

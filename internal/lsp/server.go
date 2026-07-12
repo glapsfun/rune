@@ -119,7 +119,7 @@ func (s *Server) initialize(id *json.RawMessage, params json.RawMessage) {
 			DefinitionProvider: true,
 			HoverProvider:      true,
 			DocumentFormatting: true,
-			// documentSymbol is advertised as its handler lands.
+			DocumentSymbol:     true,
 		},
 		ServerInfo: ServerInfo{Name: "rune", Version: s.version},
 	}

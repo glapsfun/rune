@@ -190,3 +190,29 @@ const (
 	CIKProperty = 10
 	CIKEnum     = 13
 )
+
+// --- document symbols ---
+
+type DocumentSymbolParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+// DocumentSymbol is a hierarchical outline node. Range covers the whole symbol;
+// SelectionRange (⊆ Range) is what navigation selects.
+type DocumentSymbol struct {
+	Name           string           `json:"name"`
+	Detail         string           `json:"detail,omitempty"`
+	Kind           int              `json:"kind"`
+	Range          Range            `json:"range"`
+	SelectionRange Range            `json:"selectionRange"`
+	Children       []DocumentSymbol `json:"children,omitempty"`
+}
+
+// LSP SymbolKind values (subset).
+const (
+	SKModule    = 2
+	SKNamespace = 3
+	SKProperty  = 7
+	SKFunction  = 12
+	SKVariable  = 13
+)
