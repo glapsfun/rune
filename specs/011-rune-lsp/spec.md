@@ -209,7 +209,7 @@ A developer installs a VS Code extension or follows short configuration snippets
 
 - **FR-023**: The `rune analyze` command MUST analyze the target Runefile (defaulting to `Runefile` when no path is given) together with its transitive imports, and report diagnostics from all of them (per FR-009a), without executing any task or command.
 - **FR-024**: `rune analyze` MUST print each diagnostic as `file:line:col: severity[CODE]: message` and a summary count in its default (human) mode, and MUST emit machine-readable diagnostics under `--json`.
-- **FR-025**: `rune analyze` MUST exit 0 when no error-severity diagnostics are found, 3 when error-severity diagnostics are present, and 1 on internal failure.
+- **FR-025**: `rune analyze` MUST exit 0 when no error-severity diagnostics are found and 3 when error-severity diagnostics are present. Discovery/IO failures (no Runefile, unreadable file) exit 2, aligning with Rune's global exit-code scheme (0 success · 2 usage · 3 validation). *(This supersedes the original "1 on internal failure", reconciled during implementation for CLI consistency — see `contracts/cli-analyze.md`.)*
 
 #### Symbol index and language registry
 

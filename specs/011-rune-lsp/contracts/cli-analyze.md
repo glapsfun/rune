@@ -33,17 +33,17 @@ Runefile:24:1: warning[RUNE2010]: public task "release" has no documentation
 
 ## JSON output (`--json`)
 
-A structured array (stdout) where each diagnostic includes at least: `code`, `severity`, `message`, `range` (`{start:{line,character}, end:{line,character}}`, 0-based UTF-16), `file`, and `related` (array of `{file, range, message}`). Exact schema is stabilized during implementation and covered by a golden test.
+A structured object on stdout: `{ "diagnostics": [...], "errors": N, "warnings": M }`. Each diagnostic has `file`, `code` (omitted when uncoded), `severity`, `message`, `range` (`{start:{line,column,offset}, end:{...}}` — 1-based line/column in **bytes**, plus a 0-based byte `offset`), and `related` (array of `{file, message, range}`). Byte-based positions match the human `file:line:col` output and keep the CLI free of the UTF-16 conversion, which is an LSP-only concern (the language server emits UTF-16 ranges in `publishDiagnostics`).
 
-## Exit codes (FR-025)
+## Exit codes
 
 | Code | Meaning |
 |------|---------|
 | `0` | No error-severity diagnostics (warnings allowed) |
+| `2` | Usage/discovery failure: no Runefile found, or it cannot be read |
 | `3` | At least one error-severity diagnostic |
-| `1` | Internal failure (I/O, unexpected error) — distinct from "errors found" |
 
-Warnings (e.g. `RUNE2010`) never by themselves cause exit `3`.
+`rune analyze` uses Rune's global exit-code scheme (0 success · 2 usage · 3 validation), so it behaves consistently with `rune` itself. This supersedes the feature spec's original "1 = internal failure" (FR-025), which predated checking Rune's established codes. Warnings (e.g. `RUNE2010`) never by themselves cause a non-zero exit.
 
 ## Invariants
 

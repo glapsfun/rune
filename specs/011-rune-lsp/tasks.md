@@ -124,14 +124,14 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 2 ⚠️ (write first)
 
-- [ ] T036 [P] [US2] Golden test for human output format `FILE:LINE:COL: SEVERITY[CODE]: MESSAGE` + summary counts, in `internal/cli/testdata/`
-- [ ] T037 [P] [US2] Golden test for `--json` output schema, and exit-code tests (0 clean / 3 errors / 1 internal), in `internal/cli/`
-- [ ] T038 [P] [US2] Parity test: `rune analyze` diagnostics equal the LSP snapshot diagnostics for the same fixture (SC-002), in `internal/cli/`
+- [X] T036 [P] [US2] Golden test for human output format `FILE:LINE:COL: SEVERITY[CODE]: MESSAGE` + summary counts, in `internal/cli/testdata/`
+- [X] T037 [P] [US2] Golden test for `--json` output schema, and exit-code tests (0 clean / 3 errors / 1 internal), in `internal/cli/`
+- [X] T038 [P] [US2] Parity test: `rune analyze` diagnostics equal the LSP snapshot diagnostics for the same fixture (SC-002), in `internal/cli/`
 
 ### Implementation for User Story 2
 
-- [ ] T039 [US2] Implement `rune analyze [path] [--json]` over `analysis.Service` — default `Runefile`, transitive imports (FR-009a), human formatter + summary, exit 0/1/3 (FR-025) — in `cmd/rune/analyze.go` and `internal/cli/analyze.go`
-- [ ] T040 [US2] `--json` structured output (code/severity/message/range/file/related) in `internal/cli/analyze.go`
+- [X] T039 [US2] Implement `rune analyze [path] [--json]` over `analysis.Service` — default `Runefile`, transitive imports (FR-009a), human formatter + summary, exit 0/1/3 (FR-025) — in `cmd/rune/analyze.go` and `internal/cli/analyze.go`
+- [X] T040 [US2] `--json` structured output (code/severity/message/range/file/related) in `internal/cli/analyze.go`
 
 **Checkpoint**: `rune analyze` is a usable CI gate with the same diagnostics as the editor.
 
