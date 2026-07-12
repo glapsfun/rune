@@ -97,18 +97,18 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 - [X] T025 [P] [US1] `LineIndex` unit tests across the unicode/line-ending matrix (ASCII, Ukrainian, emoji, combining marks, CRLF, LF, empty lines, EOF) — SC-008 — in `internal/lsp/convert_test.go`
 - [X] T026 [P] [US1] Fuzz targets `FuzzUTF16Position` (convert) and `FuzzJSONRPC` (malformed messages) in `internal/lsp/`
-- [ ] T027 [P] [US1] Protocol integration test driving a real `rune lsp` subprocess: initialize → initialized → didOpen → publishDiagnostics → didChange(clear) → shutdown → exit (SC-009), in `internal/lsp/protocol_test.go`
+- [X] T027 [P] [US1] Protocol integration test driving a real `rune lsp` subprocess: initialize → initialized → didOpen → publishDiagnostics → didChange(clear) → shutdown → exit (SC-009), in `internal/lsp/protocol_test.go`
 
 ### Implementation for User Story 1
 
 - [X] T028 [P] [US1] `LineIndex` byte-offset↔UTF-16 position/range conversion (`ByteOffsetToPosition`, `PositionToByteOffset`, `SpanToRange`) in `internal/lsp/convert.go`
 - [X] T029 [US1] JSON-RPC 2.0 `Content-Length` framing + read/write/dispatch loop in `internal/lsp/jsonrpc.go`
-- [ ] T030 [US1] Minimal typed LSP 3.17 payload subset (initialize params/result, text-sync, diagnostics, position/range) in `internal/lsp/protocol.go`
-- [ ] T031 [US1] Server lifecycle (initialize/initialized/shutdown/exit) + capabilities advertisement matching `contracts/cli-lsp.md` + `serverInfo.version` from the real build version, in `internal/lsp/server.go` and `internal/lsp/handler.go`
-- [ ] T032 [US1] Document sync didOpen/didChange(incremental)/didSave/didClose applying edits to `OverlaySourceStore`, in `internal/lsp/documents.go`
-- [ ] T033 [US1] Diagnostics pipeline: map `diag.Diagnostic`→LSP (code/severity/range-via-LineIndex/relatedInformation), ~100 ms debounce + context cancellation + version guard, `publishDiagnostics`, in `internal/lsp/diagnostics.go`
+- [X] T030 [US1] Minimal typed LSP 3.17 payload subset (initialize params/result, text-sync, diagnostics, position/range) in `internal/lsp/protocol.go`
+- [X] T031 [US1] Server lifecycle (initialize/initialized/shutdown/exit) + capabilities advertisement matching `contracts/cli-lsp.md` + `serverInfo.version` from the real build version, in `internal/lsp/server.go` and `internal/lsp/handler.go`
+- [X] T032 [US1] Document sync didOpen/didChange(incremental)/didSave/didClose applying edits to `OverlaySourceStore`, in `internal/lsp/documents.go`
+- [X] T033 [US1] Diagnostics pipeline: map `diag.Diagnostic`→LSP (code/severity/range-via-LineIndex/relatedInformation), ~100 ms debounce + context cancellation + version guard, `publishDiagnostics`, in `internal/lsp/diagnostics.go`
 - [ ] T034 [US1] Imported-file change propagation: on `initialized`, register file watchers via dynamic `client/registerCapability` for `**/Runefile` and `**/*.rune` (fall back to client-side watching if the client lacks the capability); on `workspace/didChangeWatchedFiles`, invalidate transitive importers → re-analyze roots → republish (FR-022), covering on-disk imports not open in the editor, in `internal/lsp/diagnostics.go` + `internal/analysis/workspace.go`
-- [ ] T035 [US1] Wire the real `rune lsp` command: stdio transport, `--log-file`, `--log-level`, logs never on stdout (FR-012), in `cmd/rune/lsp.go`
+- [X] T035 [US1] Wire the real `rune lsp` command: stdio transport, `--log-file`, `--log-level`, logs never on stdout (FR-012), in `cmd/rune/lsp.go`
 
 **Checkpoint**: Live diagnostics work end-to-end in an editor — the MVP.
 
