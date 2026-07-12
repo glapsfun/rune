@@ -20,6 +20,8 @@ func (s *Server) dispatch(msg *Message) (stop bool) {
 		s.didSave(msg.Params)
 	case "textDocument/didClose":
 		s.didClose(msg.Params)
+	case "textDocument/completion":
+		s.completion(msg.ID, msg.Params)
 	case "textDocument/definition":
 		s.definition(msg.ID, msg.Params)
 	case "textDocument/hover":

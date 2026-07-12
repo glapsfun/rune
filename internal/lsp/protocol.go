@@ -163,3 +163,30 @@ type TextEdit struct {
 	Range   Range  `json:"range"`
 	NewText string `json:"newText"`
 }
+
+// --- completion ---
+
+// CompletionParams is the textDocument/completion request (position-based; the
+// optional completion context is ignored).
+type CompletionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
+}
+
+// CompletionItem is one suggestion returned to the client.
+type CompletionItem struct {
+	Label         string `json:"label"`
+	Kind          int    `json:"kind,omitempty"`
+	Detail        string `json:"detail,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
+}
+
+// LSP CompletionItemKind values (subset).
+const (
+	CIKMethod   = 2
+	CIKFunction = 3
+	CIKVariable = 6
+	CIKKeyword  = 14
+	CIKProperty = 10
+	CIKEnum     = 13
+)

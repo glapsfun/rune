@@ -270,3 +270,46 @@ func TestFormattingReturnsCanonicalEdit(t *testing.T) {
 		t.Errorf("formatting edits = %+v, want one canonical edit with 4-space indent", edits)
 	}
 }
+
+// TestCompletionOverProtocol drives textDocument/completion for a dependency.
+func TestCompletionOverProtocol(t *testing.T) {
+	client, done := startServer(t)
+	defer func() { client.notify("exit", nil); <-done }()
+	const uri = "file:///tmp/proj/Runefile"
+
+	initRes := client.request("initialize", InitializeParams{})
+	var ir InitializeResult
+	_ = jsonUnmarshal(initRes.Result, &ir)
+	if ir.Capabilities.CompletionProvider == nil {
+		t.Fatal("completion capability not advertised")
+	}
+	client.notify("initialized", struct{}{})
+
+	// "deploy: bu" — cursor after "bu" on line 4.
+	doc := "# B.\nbuild:\n    @echo b\n# D.\ndeploy: bu\n    @echo d\n"
+	client.notify("textDocument/didOpen", DidOpenTextDocumentParams{
+		TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: doc},
+	})
+	client.readPublish()
+
+	res := client.request("textDocument/completion", CompletionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Position:     Position{Line: 4, Character: 10}, // end of "deploy: bu"
+	})
+	var items []CompletionItem
+	if err := jsonUnmarshal(res.Result, &items); err != nil {
+		t.Fatalf("completion decode: %v (%s)", err, string(res.Result))
+	}
+	found := false
+	for _, it := range items {
+		if it.Label == "build" {
+			found = true
+			if it.Kind != CIKMethod {
+				t.Errorf("build kind = %d, want %d", it.Kind, CIKMethod)
+			}
+		}
+	}
+	if !found {
+		t.Errorf("completion should suggest 'build', got %+v", items)
+	}
+}

@@ -147,13 +147,13 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 3 ⚠️ (write first)
 
-- [ ] T041 [P] [US3] Golden completion tests per context (dependency incl. private same-file-only, interpolation, setting, attribute, executor, builtin) using `testdata/lsp/` fixtures, in `internal/language/completion_test.go`
+- [X] T041 [P] [US3] Golden completion tests per context (dependency incl. private same-file-only, interpolation, setting, attribute, executor, builtin) using `testdata/lsp/` fixtures, in `internal/language/completion_test.go`
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Cursor-context detection (dependency / interpolation / `set` / attribute-bracket / executor / builtin-prefix) in `internal/language/completion.go`
-- [ ] T043 [US3] Completion result assembly: tasks (namespaced; private same-file-only per FR-019a), scope-visible variables+params (params ranked first), settings, attributes, executors, builtins — each with signature + documentation from the registry, in `internal/language/completion.go`
-- [ ] T044 [US3] LSP completion handler + trigger characters `[ ( . { :` mapping, enabling `completionProvider`, in `internal/lsp/completion.go`
+- [X] T042 [US3] Cursor-context detection (dependency / interpolation / `set` / attribute-bracket / executor / builtin-prefix) in `internal/language/completion.go`
+- [X] T043 [US3] Completion result assembly: tasks (namespaced; private same-file-only per FR-019a), scope-visible variables+params (params ranked first), settings, attributes, executors, builtins — each with signature + documentation from the registry, in `internal/language/completion.go`
+- [X] T044 [US3] LSP completion handler + trigger characters `[ ( . { :` mapping, enabling `completionProvider`, in `internal/lsp/completion.go`
 
 **Checkpoint**: Completion works in-editor for all six contexts.
 
