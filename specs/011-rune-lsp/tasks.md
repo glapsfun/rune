@@ -95,14 +95,14 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 1 ⚠️ (write first)
 
-- [ ] T025 [P] [US1] `LineIndex` unit tests across the unicode/line-ending matrix (ASCII, Ukrainian, emoji, combining marks, CRLF, LF, empty lines, EOF) — SC-008 — in `internal/lsp/convert_test.go`
-- [ ] T026 [P] [US1] Fuzz targets `FuzzUTF16Position` (convert) and `FuzzJSONRPC` (malformed messages) in `internal/lsp/`
+- [X] T025 [P] [US1] `LineIndex` unit tests across the unicode/line-ending matrix (ASCII, Ukrainian, emoji, combining marks, CRLF, LF, empty lines, EOF) — SC-008 — in `internal/lsp/convert_test.go`
+- [X] T026 [P] [US1] Fuzz targets `FuzzUTF16Position` (convert) and `FuzzJSONRPC` (malformed messages) in `internal/lsp/`
 - [ ] T027 [P] [US1] Protocol integration test driving a real `rune lsp` subprocess: initialize → initialized → didOpen → publishDiagnostics → didChange(clear) → shutdown → exit (SC-009), in `internal/lsp/protocol_test.go`
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] `LineIndex` byte-offset↔UTF-16 position/range conversion (`ByteOffsetToPosition`, `PositionToByteOffset`, `SpanToRange`) in `internal/lsp/convert.go`
-- [ ] T029 [US1] JSON-RPC 2.0 `Content-Length` framing + read/write/dispatch loop in `internal/lsp/jsonrpc.go`
+- [X] T028 [P] [US1] `LineIndex` byte-offset↔UTF-16 position/range conversion (`ByteOffsetToPosition`, `PositionToByteOffset`, `SpanToRange`) in `internal/lsp/convert.go`
+- [X] T029 [US1] JSON-RPC 2.0 `Content-Length` framing + read/write/dispatch loop in `internal/lsp/jsonrpc.go`
 - [ ] T030 [US1] Minimal typed LSP 3.17 payload subset (initialize params/result, text-sync, diagnostics, position/range) in `internal/lsp/protocol.go`
 - [ ] T031 [US1] Server lifecycle (initialize/initialized/shutdown/exit) + capabilities advertisement matching `contracts/cli-lsp.md` + `serverInfo.version` from the real build version, in `internal/lsp/server.go` and `internal/lsp/handler.go`
 - [ ] T032 [US1] Document sync didOpen/didChange(incremental)/didSave/didClose applying edits to `OverlaySourceStore`, in `internal/lsp/documents.go`
