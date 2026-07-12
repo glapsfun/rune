@@ -3,9 +3,13 @@ package lsp
 import (
 	"encoding/json"
 	"io"
+	"strings"
 	"testing"
 	"time"
 )
+
+func jsonUnmarshal(data json.RawMessage, v any) error { return json.Unmarshal(data, v) }
+func containsStr(s, sub string) bool                  { return strings.Contains(s, sub) }
 
 // testClient drives a Server over real JSON-RPC framing via in-memory pipes.
 type testClient struct {
@@ -191,5 +195,78 @@ func TestIncrementalEditProducesError(t *testing.T) {
 	pub2 := client.readPublish()
 	if !hasDiagCode(pub2.Diagnostics, "RUNE2001") {
 		t.Errorf("expected RUNE2001 after breaking edit, got %+v", pub2.Diagnostics)
+	}
+}
+
+// TestDefinitionHoverFormatting drives the three request handlers over the
+// protocol against an open document.
+func TestDefinitionHoverFormatting(t *testing.T) {
+	client, done := startServer(t)
+	defer func() { client.notify("exit", nil); <-done }()
+	const uri = "file:///tmp/proj/Runefile"
+
+	initRes := client.request("initialize", InitializeParams{})
+	var ir InitializeResult
+	_ = jsonUnmarshal(initRes.Result, &ir)
+	if !ir.Capabilities.DefinitionProvider || !ir.Capabilities.HoverProvider || !ir.Capabilities.DocumentFormatting {
+		t.Fatalf("capabilities missing definition/hover/formatting: %+v", ir.Capabilities)
+	}
+	client.notify("initialized", struct{}{})
+
+	doc := "# Build the app.\nbuild target=\"debug\":\n    @echo {{target}}\n# Deploy.\ndeploy: build\n    @echo deploy\n"
+	client.notify("textDocument/didOpen", DidOpenTextDocumentParams{
+		TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: doc},
+	})
+	client.readPublish() // consume diagnostics
+
+	// definition on "build" in "deploy: build" (line 4, char 8).
+	defRes := client.request("textDocument/definition", TextDocumentPositionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Position:     Position{Line: 4, Character: 8},
+	})
+	var locs []Location
+	if err := jsonUnmarshal(defRes.Result, &locs); err != nil || len(locs) != 1 {
+		t.Fatalf("definition result = %s (err %v)", string(defRes.Result), err)
+	}
+	if locs[0].Range.Start.Line != 1 { // build task header is line index 1
+		t.Errorf("definition points at line %d, want 1", locs[0].Range.Start.Line)
+	}
+
+	// hover on the "build" task name (line 1, char 0).
+	hovRes := client.request("textDocument/hover", TextDocumentPositionParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+		Position:     Position{Line: 1, Character: 0},
+	})
+	var hov Hover
+	if err := jsonUnmarshal(hovRes.Result, &hov); err != nil {
+		t.Fatalf("hover decode: %v", err)
+	}
+	if hov.Contents.Kind != "markdown" || !containsStr(hov.Contents.Value, `build target="debug"`) {
+		t.Errorf("hover = %+v", hov.Contents)
+	}
+}
+
+func TestFormattingReturnsCanonicalEdit(t *testing.T) {
+	client, done := startServer(t)
+	defer func() { client.notify("exit", nil); <-done }()
+	const uri = "file:///tmp/proj/Runefile"
+	client.request("initialize", InitializeParams{})
+	client.notify("initialized", struct{}{})
+
+	// 2-space body indent is valid but not canonical (canonical is 4 spaces).
+	client.notify("textDocument/didOpen", DidOpenTextDocumentParams{
+		TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: "# B.\nbuild:\n  @echo hi\n"},
+	})
+	client.readPublish()
+
+	res := client.request("textDocument/formatting", DocumentFormattingParams{
+		TextDocument: TextDocumentIdentifier{URI: uri},
+	})
+	var edits []TextEdit
+	if err := jsonUnmarshal(res.Result, &edits); err != nil {
+		t.Fatalf("formatting decode: %v", err)
+	}
+	if len(edits) != 1 || !containsStr(edits[0].NewText, "    @echo hi") {
+		t.Errorf("formatting edits = %+v, want one canonical edit with 4-space indent", edits)
 	}
 }

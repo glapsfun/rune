@@ -134,3 +134,32 @@ const (
 	SeverityError   = 1
 	SeverityWarning = 2
 )
+
+// --- definition / hover / formatting ---
+
+// TextDocumentPositionParams is the request shape for definition and hover.
+type TextDocumentPositionParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
+}
+
+// Hover is the result of textDocument/hover.
+type Hover struct {
+	Contents MarkupContent `json:"contents"`
+	Range    *Range        `json:"range,omitempty"`
+}
+
+type MarkupContent struct {
+	Kind  string `json:"kind"` // "markdown" | "plaintext"
+	Value string `json:"value"`
+}
+
+type DocumentFormattingParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+// TextEdit replaces Range with NewText.
+type TextEdit struct {
+	Range   Range  `json:"range"`
+	NewText string `json:"newText"`
+}

@@ -115,8 +115,10 @@ func (s *Server) initialize(id *json.RawMessage, params json.RawMessage) {
 				Change:    SyncIncremental,
 				Save:      &SaveOptions{IncludeText: false},
 			},
-			// completion/definition/hover/symbols/formatting are advertised as
-			// their handlers land in later phases.
+			DefinitionProvider: true,
+			HoverProvider:      true,
+			DocumentFormatting: true,
+			// completion and documentSymbol are advertised as their handlers land.
 		},
 		ServerInfo: ServerInfo{Name: "rune", Version: s.version},
 	}

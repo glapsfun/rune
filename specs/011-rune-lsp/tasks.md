@@ -169,12 +169,12 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 4 ⚠️ (write first)
 
-- [ ] T045 [P] [US4] Definition unit + integration tests: same-file (task/var/param) and cross-file (`backend.build`) using `testdata/lsp/imports/`, plus overlay-for-open-import case, in `internal/language/definition_test.go`
+- [X] T045 [P] [US4] Definition unit + integration tests: same-file (task/var/param) and cross-file (`backend.build`) using `testdata/lsp/imports/`, plus overlay-for-open-import case, in `internal/language/definition_test.go`
 
 ### Implementation for User Story 4
 
-- [ ] T046 [US4] Definition resolution for dependency, variable reference, parameter interpolation, imported namespace, and imported task (cross-file via `Sp.File`) in `internal/language/definition.go`
-- [ ] T047 [US4] LSP definition handler enabling `definitionProvider`, in `internal/lsp/definition.go`
+- [X] T046 [US4] Definition resolution for dependency, variable reference, parameter interpolation, imported namespace, and imported task (cross-file via `Sp.File`) in `internal/language/definition.go`
+- [X] T047 [US4] LSP definition handler enabling `definitionProvider`, in `internal/lsp/definition.go`
 
 **Checkpoint**: Navigation works within and across imported Runefiles.
 
@@ -190,12 +190,12 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 5 ⚠️ (write first)
 
-- [ ] T048 [P] [US5] Golden hover tests for task, parameter, attribute, and builtin, in `internal/language/hover_test.go`
+- [X] T048 [P] [US5] Golden hover tests for task, parameter, attribute, and builtin, in `internal/language/hover_test.go`
 
 ### Implementation for User Story 5
 
-- [ ] T049 [US5] Hover content assembly (task signature+doc+executor+group+location; parameter; attribute; builtin) in `internal/language/hover.go`
-- [ ] T050 [US5] LSP hover handler enabling `hoverProvider`, in `internal/lsp/hover.go`
+- [X] T049 [US5] Hover content assembly (task signature+doc+executor+group+location; parameter; attribute; builtin) in `internal/language/hover.go`
+- [X] T050 [US5] LSP hover handler enabling `hoverProvider`, in `internal/lsp/hover.go`
 
 **Checkpoint**: Hover works for all symbol kinds.
 
@@ -231,11 +231,11 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Tests for User Story 7 ⚠️ (write first)
 
-- [ ] T053 [P] [US7] Formatting handler tests: output equals `formatter.Format`, idempotent, no edit on severe parse errors, in `internal/lsp/formatting_test.go`
+- [X] T053 [P] [US7] Formatting handler tests: output equals `formatter.Format`, idempotent, no edit on severe parse errors, in `internal/lsp/formatting_test.go`
 
 ### Implementation for User Story 7
 
-- [ ] T054 [US7] LSP formatting handler calling `internal/formatter.Format` over the overlay buffer, returning one full-document `TextEdit`, enabling `documentFormattingProvider`, in `internal/lsp/formatting.go`
+- [X] T054 [US7] LSP formatting handler calling `internal/formatter.Format` over the overlay buffer, returning one full-document `TextEdit`, enabling `documentFormattingProvider`, in `internal/lsp/formatting.go`
 
 **Checkpoint**: Formatting works on unsaved content via the canonical formatter.
 
