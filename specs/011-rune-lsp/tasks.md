@@ -251,8 +251,8 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Implementation for User Story 8
 
-- [ ] T055 [P] [US8] VS Code client extension (language config for `runefile`, launches `rune lsp`) in `editors/vscode/`
-- [ ] T056 [P] [US8] Neovim, Zed, and Helix setup documentation in `editors/README.md`
+- [X] T055 [P] [US8] VS Code client extension (language config for `runefile`, launches `rune lsp`) in `editors/vscode/`
+- [X] T056 [P] [US8] Neovim, Zed, and Helix setup documentation in `editors/README.md`
 - [ ] T057 [US8] Manual editor validation per `quickstart.md` §9 across at least VS Code + one other editor
 
 **Checkpoint**: `rune lsp` works in common editors.
