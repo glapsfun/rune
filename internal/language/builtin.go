@@ -73,6 +73,8 @@ var builtinSettings = []Builtin{
 	{Name: "node", Kind: BuiltinSetting, Signature: "set node := [\"node\"]", Documentation: "Command used for (node) tasks."},
 	{Name: "agent_cmd", Kind: BuiltinSetting, Signature: "set agent_cmd := [\"...\"]", Documentation: "Command used to drive (agent) tasks."},
 	{Name: "agent_provider", Kind: BuiltinSetting, Signature: "set agent_provider := \"name\"", Documentation: "Named agent provider for (agent) tasks."},
+	{Name: "minimum_version", Kind: BuiltinSetting, Signature: "set minimum_version := \"0.8.0\"", Documentation: "Pin the minimum Rune binary version required to run this Runefile."},
+	{Name: "rune_version", Kind: BuiltinSetting, Signature: "set rune_version := \"0.8.0\"", Documentation: "Declare the Rune language version this Runefile targets."},
 }
 
 // builtinAttributes are the valid task attributes (mirrors ast Attr* constants).
