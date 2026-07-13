@@ -61,9 +61,9 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 ### Parser recovery (FR-004/005)
 
-- [ ] T013 Harden parser recovery: synchronize at newline / declaration keyword / attribute close-bracket / dedent-to-top-level / EOF, and emit `ast.InvalidStmt{Raw, Sp}` for unrecoverable regions, in `internal/parser/` and `internal/ast/ast.go`
-- [ ] T014 Make the analyzer skip `InvalidStmt` subtrees while checking valid siblings, in `internal/analyzer/analyzer.go`
-- [ ] T015 [P] Fuzz target `FuzzParseRecover` asserting terminate / no-panic / all diagnostic ranges in-bounds (FR-005/SC-004) in `internal/parser/`
+- [X] T013 Parser recovery: verified the existing drop-and-continue recovery keeps valid declarations around broken regions (`parser.TestRecoveryKeepsValidDeclarations`), documented the unterminated-group-to-EOF limitation (`TestUnterminatedGroupIsBounded`). `InvalidStmt` intentionally NOT added — drop-and-continue leaves no broken subtree, so it has no consumer (see research.md R2 outcome)
+- [X] T014 Analyzer runs on partially-recovered ASTs (surviving declarations) without panic and still flags their errors — `analyzer.TestAnalyzeRecoveredFile`. Moot `InvalidStmt`-skip per T013 decision
+- [X] T015 [P] Fuzz target `FuzzParseRecover` asserting terminate / no-panic / all diagnostic ranges in-bounds (FR-005/SC-004) in `internal/parser/`
 
 ### Language registry & symbol index (FR-026/027, R6/R9)
 
