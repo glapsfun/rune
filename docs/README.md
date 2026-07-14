@@ -25,6 +25,8 @@ New to Rune? Read **[What is Rune?](overview.md)**, then **[Getting started](get
 | …split tasks across files (**monorepo**) | [How-to: Imports & modules](how-to/imports-and-modules.md) |
 | …scope a task to an **OS** | [How-to: OS filtering](how-to/os-filtering.md) |
 | …look up a **flag** or exit code | [CLI reference](cli.md) |
+| …use Rune in my **editor** (LSP) | [Editor setup](../editors/README.md) · [Diagnostics & codes](diagnostics.md) |
+| …understand a **`RUNE####`** code | [Diagnostics](diagnostics.md) |
 | …look up the **Runefile syntax** | [Runefile language](runefile.md) · [Grammar](GRAMMAR.md) |
 | …copy a runnable **example** | [Examples](examples/README.md) |
 | …fix an **error** | [Troubleshooting](troubleshooting.md) |
@@ -36,7 +38,8 @@ New to Rune? Read **[What is Rune?](overview.md)**, then **[Getting started](get
 - **Explanation** — [What is Rune?](overview.md) · [User guide](user-guide/README.md)
 - **How-to guides** — [all capabilities](how-to/README.md)
 - **Use-case walkthroughs** — [Python](use-cases/python-project.md) · [Node](use-cases/node-project.md) · [AI agents](use-cases/mcp-agents.md)
-- **Reference** — [CLI](cli.md) · [Runefile language](runefile.md) · [Grammar](GRAMMAR.md) · [AI agents (MCP)](mcp.md)
+- **Reference** — [CLI](cli.md) · [Runefile language](runefile.md) · [Grammar](GRAMMAR.md) · [Diagnostics & codes](diagnostics.md) · [AI agents (MCP)](mcp.md)
+- **Editors** — [Editor setup (LSP)](../editors/README.md)
 - **Operations** — [Installation](installation.md) · [Docker](docker.md) · [Releasing](releasing.md) · [Troubleshooting](troubleshooting.md)
 
 ---

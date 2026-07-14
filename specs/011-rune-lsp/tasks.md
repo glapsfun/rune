@@ -263,9 +263,9 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 
 **Purpose**: Performance validation, docs, extra fuzz, and the full CI gate.
 
-- [ ] T058 [P] Implement `BenchmarkCompletion` + `BenchmarkImportedFileInvalidation` and validate SC-010 targets (no optimization before profiling), in `internal/language/` and `internal/analysis/`
-- [ ] T059 [P] Additional fuzz: completion and definition at arbitrary positions, in `internal/lsp/`
-- [ ] T060 [P] Documentation: `rune lsp` + `rune analyze` guides and the diagnostic-code catalog in `docs/`; update `README.md`/`CONTRIBUTING.md`; ensure `docs-verify` passes
+- [X] T058 [P] Implement `BenchmarkCompletion` + `BenchmarkImportedFileInvalidation` and validate SC-010 targets (no optimization before profiling), in `internal/language/` and `internal/analysis/`
+- [X] T059 [P] Additional fuzz: completion and definition at arbitrary positions, in `internal/lsp/`
+- [X] T060 [P] Documentation: `rune lsp` + `rune analyze` guides and the diagnostic-code catalog in `docs/`; update `README.md`/`CONTRIBUTING.md`; ensure `docs-verify` passes
 - [ ] T061 Run the full gate inside Docker: `go test ./...`, `-race`, `golangci-lint`, golden, fuzz-smoke, docs-verify, release-dryrun
 - [ ] T062 Run `quickstart.md` end-to-end validation (all nine scenarios); SC-006 requires US1+US3+US4+US5 complete
 

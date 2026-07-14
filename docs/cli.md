@@ -104,11 +104,13 @@ any command.
 |---------|-------------|
 | `rune serve [--http] [--addr <addr>] [--token-file <file>]` | Start the MCP server. Stdio by default; `--http` enables the Streamable HTTP transport (which requires `--token-file`), and `--addr` sets the bind address. |
 | `rune mcp` | Alias for `rune serve` over **stdio** (for local agents/IDEs). |
+| `rune analyze [path] [--json]` | Statically analyze a Runefile (and its transitive imports) and print diagnostics — **without running anything**. Exit `0` (no errors), `3` (error diagnostics), or `2` (no Runefile / unreadable). `--json` emits machine-readable output. See [Diagnostics](diagnostics.md). |
+| `rune lsp [--log-file <path>] [--log-level <level>]` | Start the language server (JSON-RPC / LSP 3.17 over stdio) for editors: live diagnostics, completion, go-to-definition, hover, document symbols, and formatting. stdout is protocol-only; logs go to stderr or `--log-file`. See [editor setup](../editors/README.md). |
 | `rune version` | Print the version (first line identical to `--version`) plus the Runefile language version. Add `--check` to report whether the installed binary satisfies the Runefile's `minimum_version`, and `--json` for machine-readable output. |
 | `rune completion <bash\|zsh\|fish\|powershell>` | Print a shell-completion script for the given shell (a shell argument is required; an unsupported shell is an error). Completions include your Runefile's task names; run `rune completion --help` for install steps. |
 | `rune help [command]` | Help about any command. |
 
-See the [MCP guide](mcp.md) for exposing tasks to AI agents and the security model.
+See the [MCP guide](mcp.md) for exposing tasks to AI agents, [editor setup](../editors/README.md) for using `rune lsp`, and [Diagnostics](diagnostics.md) for the stable `RUNE####` codes.
 
 ## Exit codes
 

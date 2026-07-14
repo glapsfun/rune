@@ -61,6 +61,10 @@ If you've used `make` or `just`, Rune will feel familiar — with a few delibera
   read-only by default, destructive tasks are gated, and secrets come from the environment
   only — never the Runefile.
 - **Multi-language bodies.** Write task bodies in shell, Python, Node, or drive an AI agent.
+- **First-class editor support.** `rune lsp` is a built-in language server (LSP 3.17): live
+  diagnostics, completion, go-to-definition, hover, outline, and formatting in VS Code,
+  Neovim, Helix, and Zed — reusing the same parser and analyzer, running nothing. `rune
+  analyze` reports the same diagnostics for CI. See [editor setup](editors/README.md).
 
 ## Install
 
