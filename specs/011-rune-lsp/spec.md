@@ -238,15 +238,15 @@ A developer installs a VS Code extension or follows short configuration snippets
 
 - **SC-001**: A developer editing a Runefile sees a newly introduced error (e.g. an unknown dependency) reflected in the editor without taking any explicit action beyond typing, and sees it clear once corrected.
 - **SC-002**: For every diagnostic type listed in FR-008, a golden test demonstrates that both `rune analyze` and the language server report the same diagnostic (same code, message intent, and range) for the same input.
-- **SC-003**: `rune analyze` returns exit code 0 for a clean Runefile, 3 for one containing errors, and 1 on internal failure, and prints a summary count — verified by tests.
+- **SC-003**: `rune analyze` returns exit code 0 for a clean Runefile, 3 for one containing error diagnostics, and 2 for a discovery/IO failure (no Runefile or unreadable) — matching Rune's global exit-code scheme (see FR-025) — and prints a summary count. Verified by tests.
 - **SC-004**: Across a fuzz corpus of arbitrary byte sequences, the parser and analysis pipeline never panic, always terminate, and never emit a diagnostic range outside the document.
 - **SC-005**: Zero task executions, shell invocations, network requests, or project file writes occur during any analysis, completion, definition, hover, symbol, or formatting operation — verified by a test that fails if any such side effect happens.
 - **SC-006** (cumulative acceptance — satisfied once US1, US3, US4, and US5 are complete): The full MVP scenario works end to end: in a file with a `build` task, typing `deploy env: bui` and completing suggests `build`; accepting yields `deploy env: build`; go-to-definition on `build` opens its declaration; hover shows its signature and documentation; changing the dependency to `missing` immediately produces an unknown-dependency error — with no task executed at any point.
 - **SC-007**: Formatting through the server produces output identical to Rune's canonical formatter for the same content and is idempotent.
 - **SC-008**: Position conversion is correct for the full unicode/line-ending matrix (ASCII, Ukrainian text, emoji, combining characters, CRLF, LF, empty lines, EOF), verified by unit tests.
-- **SC-009**: A protocol integration test drives a real `rune lsp` subprocess through initialize → initialized → didOpen → completion → definition → hover → shutdown → exit and verifies correct responses and lifecycle behavior.
+- **SC-009**: A protocol integration test drives the server over real JSON-RPC framing (in-process pipes) through initialize → initialized → didOpen → completion → definition → hover → shutdown → exit, verifying responses and lifecycle behavior; a `rune lsp` binary smoke additionally confirms the built command frames protocol on stdout with no stderr leakage.
 - **SC-010 (product target, not a release blocker)**: For ordinary Runefiles, open-document analysis completes under 50 ms at P50 and under 150 ms at P95, and completion/definition/hover complete under 50 ms at P95; for a 100-Runefile project, initial workspace indexing completes under 1 second and a single imported-file update completes under 250 ms. These targets are validated by benchmarks once benchmarks exist.
-- **SC-011**: At least one editor (VS Code) works via a published client extension, and Neovim, Zed, and Helix each have documented working configurations.
+- **SC-011**: At least one editor (VS Code) works via an installable client extension (buildable from `editors/vscode/`), and Neovim, Zed, and Helix each have documented working configurations.
 
 ## Assumptions
 

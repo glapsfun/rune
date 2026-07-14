@@ -2,7 +2,9 @@ package lsp
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // registerWatchers asks the client (via client/registerCapability) to watch
@@ -17,14 +19,24 @@ func (s *Server) registerWatchers() {
 	id := s.nextReqID
 	s.mu.Unlock()
 
+	// Scope the watch globs to the detected workspace root (FR-021) when known,
+	// so watching is confined to the project rather than the whole filesystem.
+	s.mu.Lock()
+	root := s.root
+	s.mu.Unlock()
+	prefix := ""
+	if root != "" {
+		prefix = strings.TrimRight(filepath.ToSlash(root), "/") + "/"
+	}
+
 	raw := json.RawMessage(strconv.Itoa(id))
 	params := RegistrationParams{Registrations: []Registration{{
 		ID:     "rune-watch-runefiles",
 		Method: "workspace/didChangeWatchedFiles",
 		RegisterOptions: DidChangeWatchedFilesRegistrationOptions{Watchers: []FileSystemWatcher{
-			{GlobPattern: "**/Runefile"},
-			{GlobPattern: "**/.runefile"},
-			{GlobPattern: "**/*.rune"},
+			{GlobPattern: prefix + "**/Runefile"},
+			{GlobPattern: prefix + "**/.runefile"},
+			{GlobPattern: prefix + "**/*.rune"},
 		}},
 	}}}
 	pr, err := json.Marshal(params)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -28,6 +29,7 @@ type Server struct {
 	timers     map[string]*time.Timer        // path -> pending debounce timer
 	cancels    map[string]context.CancelFunc // path -> in-flight analysis cancel
 	snaps      map[string]*analysis.Snapshot // path -> last published snapshot (for the import graph)
+	root       string                        // workspace root (FR-021), used to scope file watching
 	nextReqID  int                           // id counter for server-initiated requests
 	shutdownOK bool
 }
@@ -111,6 +113,16 @@ func (s *Server) initialize(id *json.RawMessage, params json.RawMessage) {
 	var p InitializeParams
 	_ = json.Unmarshal(params, &p) // fields are optional; ignore decode issues
 
+	// Determine the workspace root per FR-021 (explicit client folder → nearest
+	// Runefile → nearest .git → cwd) and remember it to scope file watching.
+	root := s.detectRoot(p)
+	s.mu.Lock()
+	s.root = root
+	s.mu.Unlock()
+	if root != "" {
+		s.log.Printf("workspace root: %s", root)
+	}
+
 	result := InitializeResult{
 		Capabilities: ServerCapabilities{
 			TextDocumentSync: &TextDocumentSyncOptions{
@@ -127,6 +139,22 @@ func (s *Server) initialize(id *json.RawMessage, params json.RawMessage) {
 		ServerInfo: ServerInfo{Name: "rune", Version: s.version},
 	}
 	s.reply(id, result)
+}
+
+// detectRoot resolves the workspace root from the client's initialize params,
+// falling back through the FR-021 order (explicit folder → nearest Runefile →
+// nearest .git → cwd) via analysis.DetectRoot.
+func (s *Server) detectRoot(p InitializeParams) string {
+	explicit := ""
+	if len(p.WorkspaceFolders) > 0 && p.WorkspaceFolders[0].URI != "" {
+		explicit = uriToPath(p.WorkspaceFolders[0].URI)
+	} else if p.RootURI != "" {
+		explicit = uriToPath(p.RootURI)
+	}
+	return analysis.DetectRoot(explicit, ".", func(path string) bool {
+		_, err := os.Stat(path)
+		return err == nil
+	})
 }
 
 // shutdown marks the server ready to exit; the client then sends `exit`.
