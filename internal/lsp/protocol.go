@@ -216,3 +216,33 @@ const (
 	SKFunction  = 12
 	SKVariable  = 13
 )
+
+// --- watched files / dynamic registration ---
+
+type DidChangeWatchedFilesParams struct {
+	Changes []FileEvent `json:"changes"`
+}
+
+type FileEvent struct {
+	URI  string `json:"uri"`
+	Type int    `json:"type"` // 1 created, 2 changed, 3 deleted
+}
+
+// Registration payloads for client/registerCapability (server → client).
+type RegistrationParams struct {
+	Registrations []Registration `json:"registrations"`
+}
+
+type Registration struct {
+	ID              string `json:"id"`
+	Method          string `json:"method"`
+	RegisterOptions any    `json:"registerOptions,omitempty"`
+}
+
+type DidChangeWatchedFilesRegistrationOptions struct {
+	Watchers []FileSystemWatcher `json:"watchers"`
+}
+
+type FileSystemWatcher struct {
+	GlobPattern string `json:"globPattern"`
+}

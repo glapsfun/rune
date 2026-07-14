@@ -3,6 +3,8 @@ package lsp
 import (
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -38,7 +40,14 @@ func (c *testClient) request(method string, params any) *Message {
 	if err := c.conn.Write(&Message{JSONRPC: "2.0", ID: &rm, Method: method, Params: pr}); err != nil {
 		c.t.Fatalf("write %s: %v", method, err)
 	}
-	return c.read()
+	// Skip any server-initiated request (e.g. client/registerCapability) and
+	// return the response to our request (a message with an id and no method).
+	for {
+		m := c.read()
+		if m.Method == "" {
+			return m
+		}
+	}
 }
 
 func (c *testClient) notify(method string, params any) {
@@ -76,15 +85,19 @@ func (c *testClient) read() *Message {
 
 func (c *testClient) readPublish() PublishDiagnosticsParams {
 	c.t.Helper()
-	m := c.read()
-	if m.Method != "textDocument/publishDiagnostics" {
-		c.t.Fatalf("expected publishDiagnostics, got method %q", m.Method)
+	// Skip unrelated server messages (e.g. client/registerCapability) until the
+	// next publishDiagnostics arrives.
+	for {
+		m := c.read()
+		if m.Method != "textDocument/publishDiagnostics" {
+			continue
+		}
+		var p PublishDiagnosticsParams
+		if err := json.Unmarshal(m.Params, &p); err != nil {
+			c.t.Fatalf("decode publishDiagnostics: %v", err)
+		}
+		return p
 	}
-	var p PublishDiagnosticsParams
-	if err := json.Unmarshal(m.Params, &p); err != nil {
-		c.t.Fatalf("decode publishDiagnostics: %v", err)
-	}
-	return p
 }
 
 func hasDiagCode(diags []Diagnostic, code string) bool {
@@ -361,5 +374,48 @@ func TestDocumentSymbolOverProtocol(t *testing.T) {
 		if c.Kind != SKFunction {
 			t.Errorf("task %q kind = %d, want %d", c.Name, c.Kind, SKFunction)
 		}
+	}
+}
+
+// TestWatchedFileImportPropagation verifies that an on-disk change to an
+// imported file refreshes diagnostics for an open document that imports it
+// (spec FR-022), driven via workspace/didChangeWatchedFiles.
+func TestWatchedFileImportPropagation(t *testing.T) {
+	dir := t.TempDir()
+	rootPath := filepath.Join(dir, "Runefile")
+	importPath := filepath.Join(dir, "common.rune")
+	if err := os.WriteFile(importPath, []byte("# S.\nshared:\n    echo s\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rootSrc := "import \"common.rune\"\n# D.\ndeploy: shared\n    echo d\n"
+	if err := os.WriteFile(rootPath, []byte(rootSrc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	client, done := startServer(t)
+	defer func() { client.notify("exit", nil); <-done }()
+	client.request("initialize", InitializeParams{})
+	client.notify("initialized", struct{}{})
+
+	rootURI := pathToURI(rootPath)
+	client.notify("textDocument/didOpen", DidOpenTextDocumentParams{
+		TextDocument: TextDocumentItem{URI: rootURI, Version: 1, Text: rootSrc},
+	})
+	pub := client.readPublish()
+	if hasDiagCode(pub.Diagnostics, "RUNE2001") {
+		t.Fatalf("with a valid import, deploy: shared should resolve: %+v", pub.Diagnostics)
+	}
+
+	// Change the imported file on disk so it no longer defines `shared`.
+	if err := os.WriteFile(importPath, []byte("# O.\nother:\n    echo o\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	client.notify("workspace/didChangeWatchedFiles", DidChangeWatchedFilesParams{
+		Changes: []FileEvent{{URI: pathToURI(importPath), Type: 2}},
+	})
+
+	pub2 := client.readPublish()
+	if !hasDiagCode(pub2.Diagnostics, "RUNE2001") {
+		t.Errorf("expected RUNE2001 after the imported task disappeared, got %+v", pub2.Diagnostics)
 	}
 }

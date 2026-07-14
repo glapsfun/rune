@@ -97,6 +97,7 @@ func (s *Server) getVersion(path string) int {
 func (s *Server) clearDoc(path string) {
 	s.mu.Lock()
 	delete(s.docs, path)
+	delete(s.snaps, path)
 	if t, ok := s.timers[path]; ok {
 		t.Stop()
 		delete(s.timers, path)

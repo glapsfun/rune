@@ -24,9 +24,11 @@ type Server struct {
 	debounce time.Duration
 
 	mu         sync.Mutex
-	docs       map[string]int // path -> current version
-	timers     map[string]*time.Timer
-	cancels    map[string]context.CancelFunc
+	docs       map[string]int                // path -> current version
+	timers     map[string]*time.Timer        // path -> pending debounce timer
+	cancels    map[string]context.CancelFunc // path -> in-flight analysis cancel
+	snaps      map[string]*analysis.Snapshot // path -> last published snapshot (for the import graph)
+	nextReqID  int                           // id counter for server-initiated requests
 	shutdownOK bool
 }
 
@@ -61,6 +63,7 @@ func NewServer(r io.Reader, w io.Writer, opts Options) *Server {
 		docs:     map[string]int{},
 		timers:   map[string]*time.Timer{},
 		cancels:  map[string]context.CancelFunc{},
+		snaps:    map[string]*analysis.Snapshot{},
 	}
 }
 

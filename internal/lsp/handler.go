@@ -7,7 +7,9 @@ func (s *Server) dispatch(msg *Message) (stop bool) {
 	case "initialize":
 		s.initialize(msg.ID, msg.Params)
 	case "initialized":
-		// no-op notification
+		// Async so the read loop is not blocked writing the server→client
+		// registration request (the client may still be sending notifications).
+		go s.registerWatchers()
 	case "shutdown":
 		s.shutdown(msg.ID)
 	case "exit":
@@ -30,6 +32,8 @@ func (s *Server) dispatch(msg *Message) (stop bool) {
 		s.formatting(msg.ID, msg.Params)
 	case "textDocument/documentSymbol":
 		s.documentSymbol(msg.ID, msg.Params)
+	case "workspace/didChangeWatchedFiles":
+		s.didChangeWatchedFiles(msg.Params)
 	case "$/cancelRequest":
 		// best-effort: handled implicitly by version guarding
 	default:

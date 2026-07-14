@@ -48,6 +48,9 @@ func (s *Server) analyzeAndPublish(path string, version int) {
 	// Version guard: drop results computed for an out-of-date document.
 	s.mu.Lock()
 	current, tracked := s.docs[path]
+	if !tracked || version == current {
+		s.snaps[path] = snap // cache for import-graph lookups (watched files)
+	}
 	s.mu.Unlock()
 	if tracked && version != current {
 		return
