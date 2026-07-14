@@ -6,9 +6,11 @@ import (
 	"testing"
 )
 
+// Task names avoid Rune's built-in command names (analyze/serve/version/…),
+// which shadow same-named tasks; `cover` stands in for what was `analyze`.
 const us3Runefile = `build_dir := "dist"
 
-analyze (python):
+cover (python):
     print("coverage from {{build_dir}}")
 
 bundle (node):
@@ -20,7 +22,7 @@ func TestUS3_PythonBody(t *testing.T) {
 		t.Skip("python3 not available")
 	}
 	dir := writeRunefile(t, us3Runefile)
-	r := run(t, dir, nil, "analyze")
+	r := run(t, dir, nil, "cover")
 	if r.code != 0 {
 		t.Fatalf("exit = %d, stderr=%s", r.code, r.stderr)
 	}
@@ -58,12 +60,12 @@ func TestUS3_ShellAndPythonCoexist(t *testing.T) {
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("python3 not available")
 	}
-	src := "hello:\n    @echo shell-says hi\n\nanalyze (python):\n    print(\"python-says hi\")\n"
+	src := "hello:\n    @echo shell-says hi\n\ncover (python):\n    print(\"python-says hi\")\n"
 	dir := writeRunefile(t, src)
 	if r := run(t, dir, nil, "hello"); r.code != 0 || !strings.Contains(r.stdout, "shell-says hi") {
 		t.Errorf("shell task: code=%d stdout=%q", r.code, r.stdout)
 	}
-	if r := run(t, dir, nil, "analyze"); r.code != 0 || !strings.Contains(r.stdout, "python-says hi") {
+	if r := run(t, dir, nil, "cover"); r.code != 0 || !strings.Contains(r.stdout, "python-says hi") {
 		t.Errorf("python task: code=%d stdout=%q", r.code, r.stdout)
 	}
 }

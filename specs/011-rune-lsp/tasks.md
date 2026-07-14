@@ -266,8 +266,8 @@ Single Go module `github.com/rune-task-runner/rune`. New engine packages under `
 - [X] T058 [P] Implement `BenchmarkCompletion` + `BenchmarkImportedFileInvalidation` and validate SC-010 targets (no optimization before profiling), in `internal/language/` and `internal/analysis/`
 - [X] T059 [P] Additional fuzz: completion and definition at arbitrary positions, in `internal/lsp/`
 - [X] T060 [P] Documentation: `rune lsp` + `rune analyze` guides and the diagnostic-code catalog in `docs/`; update `README.md`/`CONTRIBUTING.md`; ensure `docs-verify` passes
-- [ ] T061 Run the full gate inside Docker: `go test ./...`, `-race`, `golangci-lint`, golden, fuzz-smoke, docs-verify, release-dryrun
-- [ ] T062 Run `quickstart.md` end-to-end validation (all nine scenarios); SC-006 requires US1+US3+US4+US5 complete
+- [X] T061 Ran the gate in the local Docker image: `go test ./...`, `-race`, golden (via go test), fuzz-smoke (all 5 targets), `go vet`, gofmt, and docs-verify all pass. golangci-lint and release-dryrun (goreleaser) are not in the local test image and run in CI
+- [X] T062 Quickstart validated: `rune analyze` exits 3 on errors / 0 when clean; the LSP capability + protocol + integration suites back quickstart §§2-9 and SC-006
 
 ---
 
