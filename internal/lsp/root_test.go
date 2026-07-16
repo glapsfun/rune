@@ -1,6 +1,9 @@
 package lsp
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 // TestInitializeSetsWorkspaceRoot verifies the server determines and stores the
 // workspace root from the client's initialize params (spec FR-021), so file
@@ -12,14 +15,16 @@ func TestInitializeSetsWorkspaceRoot(t *testing.T) {
 	root := srv.detectRoot(InitializeParams{
 		WorkspaceFolders: []WorkspaceFolder{{URI: "file:///home/dev/project", Name: "project"}},
 	})
-	if root != "/home/dev/project" {
-		t.Errorf("root from workspaceFolders = %q, want /home/dev/project", root)
+	// detectRoot returns OS-native paths (uriToPath runs filepath.Clean), so
+	// compare against the OS-native form to keep the test portable to Windows.
+	if want := filepath.FromSlash("/home/dev/project"); root != want {
+		t.Errorf("root from workspaceFolders = %q, want %q", root, want)
 	}
 
 	// rootUri is used when no workspaceFolders are given.
 	root = srv.detectRoot(InitializeParams{RootURI: "file:///srv/app"})
-	if root != "/srv/app" {
-		t.Errorf("root from rootUri = %q, want /srv/app", root)
+	if want := filepath.FromSlash("/srv/app"); root != want {
+		t.Errorf("root from rootUri = %q, want %q", root, want)
 	}
 
 	// With neither, DetectRoot falls back through the FR-021 order (never panics,

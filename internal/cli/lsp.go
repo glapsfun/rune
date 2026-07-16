@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"io"
 	"os"
 
 	"github.com/rune-task-runner/rune/internal/lsp"
@@ -17,13 +16,13 @@ type LSPOptions struct {
 // only JSON-RPC protocol messages; logs go to stderr or --log-file (FR-012).
 // It executes nothing (FR-028).
 func LSP(opts Options, lspOpts LSPOptions) error {
-	var logw io.Writer = opts.Stderr
+	logw := opts.Stderr
 	if lspOpts.LogFile != "" {
 		f, err := os.OpenFile(lspOpts.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 		if err != nil {
 			return &UsageError{Err: err}
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		logw = f
 	}
 

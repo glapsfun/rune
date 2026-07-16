@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -77,7 +78,7 @@ func (s *Server) Run() error {
 	for {
 		msg, err := s.conn.Read()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 			// A malformed message must not crash the server: log and continue.
@@ -102,11 +103,7 @@ func isFatalRead(err error) bool {
 }
 
 func asResponseError(err error, target **ResponseError) bool {
-	if re, ok := err.(*ResponseError); ok {
-		*target = re
-		return true
-	}
-	return false
+	return errors.As(err, target)
 }
 
 // initialize handles the initialize request, advertising only implemented
@@ -173,7 +170,7 @@ func (s *Server) reply(id *json.RawMessage, result any) {
 	resp, err := NewResponse(id, result)
 	if err != nil {
 		s.log.Printf("marshal response: %v", err)
-		s.conn.Write(NewErrorResponse(id, InternalError, err.Error()))
+		_ = s.conn.Write(NewErrorResponse(id, InternalError, err.Error()))
 		return
 	}
 	if err := s.conn.Write(resp); err != nil {

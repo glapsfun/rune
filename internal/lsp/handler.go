@@ -40,7 +40,7 @@ func (s *Server) dispatch(msg *Message) (stop bool) {
 		if msg.IsRequest() {
 			// Unknown request: respond with MethodNotFound so the client isn't
 			// left waiting (notifications are simply ignored).
-			s.conn.Write(NewErrorResponse(msg.ID, MethodNotFound, "unsupported method: "+msg.Method))
+			_ = s.conn.Write(NewErrorResponse(msg.ID, MethodNotFound, "unsupported method: "+msg.Method))
 		}
 	}
 	return false
