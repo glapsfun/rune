@@ -45,14 +45,15 @@ func (s *Server) analyzeAndPublish(path string, version int) {
 		return
 	}
 
-	// Version guard: drop results computed for an out-of-date document.
+	// Version guard: drop results for a document that has since been closed
+	// (racing didClose already cleared it) or superseded by a newer version.
 	s.mu.Lock()
 	current, tracked := s.docs[path]
-	if !tracked || version == current {
+	if tracked && version == current {
 		s.snaps[path] = snap // cache for import-graph lookups (watched files)
 	}
 	s.mu.Unlock()
-	if tracked && version != current {
+	if !tracked || version != current {
 		return
 	}
 
@@ -93,11 +94,66 @@ func (s *Server) publishSnapshot(ctx context.Context, entryPath string, version 
 			lsps = append(lsps, toLSPDiagnostic(ix, lineIndex, d))
 		}
 		params := PublishDiagnosticsParams{URI: pathToURI(file), Diagnostics: lsps}
-		if file == entryPath {
-			params.Version = version
+		if v, ok := s.publishVersion(file, entryPath, version); ok {
+			params.Version = &v
 		}
 		s.notify("textDocument/publishDiagnostics", params)
 	}
+
+	// Clear diagnostics on files this entry published to previously but no longer
+	// does (an import was removed, or an imported file's error was fixed) — those
+	// URIs would otherwise keep showing stale squiggles. Files that are open in
+	// their own right manage their own diagnostics, so leave them untouched.
+	s.mu.Lock()
+	cur := make(map[string]bool, len(byFile))
+	for file := range byFile {
+		cur[file] = true
+	}
+	var stale []string
+	for file := range s.published[entryPath] {
+		if cur[file] {
+			continue
+		}
+		if _, open := s.docs[file]; open && file != entryPath {
+			continue
+		}
+		// Another open document may still legitimately flag this imported file;
+		// clearing here would wipe diagnostics that entry still owns (and would
+		// not be re-triggered), so only clear when no other entry publishes to it.
+		ownedElsewhere := false
+		for entry, files := range s.published {
+			if entry != entryPath && files[file] {
+				ownedElsewhere = true
+				break
+			}
+		}
+		if ownedElsewhere {
+			continue
+		}
+		stale = append(stale, file)
+	}
+	s.published[entryPath] = cur
+	s.mu.Unlock()
+
+	for _, file := range stale {
+		s.notify("textDocument/publishDiagnostics", PublishDiagnosticsParams{
+			URI:         pathToURI(file),
+			Diagnostics: []Diagnostic{},
+		})
+	}
+}
+
+// publishVersion returns the version to attach to a publishDiagnostics for file.
+// The entry document uses the analyzed version; another open document uses its
+// current tracked version; a file that is not open carries no version (false).
+func (s *Server) publishVersion(file, entryPath string, entryVersion int) (int, bool) {
+	if file == entryPath {
+		return entryVersion, true
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	v, ok := s.docs[file]
+	return v, ok
 }
 
 // toLSPDiagnostic converts a diag.Diagnostic to its LSP form. Related locations

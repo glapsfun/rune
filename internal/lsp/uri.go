@@ -14,7 +14,7 @@ import (
 // returned unchanged, so the server tolerates non-conformant clients.
 func uriToPath(uri string) string {
 	if !strings.HasPrefix(uri, "file://") {
-		return filepath.FromSlash(percentDecode(uri))
+		return filepath.Clean(filepath.FromSlash(percentDecode(uri)))
 	}
 	p := strings.TrimPrefix(uri, "file://")
 	// An authority component ("file://host/path") is uncommon for local files;
@@ -29,7 +29,10 @@ func uriToPath(uri string) string {
 	if len(p) >= 3 && p[0] == '/' && isDriveLetter(p[1]) && p[2] == ':' {
 		p = p[1:]
 	}
-	return filepath.FromSlash(p)
+	// Clean so a URI carrying redundant separators or ./ segments keys overlay
+	// documents identically to the cleaned filepath.Join paths config.Compose
+	// resolves imports to (FR-003 overlay-then-disk lookup relies on the match).
+	return filepath.Clean(filepath.FromSlash(p))
 }
 
 // pathToURI converts a filesystem path to a file:// URI.

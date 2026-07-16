@@ -155,7 +155,15 @@ func exprAt(e ast.Expr, offset int, scope ScopeID) (Target, bool) {
 // body line, returning it as a variable/parameter reference.
 func interpTargetAt(bl *ast.BodyLine, offset int, scope ScopeID) (Target, bool) {
 	base := bl.Sp.Start.Offset
-	rel := offset - base
+	// bl.Raw prepends the line's extra (deeper-than-base) indentation, while the
+	// span starts at the first content byte. On a more-nested body line those
+	// leading spaces shift every Raw index by len(extra) relative to the source,
+	// so offsets must be adjusted both ways or hit-testing lands too early.
+	extra := len(bl.Raw) - (bl.Sp.End.Offset - bl.Sp.Start.Offset)
+	if extra < 0 {
+		extra = 0
+	}
+	rel := offset - base + extra
 	if rel < 0 || rel > len(bl.Raw) {
 		return Target{}, false
 	}
@@ -165,8 +173,8 @@ func interpTargetAt(bl *ast.BodyLine, offset int, scope ScopeID) (Target, bool) 
 	}
 	sp := token.Span{
 		File:  bl.Sp.File,
-		Start: token.Position{Offset: base + relStart, Line: bl.Sp.Start.Line, Col: bl.Sp.Start.Col + relStart},
-		End:   token.Position{Offset: base + relEnd, Line: bl.Sp.Start.Line, Col: bl.Sp.Start.Col + relEnd},
+		Start: token.Position{Offset: base + relStart - extra, Line: bl.Sp.Start.Line, Col: bl.Sp.Start.Col + relStart - extra},
+		End:   token.Position{Offset: base + relEnd - extra, Line: bl.Sp.Start.Line, Col: bl.Sp.Start.Col + relEnd - extra},
 	}
 	return Target{Kind: TargetVarRef, Name: name, Scope: scope, Span: sp}, true
 }

@@ -11,8 +11,10 @@ import (
 )
 
 // snapshotFor analyzes the current content of the document at path and returns
-// the snapshot plus the raw text (for position conversion). Analysis is cheap
-// (~microseconds), so it is done per request rather than cached.
+// the snapshot plus the raw text (for position conversion). Analysis is done
+// per request rather than cached: the entry document's version does not change
+// when a transitive import is edited on disk, so a version-keyed cache would
+// serve stale cross-file results until an async watched-file re-analysis lands.
 func (s *Server) snapshotFor(ctx context.Context, path string) (*analysis.Snapshot, string, error) {
 	text := ""
 	if b, err := s.overlay.Read(ctx, path); err == nil {
@@ -71,13 +73,14 @@ func (s *Server) hover(id *json.RawMessage, params json.RawMessage) {
 		s.reply(id, nil)
 		return
 	}
-	offset := offsetAt(text, p.Position)
+	ix := NewLineIndex(text) // one index for both the offset and the result span
+	offset, _ := ix.PositionToByteOffset(p.Position)
 	md, span, ok := language.Hover(snap.File, path, offset)
 	if !ok {
 		s.reply(id, nil)
 		return
 	}
-	r := NewLineIndex(text).SpanToRange(span)
+	r := ix.SpanToRange(span)
 	s.reply(id, Hover{Contents: MarkupContent{Kind: "markdown", Value: md}, Range: &r})
 }
 

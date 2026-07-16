@@ -51,6 +51,23 @@ func TestDefinitionVariableReference(t *testing.T) {
 	}
 }
 
+// TestDefinitionInterpolationDeeperIndent guards the body-line offset mapping:
+// a line indented deeper than the body's base width keeps that extra
+// indentation in its Raw text, so the source offset must be shifted by it to
+// hit-test the interpolation. Without the shift this reference is missed.
+func TestDefinitionInterpolationDeeperIndent(t *testing.T) {
+	src := "output := \"dist\"\n# B.\nbuild:\n    @echo start\n        echo {{output}}\n"
+	f, ix := resolve(t, src)
+	offset := at(src, "{{output}}") + 2 // on "output" inside the deeper-indented line
+	spans, ok := Definition(ix, f, "Runefile", offset)
+	if !ok || len(spans) != 1 {
+		t.Fatalf("variable definition not resolved on deeper-indented line: ok=%v spans=%v", ok, spans)
+	}
+	if spans[0].Start.Line != 1 { // assignment on line 1
+		t.Errorf("definition line = %d, want 1", spans[0].Start.Line)
+	}
+}
+
 func TestDefinitionParameterInterpolation(t *testing.T) {
 	src := "# G.\ngreet name=\"world\":\n    @echo {{name}}\n"
 	f, ix := resolve(t, src)

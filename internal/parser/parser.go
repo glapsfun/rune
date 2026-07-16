@@ -77,10 +77,6 @@ func (p *parser) expect(k token.Kind, context string) (token.Token, bool) {
 	return p.cur(), false
 }
 
-func (p *parser) errorf(span token.Span, format string, args ...any) {
-	p.diags.Errorf(span, format, args...)
-}
-
 // codef emits a parse error carrying a stable diagnostic code (spec FR-010).
 func (p *parser) codef(code string, span token.Span, format string, args ...any) {
 	p.diags.Codef(code, span, format, args...)

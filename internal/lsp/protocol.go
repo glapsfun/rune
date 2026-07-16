@@ -105,8 +105,12 @@ type DidCloseTextDocumentParams struct {
 // --- diagnostics ---
 
 type PublishDiagnosticsParams struct {
-	URI         string       `json:"uri"`
-	Version     int          `json:"version"`
+	URI string `json:"uri"`
+	// Version is the document version the diagnostics were computed for. It is
+	// optional per LSP; omitted (nil) rather than sent as a misleading 0 for
+	// files that are not open, since version-checking clients discard a payload
+	// whose version does not match the buffer they hold.
+	Version     *int         `json:"version,omitempty"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 

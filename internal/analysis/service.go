@@ -59,7 +59,7 @@ func (s *Service) Analyze(ctx context.Context, req AnalyzeRequest) (*Snapshot, e
 	diags = append(diags, analyzer.CheckSettings(file)...)
 
 	idx := language.BuildIndex(file)
-	graph := buildImportGraph(req.URI, file)
+	graph := buildImportGraph(req.URI, file, provider)
 
 	return &Snapshot{
 		URI:         req.URI,
@@ -87,7 +87,7 @@ func entryProvider(ctx context.Context, store SourceStore, entryURI DocumentURI,
 // buildImportGraph records the entry file's direct import/mod edges. Deeper
 // transitive edges are added as those files are themselves analyzed; the LSP
 // composes per-entry graphs into a workspace graph.
-func buildImportGraph(entry DocumentURI, f *ast.File) ImportGraph {
+func buildImportGraph(entry DocumentURI, f *ast.File, src diag.SourceProvider) ImportGraph {
 	g := NewImportGraph()
 	if f == nil {
 		return g
@@ -97,8 +97,11 @@ func buildImportGraph(entry DocumentURI, f *ast.File) ImportGraph {
 		g.AddEdge(entry, filepath.Join(base, filepath.FromSlash(im.Path)))
 	}
 	for _, m := range f.Mods {
-		if m.Path != "" {
-			g.AddEdge(entry, filepath.Join(base, filepath.FromSlash(m.Path)))
+		// Resolve mods through the same rules as Compose so directory-resolved
+		// mods (`mod foo` -> foo/Runefile) also get an edge — otherwise saving
+		// such a mod file would not invalidate the open document that imports it.
+		if target := config.ResolveModPath(base, m, src); target != "" {
+			g.AddEdge(entry, target)
 		}
 	}
 	return g

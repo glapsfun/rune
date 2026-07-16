@@ -152,8 +152,8 @@ func TestProtocolLifecycle(t *testing.T) {
 	if hasDiagCode(pub2.Diagnostics, "RUNE2001") {
 		t.Errorf("RUNE2001 should have cleared, got %+v", pub2.Diagnostics)
 	}
-	if pub2.Version != 2 {
-		t.Errorf("publish version = %d, want 2", pub2.Version)
+	if pub2.Version == nil || *pub2.Version != 2 {
+		t.Errorf("publish version = %v, want 2", pub2.Version)
 	}
 
 	// shutdown + exit.

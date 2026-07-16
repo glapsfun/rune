@@ -81,7 +81,7 @@ func detectContext(text string, offset int) (completionContext, string) {
 	prefix := trailingIdent(line)
 
 	switch {
-	case countPair(line, "{{") > countPair(line, "}}"): // inside an open interpolation
+	case strings.Count(line, "{{") > strings.Count(line, "}}"): // inside an open interpolation
 		return ctxExpression, prefix
 	case strings.Contains(line, ":="):
 		return ctxExpression, prefix
@@ -110,8 +110,6 @@ func trailingIdent(line string) string {
 func isNameByte(b byte) bool {
 	return b == '_' || b == '-' || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 }
-
-func countPair(s, pair string) int { return strings.Count(s, pair) }
 
 // isSettingLine reports whether line is `set NAME` still being typed (no `:=`).
 func isSettingLine(line string) bool {
@@ -200,10 +198,8 @@ func expressionCompletions(ix *Index, scope ScopeID, prefix string) []Completion
 			vars = append(vars, CompletionItem{Label: s.Name, Detail: "variable", Kind: CompletionVariable})
 		}
 	}
-	for _, b := range OfKind(BuiltinFunction) {
-		if strings.HasPrefix(b.Name, prefix) {
-			fns = append(fns, CompletionItem{Label: b.Name, Detail: b.Signature, Documentation: b.Documentation, Kind: CompletionFunction})
-		}
+	for _, b := range MatchKind(BuiltinFunction, prefix) {
+		fns = append(fns, CompletionItem{Label: b.Name, Detail: b.Signature, Documentation: b.Documentation, Kind: CompletionFunction})
 	}
 	sortItems(params)
 	sortItems(vars)
@@ -213,10 +209,8 @@ func expressionCompletions(ix *Index, scope ScopeID, prefix string) []Completion
 
 func registryCompletions(kind BuiltinKind, ck CompletionKind, prefix string) []CompletionItem {
 	var items []CompletionItem
-	for _, b := range OfKind(kind) {
-		if strings.HasPrefix(b.Name, prefix) {
-			items = append(items, CompletionItem{Label: b.Name, Detail: b.Signature, Documentation: b.Documentation, Kind: ck})
-		}
+	for _, b := range MatchKind(kind, prefix) {
+		items = append(items, CompletionItem{Label: b.Name, Detail: b.Signature, Documentation: b.Documentation, Kind: ck})
 	}
 	sortItems(items)
 	return items

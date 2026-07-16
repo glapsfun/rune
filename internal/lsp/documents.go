@@ -56,9 +56,11 @@ func (s *Server) didClose(params json.RawMessage) {
 	path := uriToPath(p.TextDocument.URI)
 	s.overlay.Remove(path)
 	s.clearDoc(path)
-	// Clear diagnostics for the closed document.
+	// Clear diagnostics for the closed document under the canonical URI that
+	// publishSnapshot used to publish them (pathToURI(uriToPath(...))); the raw
+	// client URI may differ (e.g. a redundant ./) and would leave stale squiggles.
 	s.notify("textDocument/publishDiagnostics", PublishDiagnosticsParams{
-		URI:         p.TextDocument.URI,
+		URI:         pathToURI(path),
 		Diagnostics: []Diagnostic{},
 	})
 }
@@ -98,6 +100,7 @@ func (s *Server) clearDoc(path string) {
 	s.mu.Lock()
 	delete(s.docs, path)
 	delete(s.snaps, path)
+	delete(s.published, path)
 	if t, ok := s.timers[path]; ok {
 		t.Stop()
 		delete(s.timers, path)

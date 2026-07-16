@@ -29,6 +29,7 @@ type Server struct {
 	timers     map[string]*time.Timer        // path -> pending debounce timer
 	cancels    map[string]context.CancelFunc // path -> in-flight analysis cancel
 	snaps      map[string]*analysis.Snapshot // path -> last published snapshot (for the import graph)
+	published  map[string]map[string]bool    // entry path -> set of files it last published diagnostics to
 	root       string                        // workspace root (FR-021), used to scope file watching
 	nextReqID  int                           // id counter for server-initiated requests
 	shutdownOK bool
@@ -56,16 +57,17 @@ func NewServer(r io.Reader, w io.Writer, opts Options) *Server {
 		debounce = 100 * time.Millisecond
 	}
 	return &Server{
-		conn:     NewConn(r, w),
-		svc:      analysis.NewService(overlay),
-		overlay:  overlay,
-		log:      log.New(logw, "rune-lsp ", log.LstdFlags),
-		version:  opts.Version,
-		debounce: debounce,
-		docs:     map[string]int{},
-		timers:   map[string]*time.Timer{},
-		cancels:  map[string]context.CancelFunc{},
-		snaps:    map[string]*analysis.Snapshot{},
+		conn:      NewConn(r, w),
+		svc:       analysis.NewService(overlay),
+		overlay:   overlay,
+		log:       log.New(logw, "rune-lsp ", log.LstdFlags),
+		version:   opts.Version,
+		debounce:  debounce,
+		docs:      map[string]int{},
+		timers:    map[string]*time.Timer{},
+		cancels:   map[string]context.CancelFunc{},
+		snaps:     map[string]*analysis.Snapshot{},
+		published: map[string]map[string]bool{},
 	}
 }
 

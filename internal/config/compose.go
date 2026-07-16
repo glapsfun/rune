@@ -118,7 +118,13 @@ func loadMods(f *ast.File, src diag.SourceProvider, seen map[string]bool, diags 
 		}
 		sub, sdiags := parser.Parse(path, string(data))
 		*diags = append(*diags, sdiags...)
-		compose(sub, src, seen, diags)
+		// Compose the module's own imports/mods only once per path; a mod cycle
+		// (a mods b, b mods a) would otherwise recurse without bound. The module
+		// is still namespaced into f either way so its tasks stay addressable.
+		if !seen[path] {
+			seen[path] = true
+			compose(sub, src, seen, diags)
+		}
 		namespaceInto(f, sub, m.Name, diags)
 	}
 }
@@ -164,6 +170,15 @@ func namespaceInto(f, sub *ast.File, ns string, diags *diag.List) {
 			have[a.Name] = true
 		}
 	}
+}
+
+// ResolveModPath resolves a mod declaration to its target file path using the
+// same rules as Compose (explicit path, else <name>.rune / <name>/Runefile /
+// <name>/.runefile), consulting src for open overlays. It returns "" when the
+// mod cannot be resolved. Exposed so the analysis layer can build a complete
+// import graph that includes directory-resolved mods.
+func ResolveModPath(base string, m *ast.Mod, src diag.SourceProvider) string {
+	return resolveModPath(base, m, src)
 }
 
 func resolveModPath(base string, m *ast.Mod, src diag.SourceProvider) string {
