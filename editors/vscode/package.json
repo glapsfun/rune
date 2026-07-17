@@ -1,0 +1,57 @@
+{
+  "name": "rune",
+  "displayName": "Rune",
+  "description": "Language support for Runefiles — diagnostics, completion, go-to-definition, hover, document symbols, and formatting — via the embedded `rune lsp` server.",
+  "version": "0.1.0",
+  "publisher": "rune-task-runner",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/rune-task-runner/rune" },
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Linters", "Formatters"],
+  "activationEvents": ["onLanguage:runefile"],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "runefile",
+        "aliases": ["Runefile", "rune"],
+        "filenames": ["Runefile", ".runefile"],
+        "extensions": [".rune"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "runefile",
+        "scopeName": "source.rune",
+        "path": "./syntaxes/runefile.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Rune",
+      "properties": {
+        "rune.path": {
+          "type": "string",
+          "default": "rune",
+          "description": "Path to the `rune` executable used to start the language server (`rune lsp`)."
+        },
+        "rune.trace.server": {
+          "type": "string",
+          "enum": ["off", "messages", "verbose"],
+          "default": "off",
+          "description": "Trace the JSON-RPC traffic between VS Code and the rune language server."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.24.0"
+  },
+  "scripts": {
+    "package": "vsce package"
+  }
+}

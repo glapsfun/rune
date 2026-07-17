@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/rune-task-runner/rune/internal/ast"
+	"github.com/rune-task-runner/rune/internal/diag"
 	"github.com/rune-task-runner/rune/internal/token"
 )
 
@@ -55,7 +56,7 @@ func (p *parser) parsePrimary() ast.Expr {
 		// without advancing here let callers (e.g. dependency/func-call arguments)
 		// spin forever, appending nodes until OOM. advance() is a no-op at EOF.
 		t := p.advance()
-		p.errorf(t.Span, "expected an expression, found %s", describe(t))
+		p.codef(diag.CodeIncompleteExpr, t.Span, "expected an expression, found %s", describe(t))
 		return &ast.StringLit{Value: "", Sp: t.Span}
 	}
 }
@@ -86,7 +87,7 @@ func (p *parser) parseConditional() ast.Expr {
 	parseBranch := func() (ast.CondBranch, bool) {
 		left := p.parseConcat()
 		if !isCmpOp(p.curKind()) {
-			p.errorf(p.cur().Span, "expected a comparison operator (== != =~), found %s", describe(p.cur()))
+			p.codef(diag.CodeIncompleteExpr, p.cur().Span, "expected a comparison operator (== != =~), found %s", describe(p.cur()))
 			return ast.CondBranch{}, false
 		}
 		op := p.advance()
@@ -121,7 +122,7 @@ func (p *parser) parseConditional() ast.Expr {
 		return cond
 	}
 
-	p.errorf(p.cur().Span, "conditional requires a final 'else { ... }'")
+	p.codef(diag.CodeIncompleteExpr, p.cur().Span, "conditional requires a final 'else { ... }'")
 	if cond.Else == nil {
 		cond.Else = &ast.StringLit{Value: "", Sp: ifTok.Span}
 	}

@@ -65,6 +65,26 @@ func TestComposeImportCollision(t *testing.T) {
 	}
 }
 
+// TestComposeModCycleTerminates guards against unbounded recursion on a mod
+// cycle (a mods b, b mods a). Reaching the assertion at all proves composition
+// terminated rather than overflowing the stack.
+func TestComposeModCycleTerminates(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "a.rune", "mod b \"b.rune\"\n\natask:\n    @echo a\n")
+	writeFile(t, dir, "b.rune", "mod a \"a.rune\"\n\nbtask:\n    @echo b\n")
+	main := writeFile(t, dir, "Runefile", "mod a \"a.rune\"\n\nmain: a::atask\n    @echo main\n")
+	src, _ := os.ReadFile(main)
+	f, _ := parser.Parse(main, string(src))
+	Compose(f, diag.SourceProvider(srcProvider))
+	names := map[string]bool{}
+	for _, tk := range f.Tasks {
+		names[tk.Name] = true
+	}
+	if !names["a::atask"] {
+		t.Errorf("namespaced tasks = %v, want a::atask", names)
+	}
+}
+
 func TestComposeModNamespacing(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "docker.rune", "push:\n    @echo push\nbuild: push\n    @echo dbuild\n")

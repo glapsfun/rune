@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/rune-task-runner/rune/internal/ast"
+	"github.com/rune-task-runner/rune/internal/diag"
 	"github.com/rune-task-runner/rune/internal/token"
 )
 
@@ -77,7 +78,7 @@ func (p *parser) parseAttrItem() *ast.Attribute {
 		if p.curKind() == token.LPAREN {
 			p.skipBalancedParens()
 		}
-		p.errorf(name.Span, "unknown attribute %q", name.Lit)
+		p.codef(diag.CodeInvalidAttribute, name.Span, "unknown attribute %q", name.Lit)
 		return a
 	}
 }
@@ -90,7 +91,7 @@ func (p *parser) parseSingleStringArg(attr string) string {
 	if s, ok := p.accept(token.STRING); ok {
 		val = s.Lit
 	} else {
-		p.errorf(p.cur().Span, "%s(...) requires a string argument", attr)
+		p.codef(diag.CodeInvalidAttribute, p.cur().Span, "%s(...) requires a string argument", attr)
 	}
 	p.expect(token.RPAREN, "to close "+attr+"(...)")
 	return val
@@ -114,7 +115,7 @@ func (p *parser) parseCacheArgs(a *ast.Attribute) {
 			a.Outputs = list
 			a.HasOutputs = true
 		default:
-			p.errorf(key.Span, "unknown cache argument %q (expected inputs/outputs)", key.Lit)
+			p.codef(diag.CodeInvalidAttribute, key.Span, "unknown cache argument %q (expected inputs/outputs)", key.Lit)
 		}
 		if _, ok := p.accept(token.COMMA); !ok {
 			break

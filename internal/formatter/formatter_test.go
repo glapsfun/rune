@@ -1,4 +1,4 @@
-package cli
+package formatter
 
 import (
 	"flag"
@@ -28,7 +28,7 @@ func TestFmtGolden(t *testing.T) {
 			if diags.HasErrors() {
 				t.Fatalf("parse: %v", diags)
 			}
-			got := formatFile(f)
+			got := Format(f)
 
 			golden := strings.TrimSuffix(in, ".rune") + ".fmt"
 			if *update {
@@ -56,13 +56,13 @@ func TestFmtIdempotent(t *testing.T) {
 	if diags.HasErrors() {
 		t.Fatalf("parse: %v", diags)
 	}
-	once := formatFile(f)
+	once := Format(f)
 
 	f2, diags2 := parser.Parse("Runefile", once)
 	if diags2.HasErrors() {
 		t.Fatalf("re-parse of formatted output failed: %v", diags2)
 	}
-	twice := formatFile(f2)
+	twice := Format(f2)
 	if once != twice {
 		t.Errorf("formatting is not idempotent:\nonce:\n%s\ntwice:\n%s", once, twice)
 	}

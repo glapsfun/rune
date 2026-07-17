@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Runefile",
+  "scopeName": "source.rune",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#attributes" },
+    { "include": "#strings" },
+    { "include": "#interpolation" }
+  ],
+  "repository": {
+    "comments": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.rune"
+    },
+    "keywords": {
+      "match": "\\b(set|import|mod|if|else)\\b",
+      "name": "keyword.control.rune"
+    },
+    "attributes": {
+      "match": "\\[(private|confirm|group|parallel|cache|env|working-directory|network|no-cd|no-exit-message|linux|macos|windows|unix)\\b",
+      "name": "entity.other.attribute-name.rune"
+    },
+    "strings": {
+      "name": "string.quoted.double.rune",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "match": "\\\\.", "name": "constant.character.escape.rune" }
+      ]
+    },
+    "interpolation": {
+      "name": "meta.interpolation.rune",
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.rune" } },
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.rune" } },
+      "patterns": [
+        { "match": "[A-Za-z_][A-Za-z0-9_]*", "name": "variable.other.rune" }
+      ]
+    }
+  }
+}

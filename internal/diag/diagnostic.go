@@ -20,11 +20,23 @@ func (s Severity) String() string {
 	return "error"
 }
 
-// Diagnostic is a single located message.
+// RelatedLocation is a secondary span attached to a diagnostic, such as each
+// task/file participating in a cycle (spec FR-009). Message is optional context
+// (e.g. "build depends on test").
+type RelatedLocation struct {
+	Span    token.Span
+	Message string
+}
+
+// Diagnostic is a single located message. Code, when set, is a stable public
+// identifier from the RUNE#### catalog (spec FR-010); it is empty for legacy or
+// uncoded emits. Related carries any secondary locations (FR-009).
 type Diagnostic struct {
 	Severity Severity
 	Span     token.Span
 	Message  string
+	Code     string
+	Related  []RelatedLocation
 }
 
 // New builds an error diagnostic.
@@ -37,6 +49,18 @@ func Warn(span token.Span, msg string) Diagnostic {
 	return Diagnostic{Severity: Warning, Span: span, Message: msg}
 }
 
+// WithCode returns a copy of d carrying the given stable diagnostic code.
+func (d Diagnostic) WithCode(code string) Diagnostic {
+	d.Code = code
+	return d
+}
+
+// WithRelated returns a copy of d with the given related locations attached.
+func (d Diagnostic) WithRelated(rel ...RelatedLocation) Diagnostic {
+	d.Related = append(d.Related, rel...)
+	return d
+}
+
 // List is an ordered collection of diagnostics.
 type List []Diagnostic
 
@@ -46,6 +70,11 @@ func (l *List) Add(d Diagnostic) { *l = append(*l, d) }
 // Errorf appends an error diagnostic with a formatted message.
 func (l *List) Errorf(span token.Span, format string, args ...any) {
 	l.Add(Diagnostic{Severity: Error, Span: span, Message: sprintf(format, args...)})
+}
+
+// Codef appends an error diagnostic carrying a stable code (spec FR-010).
+func (l *List) Codef(code string, span token.Span, format string, args ...any) {
+	l.Add(Diagnostic{Severity: Error, Span: span, Message: sprintf(format, args...), Code: code})
 }
 
 // HasErrors reports whether any diagnostic is an error.

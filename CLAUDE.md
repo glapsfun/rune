@@ -1,26 +1,30 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/010-minimum-rune-version/plan.md` (Minimum Rune Version
-— a new `set minimum_version := "0.8.0"` setting that pins the minimum required Rune
-binary release). The gate runs before imports are spliced, before analysis, and
-before any execution: it reads the setting from the ROOT Runefile's `file.Settings`
-(pre-`config.Compose`, so imported/child values can never impose or relax the
-requirement) and rejects an older binary with a caret-anchored diagnostic
-(required/installed/upgrade-URL, exit 3, nothing executed). Key pieces: (1) new
-dependency-free `internal/semver` package (SemVer 2.0.0 precedence; build metadata
-ignored; prerelease < release, so `0.9.0-rc.1` does not satisfy `0.9.0`) — chosen
-over a third-party dep to honor Boringly-Portable; (2) `config.MinimumVersion` /
-`CheckMinimumVersion(file, installed)` mirroring the existing `rune_version` helper
-in `internal/config/version.go`, requiring a static `*ast.StringLit` value else
-`minimum_version must be a static semantic version`; (3) gate call sites in
-`internal/cli/run.go` (between `parser.Parse` and `config.Compose`) and
-`serve.go loadModule` (same point) — installed version threaded via `opts.Version`
-with a test-only `RUNE_TEST_VERSION` env hook for integration tests; (4) CLI-only
-global `--ignore-version` (warn+proceed, never Runefile-settable) plus MCP
-operator-only `mcpserver.Options.AllowIgnoreVersion` (default false); (5) `rune
-version` gains a language-version line, `--check`, and `--check --json`. `minimum_version`
-stays independent of `rune_version`. Ships with GRAMMAR.md/settings docs and unit +
-integration + golden-diagnostic + cross-platform tests. Read the plan and its
-`research.md` for details.
+Active feature plan: `specs/011-rune-lsp/plan.md` (Rune Language Server Protocol —
+a new `rune lsp` stdio JSON-RPC/LSP 3.17 server plus a standalone `rune analyze`
+command, both driven by a single new `internal/analysis` service wrapping the
+existing parse → compose → analyze pipeline. Delivers live diagnostics, context-aware
+completion, go-to-definition (incl. cross-file), hover, document symbols, and
+formatting — reusing the existing parser/analyzer/import-resolver/formatter with NO
+second grammar, and running NOTHING during analysis). Four additive `internal/`
+packages: `analysis` (Service.Analyze → Snapshot; SourceStore overlay; Workspace +
+ImportGraph), `language` (Symbol Index ByName/ByQualified/ByDocument; scope;
+completion/definition/hover; single builtin/setting/attribute registry), `lsp`
+(hand-rolled Content-Length JSON-RPC + minimal typed LSP 3.17 subset — zero new deps,
+per the `internal/semver` precedent; `convert.go` LineIndex does byte-col↔UTF-16),
+and `formatter` (extracted from `internal/cli/fmt.go`). Backward-compatible changes to
+existing packages: `diag.Diagnostic` gains `Code` + `Related []RelatedLocation`
+(RUNE#### codes are a STABLE PUBLIC CONTRACT — see `contracts/diagnostic-codes.md`);
+`config.Compose` refactored to read imports through the injected SourceStore instead
+of `os.ReadFile` (so overlays apply transitively — today it takes a SourceProvider but
+ignores it); parser recovery hardened (existing top-level recovery + optional
+`InvalidStmt`). Wired as `cmd/rune/lsp.go` + `analyze.go`; MCP compose site is
+`internal/cli/serve.go loadModule`. Safety (FR-028) enforced structurally (no
+`runtime`/`os-exec`/net imports in analysis/language/lsp) + a no-side-effects test.
+Clarifications (2026-07-10): codes are a contract; analyze/LSP report full transitive
+import diagnostics; private tasks complete only in their own file; undocumented-public-
+task warning (RUNE2010) ships as a non-gating warning. Constitution deviation
+(4 new packages + formatter extraction vs locked layout) justified in plan Complexity
+Tracking. Read the plan, `research.md`, `data-model.md`, and `contracts/` for details.
 <!-- SPECKIT END -->
 
 ## Development workflow

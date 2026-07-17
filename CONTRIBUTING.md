@@ -101,6 +101,8 @@ example, `rune docs-check` is the fast check; if you don't have `rune`, run the
 |------|--------------|
 | [`cmd/rune/`](cmd/rune/) | The CLI entry point (flags, subcommands). |
 | `internal/` | The engine: `lexer`, `parser`, `analyzer`, `eval`, `runtime/…`, `cli`, plus the MCP server. |
+| `internal/analysis`, `internal/language`, `internal/lsp`, `internal/formatter` | The read-only analysis layer behind `rune analyze` and `rune lsp` (the language server) — a shared `analysis.Service`, the symbol index and language registry, the LSP protocol glue, and the canonical formatter. Runs nothing. |
+| [`editors/`](editors/) | Editor integration: the VS Code extension and Neovim/Helix/Zed setup. |
 | [`docs/`](docs/) | User documentation — guides, examples, reference. |
 | `test/integration`, `test/corpus`, `test/docs` | End-to-end, grammar-corpus, and documentation harnesses. |
 | [`Runefile`](Runefile) | Rune's own dev tasks. |

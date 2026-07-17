@@ -55,7 +55,7 @@ func (a *analyzer) collect() {
 
 	for _, t := range a.file.Tasks {
 		if _, ok := a.tasks[t.Name]; ok {
-			a.diags.Errorf(t.Sp, "duplicate task %q", t.Name)
+			a.diags.Codef(diag.CodeDuplicateTask, t.Sp, "duplicate task %q", t.Name)
 			continue
 		}
 		a.tasks[t.Name] = t
@@ -70,7 +70,7 @@ func (a *analyzer) checkParams(t *ast.Task) {
 	sawDefaulted := false
 	for i, p := range t.Params {
 		if seen[p.Name] {
-			a.diags.Errorf(p.Sp, "duplicate parameter %q in task %q", p.Name, t.Name)
+			a.diags.Codef(diag.CodeDuplicateParam, p.Sp, "duplicate parameter %q in task %q", p.Name, t.Name)
 		}
 		seen[p.Name] = true
 
@@ -143,7 +143,7 @@ func (a *analyzer) resolveExpr(e ast.Expr, validParams map[string]bool) {
 		return
 	case *ast.VarRef:
 		if !a.vars[x.Name] && !validParams[x.Name] {
-			a.diags.Errorf(x.Sp, "undefined variable: %s", x.Name)
+			a.diags.Codef(diag.CodeUndefinedVariable, x.Sp, "undefined variable: %s", x.Name)
 		}
 	case *ast.Binary:
 		a.resolveExpr(x.Left, validParams)
@@ -171,7 +171,7 @@ func (a *analyzer) checkDependencies() {
 		for _, dep := range append(append([]*ast.DepCall{}, t.Deps...), t.PostHooks...) {
 			target, ok := a.tasks[dep.Name]
 			if !ok {
-				a.diags.Errorf(dep.Sp, "unknown task: %s", dep.Name)
+				a.diags.Codef(diag.CodeUnknownDependency, dep.Sp, "unknown task: %s", dep.Name)
 				continue
 			}
 			a.checkArity(target, len(dep.Args), dep.Sp)
@@ -199,11 +199,11 @@ func (a *analyzer) checkArity(target *ast.Task, argc int, span token.Span) {
 		min++
 	}
 	if argc < min {
-		a.diags.Errorf(span, "task %q expects at least %d argument(s), got %d", target.Name, min, argc)
+		a.diags.Codef(diag.CodeWrongArgCount, span, "task %q expects at least %d argument(s), got %d", target.Name, min, argc)
 		return
 	}
 	if !hasVariadic && argc > len(target.Params) {
-		a.diags.Errorf(span, "task %q accepts at most %d argument(s), got %d", target.Name, len(target.Params), argc)
+		a.diags.Codef(diag.CodeWrongArgCount, span, "task %q accepts at most %d argument(s), got %d", target.Name, len(target.Params), argc)
 	}
 }
 
@@ -228,7 +228,7 @@ func (a *analyzer) checkCycles() {
 		for _, dep := range append(append([]*ast.DepCall{}, t.Deps...), t.PostHooks...) {
 			switch color[dep.Name] {
 			case gray:
-				a.diags.Errorf(t.Sp, "dependency cycle: %s", cyclePath(stack, dep.Name))
+				a.reportCycle(t.Sp, stack, dep.Name)
 				stack = stack[:len(stack)-1]
 				color[name] = black
 				return true
@@ -256,8 +256,27 @@ func (a *analyzer) checkCycles() {
 	}
 }
 
-// cyclePath renders the cycle from where `back` re-enters the stack.
-func cyclePath(stack []string, back string) string {
+// reportCycle emits the RUNE2003 dependency-cycle diagnostic, attaching every
+// task in the cycle as a related location (spec FR-009).
+func (a *analyzer) reportCycle(at token.Span, stack []string, back string) {
+	path := cycleNodes(stack, back)
+	d := diag.Diagnostic{
+		Severity: diag.Error,
+		Span:     at,
+		Message:  "dependency cycle: " + arrowJoin(path),
+		Code:     diag.CodeDependencyCycle,
+	}
+	for _, n := range path {
+		if tk := a.tasks[n]; tk != nil {
+			d.Related = append(d.Related, diag.RelatedLocation{Span: tk.Sp, Message: n})
+		}
+	}
+	a.diags.Add(d)
+}
+
+// cycleNodes returns the cycle path (including the closing node) from where
+// `back` re-enters the stack.
+func cycleNodes(stack []string, back string) []string {
 	start := 0
 	for i, n := range stack {
 		if n == back {
@@ -265,7 +284,11 @@ func cyclePath(stack []string, back string) string {
 			break
 		}
 	}
-	path := append(append([]string{}, stack[start:]...), back)
+	return append(append([]string{}, stack[start:]...), back)
+}
+
+// arrowJoin renders a task path as "a → b → c".
+func arrowJoin(path []string) string {
 	out := path[0]
 	for _, n := range path[1:] {
 		out += " → " + n
@@ -304,7 +327,7 @@ func (a *analyzer) resolveExprAt(e ast.Expr, params map[string]bool, reportSpan 
 			return
 		case *ast.VarRef:
 			if !a.vars[x.Name] && !params[x.Name] {
-				a.diags.Errorf(reportSpan, "undefined variable: %s", x.Name)
+				a.diags.Codef(diag.CodeUndefinedVariable, reportSpan, "undefined variable: %s", x.Name)
 			}
 		case *ast.Binary:
 			walk(x.Left)
