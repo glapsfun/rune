@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
@@ -30,12 +29,12 @@ func chooseAndRun(opts Options, runefile string, args []string) error {
 		return usagef("--choose requires an interactive terminal")
 	}
 
-	items := pickerItems(mod)
-	if len(items) == 0 {
+	sections := pickerItems(mod)
+	if len(sections) == 0 {
 		return usagef("no tasks to choose from")
 	}
 
-	picked, err := runPicker(opts, items)
+	picked, err := runPicker(opts, sections)
 	if err != nil {
 		return err
 	}
@@ -45,22 +44,27 @@ func chooseAndRun(opts Options, runefile string, args []string) error {
 	return execute(opts, runefile, append([]string{picked}, args...))
 }
 
-// pickerItems projects the loaded module's tasks into selectable rows, applying
-// the same visibility rules as `--list` and shell completion: non-private and
-// matching the current OS. Order follows the Runefile.
-func pickerItems(mod *loadedModule) []tui.PickerItem {
-	var items []tui.PickerItem
-	for _, t := range mod.file.Tasks {
-		if t.IsPrivate() || !osMatches(t, runtime.GOOS) {
-			continue
+// pickerItems projects the loaded module's tasks into sections, applying the
+// same visibility rules as `--list` and shell completion (non-private,
+// matching the current OS) and the same group("...") ordering/membership
+// rule as `--list` (visibleTasksByGroup) — so the picker and `--list` can
+// never drift apart. A Runefile with no groups yields a single, unnamed
+// section holding every visible task in file order.
+func pickerItems(mod *loadedModule) []tui.PickerSection {
+	order, groups := visibleTasksByGroup(mod.file)
+	sections := make([]tui.PickerSection, 0, len(order))
+	for _, g := range order {
+		items := make([]tui.PickerItem, 0, len(groups[g]))
+		for _, t := range groups[g] {
+			items = append(items, tui.PickerItem{
+				Name: t.Name,
+				Desc: firstLine(t.Doc),
+				Doc:  t.Doc,
+			})
 		}
-		items = append(items, tui.PickerItem{
-			Name: t.Name,
-			Desc: firstLine(t.Doc),
-			Doc:  t.Doc,
-		})
+		sections = append(sections, tui.PickerSection{Name: g, Items: items})
 	}
-	return items
+	return sections
 }
 
 // interactiveTerminal reports whether both stdin and stdout are connected to an
@@ -84,9 +88,9 @@ func isTTY(fd uintptr) bool {
 // task name ("" if cancelled). The program renders to stderr (where Rune's own
 // output goes), keeping stdout clean for the task that runs afterward. It is
 // run with the invocation context so an external SIGINT cancels it cleanly.
-func runPicker(opts Options, items []tui.PickerItem) (string, error) {
+func runPicker(opts Options, sections []tui.PickerSection) (string, error) {
 	prog := tea.NewProgram(
-		tui.New(items, opts.ColorStderr),
+		tui.New(sections, opts.ColorStderr),
 		tea.WithContext(opts.ctx()),
 		tea.WithAltScreen(),
 		tea.WithInput(opts.Stdin),

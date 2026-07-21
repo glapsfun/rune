@@ -85,6 +85,11 @@ to filter by task name or description, read the highlighted task's documentation
 in the detail pane, and press `Enter` to run it; press `q` or `Ctrl-C` to cancel
 without running anything.
 
+If your Runefile assigns tasks to groups with `[group("...")]`, the picker
+organizes them into the same labeled sections `rune --list` shows, so a large
+task set stays easy to scan; Runefiles with no groups render as a plain list,
+just as before.
+
 The picker is opt-in and interactive-only: bare `rune` never opens it, and it
 activates only when standard input and output are a terminal. In a pipe,
 redirect, or CI environment, `--choose` reports
