@@ -646,13 +646,14 @@ func hasVisibleTasks(f *ast.File) bool {
 	return false
 }
 
-// listTasks prints non-private tasks, grouped by [group("...")], excluding tasks
-// filtered out by an OS attribute that does not match the current platform.
-func listTasks(opts Options, f *ast.File) {
-	type row struct{ name, doc string }
-	groups := map[string][]row{}
-	var order []string
-	width := 0
+// visibleTasksByGroup partitions f's visible tasks (non-private, OS-matching
+// per osMatches) by their group("...") attribute, in the order each group
+// name first occurs. The "" key holds tasks with no group attribute. This is
+// the single source of truth for group ordering/membership shared by --list
+// (listTasks) and the interactive picker (pickerItems in choose.go) so the
+// two surfaces can never drift apart.
+func visibleTasksByGroup(f *ast.File) (order []string, groups map[string][]*ast.Task) {
+	groups = map[string][]*ast.Task{}
 	for _, t := range f.Tasks {
 		if t.IsPrivate() || !osMatches(t, runtime.GOOS) {
 			continue
@@ -664,9 +665,24 @@ func listTasks(opts Options, f *ast.File) {
 		if _, ok := groups[g]; !ok {
 			order = append(order, g)
 		}
-		groups[g] = append(groups[g], row{t.Name, firstLine(t.Doc)})
-		if len(t.Name) > width {
-			width = len(t.Name)
+		groups[g] = append(groups[g], t)
+	}
+	return order, groups
+}
+
+// listTasks prints non-private tasks, grouped by [group("...")], excluding tasks
+// filtered out by an OS attribute that does not match the current platform.
+func listTasks(opts Options, f *ast.File) {
+	type row struct{ name, doc string }
+	order, taskGroups := visibleTasksByGroup(f)
+	groups := map[string][]row{}
+	width := 0
+	for g, tasks := range taskGroups {
+		for _, t := range tasks {
+			groups[g] = append(groups[g], row{t.Name, firstLine(t.Doc)})
+			if len(t.Name) > width {
+				width = len(t.Name)
+			}
 		}
 	}
 

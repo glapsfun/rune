@@ -25,14 +25,24 @@ type Model struct {
 	done     bool   // true once the user has confirmed or cancelled
 }
 
-// New builds a picker over items. color toggles styling (FR-015/FR-021).
-func New(items []PickerItem, color bool) Model {
-	listItems := make([]list.Item, len(items))
-	for i, it := range items {
-		listItems[i] = it
+// New builds a picker over sections. color toggles styling (FR-015/FR-021).
+// Sections are flattened into a single, section-tagged item list; when no
+// section carries a name the picker renders as a plain flat list, byte-
+// identical to before grouping existed (FR-004).
+func New(sections []PickerSection, color bool) Model {
+	grouped := false
+	var items []list.Item
+	for _, s := range sections {
+		if s.Name != "" {
+			grouped = true
+		}
+		for _, it := range s.Items {
+			it.Section = s.Name
+			items = append(items, it)
+		}
 	}
 	styles := newStyles(color)
-	l := list.New(listItems, list.NewDefaultDelegate(), 0, 0)
+	l := list.New(items, newSectionDelegate(styles, grouped), 0, 0)
 	l.Title = "Tasks"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)

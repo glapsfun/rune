@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"reflect"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,11 +15,49 @@ func testItems() []PickerItem {
 	}
 }
 
+// singleSection wraps items in one unnamed section - the shape a Runefile
+// with no group(...) attributes projects to.
+func singleSection(items []PickerItem) []PickerSection {
+	return []PickerSection{{Items: items}}
+}
+
+// groupedSections returns tasks split across two named groups, mirroring a
+// Runefile with group("build") and group("test") attributes.
+func groupedSections() []PickerSection {
+	return []PickerSection{
+		{Name: "build", Items: []PickerItem{
+			{Name: "compile", Desc: "compile the binary"},
+			{Name: "lint", Desc: "static checks"},
+		}},
+		{Name: "test", Items: []PickerItem{
+			{Name: "unit", Desc: "run the suite"},
+		}},
+	}
+}
+
+// mixedSections mirrors spec.md US1 Acceptance Scenario 1: named groups
+// alongside a section of ungrouped tasks.
+func mixedSections() []PickerSection {
+	return []PickerSection{
+		{Items: []PickerItem{{Name: "hello", Desc: "say hi"}}},
+		{Name: "build", Items: []PickerItem{{Name: "compile", Desc: "compile the binary"}}},
+		{Name: "test", Items: []PickerItem{{Name: "unit", Desc: "run the suite"}}},
+	}
+}
+
 // newSizedModel returns a picker that has received a window size, so the list
 // is laid out and navigable.
 func newSizedModel(t *testing.T) Model {
 	t.Helper()
-	m := New(testItems(), false)
+	m := New(singleSection(testItems()), false)
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	return next.(Model)
+}
+
+// newSizedGroupedModel is newSizedModel's grouped counterpart.
+func newSizedGroupedModel(t *testing.T) Model {
+	t.Helper()
+	m := New(groupedSections(), false)
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	return next.(Model)
 }
@@ -100,7 +139,7 @@ func TestCancelKeysLeaveNoSelection(t *testing.T) {
 }
 
 func TestWindowSizeRendersAndCollapsesDetailWhenShort(t *testing.T) {
-	m := New(testItems(), false)
+	m := New(singleSection(testItems()), false)
 	// Tall terminal: detail pane shown alongside the list.
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	tall := next.(Model)
@@ -119,5 +158,65 @@ func TestFilterValueSpansNameAndDescription(t *testing.T) {
 	it := PickerItem{Name: "build", Desc: "compile the binary"}
 	if got, want := it.FilterValue(), "build compile the binary"; got != want {
 		t.Fatalf("FilterValue() = %q, want %q", got, want)
+	}
+}
+
+// TestNewFlattensSectionsTaggingEachItem asserts New's flattening step
+// preserves section order and tags every item with its section name,
+// including the ungrouped ("") section (FR-001, FR-002, FR-003).
+func TestNewFlattensSectionsTaggingEachItem(t *testing.T) {
+	m := New(mixedSections(), false)
+	var got []string
+	for _, it := range m.list.Items() {
+		pi := it.(PickerItem)
+		got = append(got, pi.Name+"/"+pi.Section)
+	}
+	want := []string{"hello/", "compile/build", "unit/test"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("flattened items = %v, want %v", got, want)
+	}
+}
+
+// TestFilterNarrowsToMatchingSectionOnly proves FR-006: once a filter leaves
+// only one section with surviving tasks, no other section's tasks (and so no
+// other section's header, which is derived from adjacency among visible
+// items) remain visible.
+func TestFilterNarrowsToMatchingSectionOnly(t *testing.T) {
+	m := newSizedGroupedModel(t)
+	m.list.SetFilterText("unit")
+
+	visible := m.list.VisibleItems()
+	if len(visible) != 1 {
+		t.Fatalf("visible items = %d, want 1 (%v)", len(visible), visible)
+	}
+	pi, ok := visible[0].(PickerItem)
+	if !ok || pi.Name != "unit" || pi.Section != "test" {
+		t.Fatalf("visible item = %+v, want unit/test", visible[0])
+	}
+}
+
+// TestSelectionAlwaysAPickerItem is a regression guard for FR-005: since
+// headers are never list.Items (see delegate.go), every key that moves the
+// cursor - including jump keys - can only ever land on a PickerItem. There is
+// nothing to "skip" by construction, but this still guards against a future
+// change reintroducing a non-task item into the list.
+func TestSelectionAlwaysAPickerItem(t *testing.T) {
+	m := newSizedGroupedModel(t)
+	keys := []tea.KeyMsg{
+		{Type: tea.KeyDown},
+		{Type: tea.KeyDown},
+		{Type: tea.KeyDown},
+		{Type: tea.KeyUp},
+		{Type: tea.KeyHome},
+		{Type: tea.KeyEnd},
+		{Type: tea.KeyPgDown},
+		{Type: tea.KeyPgUp},
+	}
+	for _, k := range keys {
+		next, _ := m.Update(k)
+		m = next.(Model)
+		if _, ok := m.list.SelectedItem().(PickerItem); !ok {
+			t.Fatalf("after %v, SelectedItem() = %#v, want a PickerItem", k, m.list.SelectedItem())
+		}
 	}
 }

@@ -1,30 +1,28 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/011-rune-lsp/plan.md` (Rune Language Server Protocol —
-a new `rune lsp` stdio JSON-RPC/LSP 3.17 server plus a standalone `rune analyze`
-command, both driven by a single new `internal/analysis` service wrapping the
-existing parse → compose → analyze pipeline. Delivers live diagnostics, context-aware
-completion, go-to-definition (incl. cross-file), hover, document symbols, and
-formatting — reusing the existing parser/analyzer/import-resolver/formatter with NO
-second grammar, and running NOTHING during analysis). Four additive `internal/`
-packages: `analysis` (Service.Analyze → Snapshot; SourceStore overlay; Workspace +
-ImportGraph), `language` (Symbol Index ByName/ByQualified/ByDocument; scope;
-completion/definition/hover; single builtin/setting/attribute registry), `lsp`
-(hand-rolled Content-Length JSON-RPC + minimal typed LSP 3.17 subset — zero new deps,
-per the `internal/semver` precedent; `convert.go` LineIndex does byte-col↔UTF-16),
-and `formatter` (extracted from `internal/cli/fmt.go`). Backward-compatible changes to
-existing packages: `diag.Diagnostic` gains `Code` + `Related []RelatedLocation`
-(RUNE#### codes are a STABLE PUBLIC CONTRACT — see `contracts/diagnostic-codes.md`);
-`config.Compose` refactored to read imports through the injected SourceStore instead
-of `os.ReadFile` (so overlays apply transitively — today it takes a SourceProvider but
-ignores it); parser recovery hardened (existing top-level recovery + optional
-`InvalidStmt`). Wired as `cmd/rune/lsp.go` + `analyze.go`; MCP compose site is
-`internal/cli/serve.go loadModule`. Safety (FR-028) enforced structurally (no
-`runtime`/`os-exec`/net imports in analysis/language/lsp) + a no-side-effects test.
-Clarifications (2026-07-10): codes are a contract; analyze/LSP report full transitive
-import diagnostics; private tasks complete only in their own file; undocumented-public-
-task warning (RUNE2010) ships as a non-gating warning. Constitution deviation
-(4 new packages + formatter extraction vs locked layout) justified in plan Complexity
-Tracking. Read the plan, `research.md`, `data-model.md`, and `contracts/` for details.
+Active feature plan: `specs/012-picker-task-grouping/plan.md` (Grouped Sections
+in the Interactive Task Picker — `rune --choose` now mirrors `rune --list`'s
+existing `group(...)`-based sectioning so large task sets stay navigable. A
+shared grouping/ordering helper (`visibleTasksByGroup`, extracted from
+`internal/cli/run.go`'s `--list` logic) is the single source both surfaces
+derive section order/membership from, so they can never drift. `choose.go`'s
+`pickerItems` returns `[]tui.PickerSection` instead of a flat `[]tui.PickerItem`.
+Headers are **not** `list.Item`s: Bubbles' `list.Model.SetItems` re-triggers its
+own async fuzzy-filter on whatever it's given, which would strip a header-as-item
+right back out the moment a filter is active — a real bug found while
+implementing the original design. Instead, `internal/tui/delegate.go`'s
+`sectionDelegate` (wrapping `list.DefaultDelegate`) draws the group name as a
+decorative line above whichever *visible* item starts a new section — derived
+at render time from adjacency in `m.list.VisibleItems()` — so there is no header
+row for `picker.go`'s `Update` to skip, and no separate recompute step on filter
+changes. Runefiles with no `group(...)` attributes render byte-identical to the
+pre-feature picker (verified: `sectionDelegate`'s output matches
+`list.DefaultDelegate`'s exactly when ungrouped). No new package, dependency,
+flag, or subcommand — reuses the existing `internal/cli` / `internal/tui` split
+and the already-vendored `bubbles`/`bubbletea`/`lipgloss`. No Constitution
+violations. Read the plan, `research.md`, `data-model.md`, and
+`contracts/tui-picker-grouping.md` (which extends, not replaces, the base
+`--choose` contract in `specs/007-interactive-tui/contracts/tui-picker.md`) for
+details.
 <!-- SPECKIT END -->
 
 ## Development workflow
