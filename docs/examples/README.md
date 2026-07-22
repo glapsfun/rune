@@ -45,6 +45,7 @@ Each isolates one feature so you can see exactly how it works.
 | [caching](caching/README.md) | Opt-in content-hash caching (`[cache(...)]`). |
 | [parallel](parallel/README.md) | Running independent prerequisites concurrently. |
 | [settings-dotenv](settings-dotenv/README.md) | Settings, `set export`, and `.env` loading. |
+| [secret-masking](secret-masking/README.md) | Sensitive values masked as `***` in all output. |
 | [os-filtering](os-filtering/README.md) | Tasks restricted to a specific OS. |
 
 ## How to run any example

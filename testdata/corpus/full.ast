@@ -2,6 +2,8 @@ File
   Setting default = "build"
   Setting export = true
   Setting shell = ["bash", "-cu"]
+  Setting secrets = ["DEPLOY_CFG"]
+  Setting unmasked = ["OAUTH_METHOD"]
   Assignment src_dir = "src"
   Assignment out = (/ src_dir "out")
   Assignment mode = if(os() == "linux" -> "lin"; os() == "windows" -> "win"; else -> "other")

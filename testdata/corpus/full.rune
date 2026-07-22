@@ -1,6 +1,8 @@
 set default := "build"
 set export
 set shell := ["bash", "-cu"]
+set secrets := ["DEPLOY_CFG"]
+set unmasked := ["OAUTH_METHOD"]
 
 src_dir := "src"
 out := src_dir / "out"
