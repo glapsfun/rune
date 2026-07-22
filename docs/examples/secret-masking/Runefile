@@ -1,0 +1,15 @@
+# Secret masking: values of sensitive variables are masked as *** in all
+# output. Names containing TOKEN/SECRET/PASSWORD/... are detected
+# automatically; `set secrets` adds names the patterns miss; `set unmasked`
+# exempts false positives (AUTHOR matches the AUTH pattern but isn't secret).
+set secrets := ["DEPLOY_CFG"]
+set unmasked := ["AUTHOR"]
+
+# Print configuration; secrets come out masked, the task sees real values.
+[env("DEMO_API_TOKEN", "tok-1234567890abcdef")]
+[env("DEPLOY_CFG", "s3-bucket-signing-key")]
+[env("AUTHOR", "ada")]
+show-env:
+    @echo "token  is $DEMO_API_TOKEN"
+    @echo "config is $DEPLOY_CFG"
+    @echo "author is $AUTHOR"

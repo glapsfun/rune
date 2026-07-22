@@ -29,21 +29,26 @@ API_TOKEN=hunter2-super-secret go run ./cmd/rune --file /tmp/rune-mask-demo/Rune
 the string `hunter2-super-secret` appears nowhere. Exit 0.
 
 MCP end-to-end (what an agent actually receives) — the stdio MCP server is the
-`serve` subcommand (alias `mcp`) and needs the initialize handshake first:
+`serve` subcommand (alias `mcp`), resolves the Runefile from the working
+directory, needs the initialize handshake first, and drops pending replies if
+stdin closes too early (hence the trailing `sleep` holding the pipe open):
 
 ```sh
-API_TOKEN=hunter2-super-secret go run ./cmd/rune serve --file /tmp/rune-mask-demo/Runefile <<'EOF'
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"quickstart","version":"0"}}}
-{"jsonrpc":"2.0","method":"notifications/initialized"}
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"leak"}}
-EOF
+cd /tmp/rune-mask-demo
+{ printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"quickstart","version":"0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"leak"}}'; sleep 2; } \
+  | API_TOKEN=hunter2-super-secret rune mcp
 ```
 
-(The integration test's `runWithStdin` frames in
-`test/integration/harness_test.go` are the authoritative reference for the
-exact handshake.)
+(The interactive session helper in
+`test/integration/secret_masking_mcp_test.go` is the authoritative reference
+for the exact handshake.)
 
-**Expected**: the JSON tool result contains `***` and never the raw value.
+**Expected**: the tools/call response is
+`{"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"token is ***\nAPI_TOKEN=***\n[exit 0]"}]}}`
+— the mask everywhere, the raw value nowhere.
 
 ## Scenario 2 — Echoed command lines (spec US2)
 

@@ -116,13 +116,13 @@ Single Go module at repo root; engine code under `internal/`, binary tests under
 
 **Purpose**: Performance guardrail, documentation (Constitution: surface changes carry their docs — same PR), final gates.
 
-- [ ] T029 [P] Add benchmark comparing masked vs unmasked writer on a 10 MB stream in `internal/mask/writer_bench_test.go`; document result against SC-004 (≤10% overhead); optimize only if the profile demands it (Constitution VIII)
-- [ ] T030 [P] Update `docs/GRAMMAR.md` (settings grammar entries for `secrets`/`unmasked`) and `docs/runefile.md` (settings reference rows)
-- [ ] T031 [P] Write `docs/how-to/secret-masking.md`: pattern list, `***` placeholder, MinLen 4, multi-line behavior, guarantee boundary/non-goals per FR-010 + contract §2.4; add pitfall cross-link in `docs/how-to/settings-and-dotenv.md`
-- [ ] T032 [P] Update `docs/mcp.md`: agent-facing guarantee note (tool results masked identically to terminal; no agent-facing off switch, FR-006)
-- [ ] T033 [P] Create runnable example `docs/examples/secret-masking/Runefile` + `docs/examples/secret-masking/README.md` (picked up by the `test/docs` harness as a fixture)
-- [ ] T034 Execute all quickstart.md scenarios 1–7 end-to-end and record outcomes in the PR description
-- [ ] T035 Full gate set: `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `go run ./cmd/rune lint`, `go run ./cmd/rune docs-check`, `go run ./cmd/rune release-dryrun`
+- [X] T029 [P] Add benchmark comparing masked vs unmasked writer on a 10 MB stream in `internal/mask/writer_bench_test.go`; document result against SC-004 (≤10% overhead); optimize only if the profile demands it (Constitution VIII)
+- [X] T030 [P] Update `docs/GRAMMAR.md` (settings grammar entries for `secrets`/`unmasked`) and `docs/runefile.md` (settings reference rows)
+- [X] T031 [P] Write `docs/how-to/secret-masking.md`: pattern list, `***` placeholder, MinLen 4, multi-line behavior, guarantee boundary/non-goals per FR-010 + contract §2.4; add pitfall cross-link in `docs/how-to/settings-and-dotenv.md`
+- [X] T032 [P] Update `docs/mcp.md`: agent-facing guarantee note (tool results masked identically to terminal; no agent-facing off switch, FR-006)
+- [X] T033 [P] Create runnable example `docs/examples/secret-masking/Runefile` + `docs/examples/secret-masking/README.md` (picked up by the `test/docs` harness as a fixture)
+- [X] T034 Execute all quickstart.md scenarios 1–7 end-to-end and record outcomes in the PR description
+- [X] T035 Full gate set: `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `go run ./cmd/rune lint`, `go run ./cmd/rune docs-check`, `go run ./cmd/rune release-dryrun`
 
 ---
 

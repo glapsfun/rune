@@ -42,10 +42,6 @@ func mcpCall(t *testing.T, dir, task string) (toolResult string, stderr string) 
 	}
 	watchdog := time.AfterFunc(15*time.Second, func() { _ = cmd.Process.Kill() })
 	defer watchdog.Stop()
-	defer func() {
-		_ = stdin.Close()
-		_ = cmd.Wait()
-	}()
 
 	frames := []string{
 		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"it","version":"0.0.0"}}}`,
@@ -58,14 +54,22 @@ func mcpCall(t *testing.T, dir, task string) (toolResult string, stderr string) 
 
 	sc := bufio.NewScanner(stdout)
 	sc.Buffer(make([]byte, 0, 1<<20), 1<<20)
+	var result string
 	for sc.Scan() {
 		line := sc.Text()
 		if strings.Contains(line, `"id":2`) || strings.Contains(line, `"id": 2`) {
-			return line, errb.String()
+			result = line
+			break
 		}
 	}
-	t.Fatalf("no tools/call response before stream end; stderr=%q", errb.String())
-	return "", ""
+	// Join the process before touching errb: exec's copier goroutine writes it
+	// until Wait returns.
+	_ = stdin.Close()
+	_ = cmd.Wait()
+	if result == "" {
+		t.Fatalf("no tools/call response before stream end; stderr=%q", errb.String())
+	}
+	return result, errb.String()
 }
 
 // TestSecretMasking_MCPToolResultMasked drives the stdio MCP server end to
