@@ -68,7 +68,7 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	// masked text, so the tool result an agent receives is safe by construction.
 	mopts, flushMask := applyMasking(
 		Options{Stdin: nil, Stdout: &outBuf, Stderr: &errBuf, Cwd: a.workDir, Quiet: true},
-		a.baseEnv, a.tasks, nil, nil,
+		a.baseEnv, a.tasks, a.settings.Secrets, a.settings.Unmasked,
 	)
 
 	eng := &engine{

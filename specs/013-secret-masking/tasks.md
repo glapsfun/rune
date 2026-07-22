@@ -97,16 +97,16 @@ Single Go module at repo root; engine code under `internal/`, binary tests under
 
 ### Tests for User Story 3 (write first, must fail)
 
-- [ ] T022 [P] [US3] Write failing unit tests in `internal/config/settings_test.go`: `set secrets`/`set unmasked` resolve to `Settings.Secrets`/`Settings.Unmasked` via list evaluation; malformed elements yield positioned diagnostics; same name in both lists yields an error diagnostic with related span, emitted by `ResolveSettings` (contract §1; data-model.md validation rules)
-- [ ] T023 [P] [US3] Write failing integration tests in `test/integration/secret_masking_settings_test.go` (new file): (a) declared innocent-name var masked, (b) `unmasked` exempts a pattern-matched name, (c) name absent from env is inert, (d) `set secrets := [42]`-style malformed value → positioned diagnostic + exit 3 + nothing executed, (e) same name in both lists → positioned error citing both spans + exit 3, (f) `rune analyze` flags `set secert` typo as RUNE2008 (quickstart Scenarios 3–4)
-- [ ] T024 [P] [US3] Register `secrets` and `unmasked` in `internal/language/builtin.go` `builtinSettings` (unlocks analyzer/LSP recognition; RUNE2008 for typos comes free via `language.IsValid`)
+- [X] T022 [P] [US3] Write failing unit tests in `internal/config/settings_test.go`: `set secrets`/`set unmasked` resolve to `Settings.Secrets`/`Settings.Unmasked` via list evaluation; malformed elements yield positioned diagnostics; same name in both lists yields an error diagnostic with related span, emitted by `ResolveSettings` (contract §1; data-model.md validation rules)
+- [X] T023 [P] [US3] Write failing integration tests in `test/integration/secret_masking_settings_test.go` (new file): (a) declared innocent-name var masked, (b) `unmasked` exempts a pattern-matched name, (c) name absent from env is inert, (d) `set secrets := [42]`-style malformed value → positioned diagnostic + exit 3 + nothing executed, (e) same name in both lists → positioned error citing both spans + exit 3, (f) `rune analyze` flags `set secert` typo as RUNE2008 (quickstart Scenarios 3–4)
+- [X] T024 [P] [US3] Register `secrets` and `unmasked` in `internal/language/builtin.go` `builtinSettings` (unlocks analyzer/LSP recognition; RUNE2008 for typos comes free via `language.IsValid`)
 
 ### Implementation for User Story 3
 
-- [ ] T025 [US3] Add `Secrets`/`Unmasked` fields + switch cases to `internal/config/settings.go` `ResolveSettings` using existing `evalList`; add the both-lists conflict diagnostic (primary + related span) there — execution-path enforcement per data-model.md (`rune analyze` surfacing is a non-v1 follow-up); make T022 pass
-- [ ] T026 [US3] Wire `Settings.Secrets`/`Settings.Unmasked` into the `mask.NewSet` call from T009 in `internal/cli/run.go` (CLI and MCP paths share it); make T023 pass
-- [ ] T027 [US3] Update grammar-drift fixtures: add both settings to `testdata/corpus/full.rune` and deliberately regenerate `testdata/corpus/full.ast` (never hand-edit); add a formatter case to `testdata/fmt/` if list-setting formatting needs pinning
-- [ ] T028 [US3] Checkpoint in Docker: full suite green; `go run ./cmd/rune analyze` accepts the new settings and flags typos
+- [X] T025 [US3] Add `Secrets`/`Unmasked` fields + switch cases to `internal/config/settings.go` `ResolveSettings` using existing `evalList`; add the both-lists conflict diagnostic (primary + related span) there — execution-path enforcement per data-model.md (`rune analyze` surfacing is a non-v1 follow-up); make T022 pass
+- [X] T026 [US3] Wire `Settings.Secrets`/`Settings.Unmasked` into the `mask.NewSet` call from T009 in `internal/cli/run.go` (CLI and MCP paths share it); make T023 pass
+- [X] T027 [US3] Update grammar-drift fixtures: add both settings to `testdata/corpus/full.rune` and deliberately regenerate `testdata/corpus/full.ast` (never hand-edit); add a formatter case to `testdata/fmt/` if list-setting formatting needs pinning
+- [X] T028 [US3] Checkpoint in Docker: full suite green; `go run ./cmd/rune analyze` accepts the new settings and flags typos
 
 **Checkpoint**: All three stories independently functional; author control complete.
 
