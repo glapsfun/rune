@@ -45,6 +45,24 @@ func TestSecretMasking_FailingTaskStderrMasked(t *testing.T) {
 	}
 }
 
+// The final "rune: task ... failed at ..." banner is printed by main.go to the
+// raw process stderr, outside the masked writers — when the failing command
+// line interpolates a secret, the banner text itself must be masked.
+func TestSecretMasking_FailureBannerMasked(t *testing.T) {
+	src := "boom:\n    @exit 22 # bearer {{env(\"CLI_DEMO_TOKEN\")}}\n"
+	dir := writeRunefile(t, src)
+	r := run(t, dir, []string{"CLI_DEMO_TOKEN=" + cliSecret}, "boom")
+	if r.code == 0 {
+		t.Fatalf("exit = 0, want failure")
+	}
+	if strings.Contains(r.stderr, cliSecret) || strings.Contains(r.stdout, cliSecret) {
+		t.Fatalf("failure banner leaked the secret: stderr=%q", r.stderr)
+	}
+	if !strings.Contains(r.stderr, "***") {
+		t.Errorf("failure banner should carry the mask: %q", r.stderr)
+	}
+}
+
 // T014 — an un-suppressed command line interpolating a secret echoes masked;
 // `@` and `set quiet` suppression semantics are unchanged.
 func TestSecretMasking_EchoedCommandMasked(t *testing.T) {

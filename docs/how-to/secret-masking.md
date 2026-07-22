@@ -23,6 +23,11 @@ TOKEN · SECRET · PASSWORD · PASSWD · APIKEY · API_KEY ·
 PRIVATE_KEY · ACCESS_KEY · CREDENTIAL · AUTH
 ```
 
+A few ubiquitous, definitively non-secret names that the `AUTH` pattern would
+otherwise catch are exempt by default: `SSH_AUTH_SOCK`, `GIT_AUTHOR_NAME`,
+`GIT_AUTHOR_EMAIL`, and `GIT_AUTHOR_DATE` (declaring one in `set secrets`
+re-includes it).
+
 ## Syntax
 
 Two settings give the Runefile the last word:
@@ -35,9 +40,10 @@ set secrets := ["DEPLOY_CFG", "UPLOAD_URL"]
 set unmasked := ["OAUTH_METHOD"]
 ```
 
-Listing the same name in both is a static error (reported with both source
-positions, nothing runs). A listed name that isn't present in the environment
-is simply inert.
+Names in both lists match environment variables case-insensitively, just like
+the built-in patterns. Listing the same name in both is a static error
+(reported with both source positions, nothing runs). A listed name that isn't
+present in the environment is simply inert.
 
 ## Runnable example
 
@@ -68,6 +74,12 @@ pattern-matched token masked automatically, plus an `unmasked` exemption.
 - **Secrets still belong in the environment.** Masking complements — never
   replaces — the rule that secrets live in `.env` or the environment, not in
   a committed Runefile (see [Settings & dotenv](settings-and-dotenv.md)).
+- **Task output flows through Rune when masking is active.** With at least one
+  secret in the environment, child processes write to a pipe instead of
+  inheriting the terminal directly: tools that auto-detect a TTY fall back to
+  their non-interactive output, and a background process a task leaves running
+  can keep the run open until it releases the stream. Secret-free environments
+  are unaffected.
 
 ## Next steps
 

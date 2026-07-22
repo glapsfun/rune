@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/diag"
@@ -41,27 +42,9 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 		}
 		return v
 	}
-	evalList := func(set *ast.Setting) []string {
-		if set.List == nil {
-			if set.Value != nil {
-				return []string{evalStr(set)}
-			}
-			return nil
-		}
-		out := make([]string, 0, len(set.List))
-		for _, e := range set.List {
-			v, err := ev.Eval(e)
-			if err != nil {
-				diags.Add(diag.New(err.Span, err.Msg))
-				continue
-			}
-			out = append(out, v)
-		}
-		return out
-	}
-
-	// evalNamed is evalList keeping each element's span, so the secrets/unmasked
-	// conflict check below can point at both offending elements (FR-009).
+	// evalNamed evaluates a list setting's elements keeping each element's
+	// span, so the secrets/unmasked conflict check below can point at both
+	// offending elements (FR-009). evalList is its span-free projection.
 	type namedSpan struct {
 		name string
 		span token.Span
@@ -91,6 +74,9 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 			out[i] = e.name
 		}
 		return out
+	}
+	evalList := func(set *ast.Setting) []string {
+		return names(evalNamed(set))
 	}
 	var secretEntries, unmaskedEntries []namedSpan
 
@@ -124,10 +110,11 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 	}
 
 	// Declaring a name secret AND exempting it is contradictory; fail before
-	// any execution, citing both spans (contract §1).
+	// any execution, citing both spans (contract §1). Matching is
+	// case-insensitive, mirroring how the mask set resolves names.
 	for _, u := range unmaskedEntries {
 		for _, d := range secretEntries {
-			if u.name == d.name {
+			if strings.EqualFold(u.name, d.name) {
 				diags.Add(diag.New(u.span,
 					fmt.Sprintf("%q is listed in both `set secrets` and `set unmasked`", u.name)).
 					WithRelated(diag.RelatedLocation{Span: d.span, Message: "declared secret here"}))

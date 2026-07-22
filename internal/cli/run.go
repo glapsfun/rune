@@ -131,7 +131,8 @@ func execute(opts Options, runefile string, args []string) error {
 	// Secret masking wraps the output streams once, before the engine exists,
 	// so every downstream surface inherits it. The deferred flush runs after
 	// scheduler.Run has joined all tasks — the only always-safe flush point.
-	mopts, flushMask := applyMasking(opts, env, tasks, settings.Secrets, settings.Unmasked)
+	set := deriveMaskSet(env, tasks, settings.Secrets, settings.Unmasked)
+	mopts, flushMask := maskOptions(opts, set)
 	defer flushMask()
 
 	eng := &engine{
@@ -158,7 +159,9 @@ func execute(opts Options, runefile string, args []string) error {
 	}
 
 	if err := scheduler.Run(eng, invs); err != nil {
-		return eng.classifyRunErr(err)
+		// maskErr covers the error text itself: the "rune: ..." banner is
+		// printed by callers outside the masked writers.
+		return maskErr(eng.classifyRunErr(err), set)
 	}
 	return nil
 }
@@ -383,12 +386,7 @@ func (e *engine) taskDir(task *ast.Task) string {
 
 // taskEnv appends any [env("NAME","VALUE")] attributes to the base environment.
 func (e *engine) taskEnv(task *ast.Task) []string {
-	var extra []string
-	for _, a := range task.Attributes {
-		if a.Kind == ast.AttrEnv && a.Str != "" {
-			extra = append(extra, a.Str+"="+a.Str2)
-		}
-	}
+	extra := envAttrPairs(task)
 	if len(extra) == 0 {
 		return e.env
 	}

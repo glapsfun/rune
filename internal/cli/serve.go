@@ -94,6 +94,7 @@ func newMCPAdapter(opts Options, runefile string) (*mcpAdapter, error) {
 		baseEnv:   mod.baseEnv,
 		overrides: map[string]string{},
 		now:       func() string { return "" },
+		maskSet:   deriveMaskSet(mod.baseEnv, mod.tasks, mod.settings.Secrets, mod.settings.Unmasked),
 	}, nil
 }
 

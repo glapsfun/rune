@@ -49,10 +49,15 @@ pairs):
 - **Pattern rule**: value of any variable whose name case-insensitively
   contains one of: `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, `APIKEY`,
   `API_KEY`, `PRIVATE_KEY`, `ACCESS_KEY`, `CREDENTIAL`, `AUTH` — unless the
-  name is listed in `unmasked`.
+  name is listed in `unmasked` or is one of the built-in exemptions
+  (`SSH_AUTH_SOCK`, `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_AUTHOR_DATE`:
+  ubiquitous non-secret names the `AUTH` pattern would otherwise capture,
+  documented user-facing).
 - **Declaration rule**: value of any variable named in `secrets`
-  (unconditionally; `unmasked` does not override an explicit declaration —
-  that combination is a static error).
+  (unconditionally; it overrides both `unmasked` at the set level — the
+  combination is a static error — and the built-in exemptions).
+- **Case rule**: `secrets` and `unmasked` names match environment variable
+  names case-insensitively, consistent with the pattern rule.
 - **Minimum length**: values (or lines of multi-line values) shorter than
   **4 bytes** are never value-masked.
 - **Multi-line values**: each line of length ≥ 4 is masked independently
@@ -80,7 +85,10 @@ Masking applies uniformly to:
    `set quiet` suppression semantics are unchanged).
 3. Rune's own emissions: `running:`/`cached:`/dry-run lines, warnings,
    confirmation prompts, error reports and rendered diagnostics produced
-   during execution.
+   during execution — including the final `rune: task ... failed at ...`
+   banner, whose text embeds the interpolated failing command line and is
+   masked in the error value itself (it is printed outside the wrapped
+   streams).
 4. MCP tool results (§3).
 
 ### 2.4 Non-goals (documented boundary)
@@ -92,6 +100,10 @@ Masking applies uniformly to:
 - No content-based detection: a credential in a variable with an innocent name
   and no declaration is not masked.
 - Values < 4 bytes are not masked.
+- When masking is active, task children write to a pipe rather than inheriting
+  the terminal fd: TTY auto-detection in child tools sees a non-TTY, and a
+  background process a task leaves running can hold the stream open. This is
+  inherent to emission-time interception and documented user-facing.
 
 ### 2.5 Invariance guarantee
 

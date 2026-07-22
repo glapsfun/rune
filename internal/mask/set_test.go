@@ -71,6 +71,35 @@ func TestNewSet_ExemptDoesNotBeatDeclaration(t *testing.T) {
 	}
 }
 
+func TestNewSet_DeclaredAndExemptNamesAreCaseInsensitive(t *testing.T) {
+	// The pattern rule is case-insensitive; declared/exempt lookups match it.
+	s := NewSet([]string{"DEPLOY_CFG=abcd-999"}, []string{"deploy_cfg"}, nil)
+	if got := s.MaskString("abcd-999"); got != Placeholder {
+		t.Errorf("lowercase declaration did not mask DEPLOY_CFG: %q", got)
+	}
+	s = NewSet([]string{"GithubToken=gh-value-123"}, nil, []string{"GITHUBTOKEN"})
+	if !s.Empty() {
+		t.Errorf("differently-cased exemption did not exempt GithubToken")
+	}
+}
+
+func TestNewSet_BuiltinUnmaskedNames(t *testing.T) {
+	// Ubiquitous non-secret names the AUTH pattern would otherwise capture.
+	s := NewSet([]string{
+		"SSH_AUTH_SOCK=/tmp/agent.1234",
+		"GIT_AUTHOR_NAME=Ada Lovelace",
+		"GIT_AUTHOR_EMAIL=ada@example.test",
+	}, nil, nil)
+	if !s.Empty() {
+		t.Fatalf("built-in unmasked names were tracked")
+	}
+	// An explicit declaration still re-includes one of them.
+	s = NewSet([]string{"GIT_AUTHOR_NAME=Ada Lovelace"}, []string{"GIT_AUTHOR_NAME"}, nil)
+	if got := s.MaskString("Ada Lovelace"); got != Placeholder {
+		t.Errorf("declaration did not override the built-in exemption: %q", got)
+	}
+}
+
 func TestNewSet_MinLen(t *testing.T) {
 	s := NewSet([]string{"SHORT_TOKEN=abc", "LONG_TOKEN=abcd"}, nil, nil)
 	if got := s.MaskString("abc"); got != "abc" {

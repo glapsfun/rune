@@ -8,6 +8,7 @@ import (
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/config"
 	"github.com/rune-task-runner/rune/internal/eval"
+	"github.com/rune-task-runner/rune/internal/mask"
 	"github.com/rune-task-runner/rune/internal/runtime/scheduler"
 	"github.com/rune-task-runner/rune/mcpserver"
 )
@@ -25,6 +26,7 @@ type mcpAdapter struct {
 	baseEnv   []string
 	overrides map[string]string
 	now       func() string
+	maskSet   *mask.Set // derived once; env/tasks/settings are fixed per adapter
 }
 
 // Tasks returns the non-private tasks as agent-facing tool descriptors. No
@@ -66,9 +68,9 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 
 	// The same masking choke point as the CLI path: the buffers only ever hold
 	// masked text, so the tool result an agent receives is safe by construction.
-	mopts, flushMask := applyMasking(
+	mopts, flushMask := maskOptions(
 		Options{Stdin: nil, Stdout: &outBuf, Stderr: &errBuf, Cwd: a.workDir, Quiet: true},
-		a.baseEnv, a.tasks, a.settings.Secrets, a.settings.Unmasked,
+		a.maskSet,
 	)
 
 	eng := &engine{
@@ -90,10 +92,12 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	}
 
 	runErr := scheduler.Run(eng, []scheduler.Invocation{{Task: t, Params: params}})
-	flushMask()
 	code := ExitSuccess
 	if runErr != nil {
+		// classifyRunErr can render diagnostics into the masked stderr, so it
+		// must precede the flush that drains the writers into the buffers.
 		code = CodeFor(eng.classifyRunErr(runErr))
 	}
+	flushMask()
 	return mcpserver.Result{Stdout: outBuf.String(), Stderr: errBuf.String(), ExitCode: code}, nil
 }

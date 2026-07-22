@@ -23,6 +23,18 @@ var namePatterns = []string{
 	"PRIVATE_KEY", "ACCESS_KEY", "CREDENTIAL", "AUTH",
 }
 
+// builtinUnmasked are ubiquitous, definitively non-secret variable names the
+// AUTH pattern would otherwise capture — masking git author names or the
+// ssh-agent socket path silently corrupts ordinary output (e.g. `git log`
+// author columns). An explicit `set secrets` declaration still re-includes
+// any of them; only the pattern rule is bypassed.
+var builtinUnmasked = map[string]struct{}{
+	"SSH_AUTH_SOCK":    {},
+	"GIT_AUTHOR_NAME":  {},
+	"GIT_AUTHOR_EMAIL": {},
+	"GIT_AUTHOR_DATE":  {},
+}
+
 // Set is an immutable collection of secret values to mask. It is safe for
 // concurrent readers.
 type Set struct {
@@ -76,8 +88,8 @@ func NewSet(env, declared, exempt []string) *Set {
 }
 
 // Empty reports whether the set tracks no values; callers skip wrapping
-// writers entirely for an empty set (FR-008).
-func (s *Set) Empty() bool { return len(s.entries) == 0 }
+// writers entirely for an empty set (FR-008). A nil Set is empty.
+func (s *Set) Empty() bool { return s == nil || len(s.entries) == 0 }
 
 // MaskString replaces every occurrence of every entry in one shot (no carry).
 func (s *Set) MaskString(in string) string {
@@ -93,8 +105,18 @@ func (s *Set) scan(buf []byte, final bool) (out, carry []byte) {
 	if len(s.entries) == 0 {
 		return buf, nil
 	}
+	// Fast path: a chunk containing no byte that can start an entry passes
+	// through without allocating or copying.
+	start := 0
+	for start < len(buf) && !s.first[buf[start]] {
+		start++
+	}
+	if start == len(buf) {
+		return buf, nil
+	}
 	out = make([]byte, 0, len(buf))
-	i := 0
+	out = append(out, buf[:start]...)
+	i := start
 	for i < len(buf) {
 		if !s.first[buf[i]] {
 			j := i + 1
@@ -130,14 +152,19 @@ func (s *Set) scan(buf []byte, final bool) (out, carry []byte) {
 	return out, nil
 }
 
+// isSecretName applies the name rules on the uppercased name, so declared and
+// exempt lookups are case-insensitive exactly like the built-in patterns.
 func isSecretName(name string, declared, exempt map[string]struct{}) bool {
-	if _, ok := declared[name]; ok {
+	upper := strings.ToUpper(name)
+	if _, ok := declared[upper]; ok {
 		return true
 	}
-	if _, ok := exempt[name]; ok {
+	if _, ok := exempt[upper]; ok {
 		return false
 	}
-	upper := strings.ToUpper(name)
+	if _, ok := builtinUnmasked[upper]; ok {
+		return false
+	}
 	for _, p := range namePatterns {
 		if strings.Contains(upper, p) {
 			return true
@@ -146,13 +173,14 @@ func isSecretName(name string, declared, exempt map[string]struct{}) bool {
 	return false
 }
 
+// toNameSet uppercases the names so lookups are case-insensitive.
 func toNameSet(names []string) map[string]struct{} {
 	if len(names) == 0 {
 		return nil
 	}
 	m := make(map[string]struct{}, len(names))
 	for _, n := range names {
-		m[n] = struct{}{}
+		m[strings.ToUpper(n)] = struct{}{}
 	}
 	return m
 }
