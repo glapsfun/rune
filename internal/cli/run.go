@@ -128,6 +128,12 @@ func execute(opts Options, runefile string, args []string) error {
 		return nil
 	}
 
+	// Secret masking wraps the output streams once, before the engine exists,
+	// so every downstream surface inherits it. The deferred flush runs after
+	// scheduler.Run has joined all tasks — the only always-safe flush point.
+	mopts, flushMask := applyMasking(opts, env, tasks, nil, nil)
+	defer flushMask()
+
 	eng := &engine{
 		file:      file,
 		tasks:     tasks,
@@ -138,11 +144,11 @@ func execute(opts Options, runefile string, args []string) error {
 		workDir:   workDir,
 		root:      root,
 		env:       env,
-		opts:      opts,
-		theme:     opts.themeStderr(),
+		opts:      mopts,
+		theme:     mopts.themeStderr(),
 		plan:      plan,
 		now:       func() string { return time.Now().UTC().Format(time.RFC3339) },
-		ctx:       opts.ctx(),
+		ctx:       mopts.ctx(),
 		src:       srcProvider,
 	}
 

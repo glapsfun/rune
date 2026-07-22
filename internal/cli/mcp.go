@@ -64,6 +64,13 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	scope.GOOS = runtime.GOOS
 	scope.Arch = runtime.GOARCH
 
+	// The same masking choke point as the CLI path: the buffers only ever hold
+	// masked text, so the tool result an agent receives is safe by construction.
+	mopts, flushMask := applyMasking(
+		Options{Stdin: nil, Stdout: &outBuf, Stderr: &errBuf, Cwd: a.workDir, Quiet: true},
+		a.baseEnv, a.tasks, nil, nil,
+	)
+
 	eng := &engine{
 		tasks:    a.tasks,
 		scope:    scope,
@@ -71,7 +78,7 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 		workDir:  a.workDir,
 		root:     a.root,
 		env:      a.baseEnv,
-		opts:     Options{Stdin: nil, Stdout: &outBuf, Stderr: &errBuf, Cwd: a.workDir, Quiet: true},
+		opts:     mopts,
 		plan:     planRun,
 		now:      a.now,
 		ctx:      ctx,
@@ -83,6 +90,7 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	}
 
 	runErr := scheduler.Run(eng, []scheduler.Invocation{{Task: t, Params: params}})
+	flushMask()
 	code := ExitSuccess
 	if runErr != nil {
 		code = CodeFor(eng.classifyRunErr(runErr))
