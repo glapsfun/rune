@@ -42,27 +42,41 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 		}
 		return v
 	}
-	// evalNamed evaluates a list setting's elements keeping each element's
-	// span, so the secrets/unmasked conflict check below can point at both
-	// offending elements (FR-009). evalList is its span-free projection.
-	type namedSpan struct {
-		name string
-		span token.Span
-	}
-	evalNamed := func(set *ast.Setting) []namedSpan {
+	// evalElems evaluates a list setting's elements (or its single value),
+	// reporting each element to visit and recording any evaluation error. It is
+	// the single eval/diagnostic loop behind both list projections below.
+	evalElems := func(set *ast.Setting, visit func(v string, e ast.Expr)) {
 		exprs := set.List
 		if exprs == nil && set.Value != nil {
 			exprs = []ast.Expr{set.Value}
 		}
-		out := make([]namedSpan, 0, len(exprs))
 		for _, e := range exprs {
 			v, err := ev.Eval(e)
 			if err != nil {
 				diags.Add(diag.New(err.Span, err.Msg))
 				continue
 			}
-			out = append(out, namedSpan{name: v, span: e.Span()})
+			visit(v, e)
 		}
+	}
+	// evalList is the plain projection used by shell/python/node/agent_cmd — no
+	// spans allocated, since those settings never need element locations.
+	evalList := func(set *ast.Setting) []string {
+		var out []string
+		evalElems(set, func(v string, _ ast.Expr) { out = append(out, v) })
+		return out
+	}
+	// evalNamed keeps each element's span so the secrets/unmasked conflict check
+	// below can point at both offending elements (FR-009).
+	type namedSpan struct {
+		name string
+		span token.Span
+	}
+	evalNamed := func(set *ast.Setting) []namedSpan {
+		var out []namedSpan
+		evalElems(set, func(v string, e ast.Expr) {
+			out = append(out, namedSpan{name: v, span: e.Span()})
+		})
 		return out
 	}
 	names := func(entries []namedSpan) []string {
@@ -74,9 +88,6 @@ func ResolveSettings(f *ast.File, ev *eval.Evaluator) (Settings, diag.List) {
 			out[i] = e.name
 		}
 		return out
-	}
-	evalList := func(set *ast.Setting) []string {
-		return names(evalNamed(set))
 	}
 	var secretEntries, unmaskedEntries []namedSpan
 

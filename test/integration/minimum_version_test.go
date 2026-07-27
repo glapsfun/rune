@@ -182,6 +182,22 @@ func TestMinimumVersion_IgnoreVersion(t *testing.T) {
 		}
 	})
 
+	// 014 US1 (C2): the override warning's label is styled like every other
+	// warning under --color=always, and stripping recovers the plain bytes.
+	// styledVsPlain covers exit parity, plain purity, and strip-equality.
+	t.Run("cli override warning styled", func(t *testing.T) {
+		styled, plain := styledVsPlain(t, dir, []string{tv + "0.7.2"}, "--ignore-version", "build")
+		if plain.code != 0 {
+			t.Fatalf("exit = %d, want 0", plain.code)
+		}
+		if !hasANSI(styled.stderr) {
+			t.Errorf("warning label should carry ANSI under --color=always: %q", styled.stderr)
+		}
+		if !strings.Contains(plain.stderr, "warning: ignoring Runefile minimum Rune version 0.8.0; running 0.7.2") {
+			t.Errorf("plain warning bytes changed: %q", plain.stderr)
+		}
+	})
+
 	t.Run("mcp refuses by default", func(t *testing.T) {
 		// The gate runs at module load, before the server reads stdin, so an
 		// incompatible requirement refuses immediately.

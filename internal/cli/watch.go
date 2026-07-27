@@ -22,13 +22,22 @@ func watch(opts Options, runefile string, args []string) error {
 		return &UsageError{Err: err}
 	}
 
+	// Watch chrome is meta output, dimmed like dry-run/cache notices (014 C3);
+	// the theme is built once and reused for every re-run and error banner.
+	th := opts.themeStderr()
+
 	runOnce := func() {
+		// BannerMessage suppresses banners the pipeline already rendered (a
+		// ValidationError's diagnostics/cycle banner) or intentionally silences
+		// ([no-exit-message]), matching the non-watch path in cmd/rune so a
+		// re-run never double-prints the banner.
 		if err := execute(opts, runefile, args); err != nil {
-			fmt.Fprintln(opts.Stderr, "rune: "+err.Error())
+			if msg := BannerMessage(err); msg != "" {
+				printErrorBanner(opts, th, msg)
+			}
 		}
 	}
-
-	fmt.Fprintf(opts.Stderr, "watching %s (Ctrl-C to stop)\n", dir)
+	fmt.Fprintln(opts.Stderr, th.Muted.Render(fmt.Sprintf("watching %s (Ctrl-C to stop)", dir)))
 	runOnce()
 
 	var debounce <-chan time.Time
@@ -46,13 +55,13 @@ func watch(opts Options, runefile string, args []string) error {
 			}
 		case <-debounce:
 			debounce = nil
-			fmt.Fprintln(opts.Stderr, "change detected, re-running…")
+			fmt.Fprintln(opts.Stderr, th.Muted.Render("change detected, re-running…"))
 			runOnce()
 		case err, ok := <-w.Errors:
 			if !ok {
 				return nil
 			}
-			fmt.Fprintln(opts.Stderr, "rune: watch error: "+err.Error())
+			printErrorBanner(opts, th, "watch error: "+err.Error())
 		}
 	}
 }

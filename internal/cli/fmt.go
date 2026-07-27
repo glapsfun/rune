@@ -25,6 +25,6 @@ func fmtRewrite(opts Options, runefile string) error {
 	if err := os.WriteFile(runefile, []byte(formatted), 0o644); err != nil {
 		return &UsageError{Err: err}
 	}
-	fmt.Fprintf(opts.Stderr, "formatted: %s\n", runefile)
+	fmt.Fprintf(opts.Stderr, "%s %s\n", opts.themeStderr().Success.Render("formatted:"), runefile)
 	return nil
 }

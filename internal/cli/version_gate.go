@@ -32,7 +32,10 @@ func enforceMinimumVersion(opts Options, file *ast.File, src diag.SourceProvider
 		return nil
 	}
 	if allowIgnore {
-		fmt.Fprintf(opts.Stderr, "warning: ignoring Runefile minimum Rune version %s; running %s\n", req.Raw, opts.Version)
+		// The label shares the Warning role with the cache-write warning so no
+		// warning is plain while another is styled (spec 014 C2).
+		fmt.Fprintf(opts.Stderr, "%s: ignoring Runefile minimum Rune version %s; running %s\n",
+			opts.themeStderr().Warning.Render("warning"), req.Raw, opts.Version)
 		return nil
 	}
 	renderVersionMismatch(opts, req, src)

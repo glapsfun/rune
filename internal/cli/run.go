@@ -45,7 +45,8 @@ func execute(opts Options, runefile string, args []string) error {
 		if err := cache.Clear(root); err != nil {
 			return &UsageError{Err: err}
 		}
-		fmt.Fprintln(opts.Stderr, "cleared: "+filepath.Join(root, ".rune", "cache"))
+		// "cleared" is an accomplished-outcome label like "running" (014 C3).
+		fmt.Fprintf(opts.Stderr, "%s %s\n", opts.themeStderr().Success.Render("cleared:"), filepath.Join(root, ".rune", "cache"))
 		return nil
 	}
 
@@ -355,7 +356,9 @@ func (e *engine) confirm(task *ast.Task, prompt string) bool {
 	if prompt == "" {
 		prompt = fmt.Sprintf("Run %q?", task.Name)
 	}
-	fmt.Fprintf(e.opts.Stderr, "%s [y/N] ", prompt)
+	// A destructive-action prompt uses the warning role; the [y/N] hint stays
+	// plain so the input convention is never obscured by styling (014 C3).
+	fmt.Fprintf(e.opts.Stderr, "%s [y/N] ", e.theme.Warning.Render(prompt))
 	reader := bufio.NewReader(e.opts.Stdin)
 	line, _ := reader.ReadString('\n')
 	switch strings.ToLower(strings.TrimSpace(line)) {
@@ -530,7 +533,7 @@ func (e *engine) classifyRunErr(err error) error {
 	}
 	var cyc *scheduler.CycleError
 	if errors.As(err, &cyc) {
-		fmt.Fprintln(e.opts.Stderr, "rune: "+cyc.Error())
+		printErrorBanner(e.opts, e.theme, cyc.Error())
 		return &ValidationError{Err: err}
 	}
 	var exec *shell.ExecError
@@ -629,14 +632,17 @@ const docsURL = "https://github.com/glapsfun/rune/tree/main/docs"
 // followed by the available-task listing, or a friendly pointer to --help and
 // the docs when the Runefile exposes no runnable tasks.
 func printOverview(opts Options, f *ast.File) {
-	fmt.Fprintf(opts.Stdout, "rune version: %s\n", opts.Version)
+	// The header label is themed so the overview reads as one screen with the
+	// styled task list below it; the version value stays plain for copy-paste.
+	th := opts.themeStdout()
+	fmt.Fprintf(opts.Stdout, "%s %s\n", th.Heading.Render("rune version:"), opts.Version)
 	if hasVisibleTasks(f) {
 		listTasks(opts, f)
 		return
 	}
 	fmt.Fprintln(opts.Stdout, "No available tasks found in this Runefile.")
 	fmt.Fprintln(opts.Stdout, "Use 'rune --help' to see commands, and read the docs:")
-	fmt.Fprintln(opts.Stdout, "  "+docsURL)
+	fmt.Fprintln(opts.Stdout, "  "+th.Muted.Render(docsURL))
 }
 
 // hasVisibleTasks reports whether the file exposes at least one non-private task

@@ -122,10 +122,11 @@ func ServeMCP(opts Options, useHTTP bool, addr, tokenFile string) error {
 		if addr == "" {
 			addr = "127.0.0.1:7777"
 		}
-		fmt.Fprintf(opts.Stderr, "rune MCP server on http://%s (token required)\n", addr)
+		// Server chrome is dimmed like the rest of Rune's meta output (014 C3).
+		fmt.Fprintln(opts.Stderr, opts.themeStderr().Muted.Render(fmt.Sprintf("rune MCP server on http://%s (token required)", addr)))
 		return srv.ServeHTTP(ctx, mcpserver.HTTPConfig{Addr: addr, Token: token})
 	}
-	fmt.Fprintln(opts.Stderr, "rune MCP server on stdio")
+	fmt.Fprintln(opts.Stderr, opts.themeStderr().Muted.Render("rune MCP server on stdio"))
 	return srv.ServeStdio(ctx)
 }
 
