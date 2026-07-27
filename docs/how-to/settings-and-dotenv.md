@@ -41,7 +41,9 @@ See **[examples/settings-dotenv](../examples/settings-dotenv/README.md)** — `s
 
 - **Secrets live in the environment, not the Runefile.** Put them in `.env` (kept out of
   version control) or the real environment. They never belong in a committed Runefile, and are
-  never exposed to agents (see [AI agents](../mcp.md)).
+  never exposed to agents (see [AI agents](../mcp.md)). As a safety net, values of
+  sensitive-looking variables are masked as `***` in all output — see
+  [secret masking](secret-masking.md).
 - **`set export` is opt-in.** Without it, Runefile variables interpolate into commands but
   aren't necessarily present as environment variables for sub-processes.
 - **Paths use `/`.** The path-join operator emits forward slashes on every OS for portability.

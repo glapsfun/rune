@@ -107,6 +107,8 @@ bin := out / "app"          # `/` joins paths (forward slash on every OS)
 # Settings:
 set export                  # export Runefile variables into task environments
 set shell := ["bash", "-cu"]  # override the shell for (sh) bodies
+set secrets := ["DEPLOY_CFG"]   # mask these variables' values in all output
+set unmasked := ["OAUTH_METHOD"]  # exempt from built-in secret-name patterns
 ```
 
 A bare `set name` is shorthand for `set name := true`.
@@ -135,6 +137,24 @@ Only the root Runefile's requirement is effective — imported files cannot chan
 it. Pass `rune --ignore-version` to bypass the check (a warning is printed), and
 `rune version --check` (add `--json` for machine-readable output) to report
 whether the installed binary is compatible.
+
+### Secret masking
+
+Values of sensitive environment variables are masked as `***` in everything
+Rune emits — task stdout/stderr, echoed command lines, Rune's own status
+lines, and MCP tool results. Variables are detected by *name* (any name
+containing `TOKEN`, `SECRET`, `PASSWORD`, `PASSWD`, `APIKEY`, `API_KEY`,
+`PRIVATE_KEY`, `ACCESS_KEY`, `CREDENTIAL`, or `AUTH`, case-insensitive);
+masking is always on and the task itself still receives the real value:
+
+```rune
+set secrets := ["DEPLOY_CFG"]     # also mask names the patterns miss
+set unmasked := ["OAUTH_METHOD"]  # exempt a false positive
+```
+
+See the [secret masking guide](how-to/secret-masking.md) for the exact rules
+and the guarantee's limits (verbatim occurrences only; values shorter than
+4 bytes are not masked).
 
 ## Expressions
 

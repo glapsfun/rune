@@ -63,6 +63,11 @@ Exposing tasks to an agent grants execution capability, so Rune is conservative 
 - **Secrets come from the environment only.** API keys and secrets are read from the
   environment (or the agent CLI's own session) — **never** from the Runefile, and they are
   never included in any tool description, schema, or log.
+- **Task output is masked.** Even if a task prints a sensitive environment variable, the
+  tool result the agent receives shows `***` in place of the value — identical to what a
+  terminal user sees — so credentials never enter an agent's chat history or memory. This
+  is always on, with no agent-facing off switch; see
+  [secret masking](how-to/secret-masking.md).
 - **Vendor-neutral.** The agent/LLM layer sits behind a provider interface; no single
   vendor is hard-coded.
 

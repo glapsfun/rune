@@ -104,3 +104,23 @@ nothing. Only the **root** Runefile's `minimum_version` is effective — an impo
 file cannot impose or relax it. A non-static or non-semver value is a static
 error. Ranges are not supported. Use `rune --ignore-version` to bypass the check
 (it prints a warning) and `rune version --check` to report compatibility.
+
+## Secret masking settings
+
+Two list-valued settings control output masking (values of sensitive variables
+are replaced with `***` in everything Rune emits — task output, echoed
+commands, status lines, and MCP tool results):
+
+```rune
+set secrets := ["DEPLOY_CFG", "UPLOAD_URL"]   # extra names whose values are masked
+set unmasked := ["OAUTH_METHOD"]              # exempt from the built-in name patterns
+```
+
+Both take a list of static string elements naming environment variables.
+Masking itself is always on: variables whose names contain `TOKEN`, `SECRET`,
+`PASSWORD`, `PASSWD`, `APIKEY`, `API_KEY`, `PRIVATE_KEY`, `ACCESS_KEY`,
+`CREDENTIAL`, or `AUTH` (case-insensitive) are masked automatically; `secrets`
+adds names the patterns miss, `unmasked` exempts false positives. Listing the
+same name in both is a static error citing both spans. A listed name absent
+from the environment is inert. See the
+[secret masking guide](how-to/secret-masking.md) for semantics and limits.

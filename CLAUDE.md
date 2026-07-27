@@ -1,28 +1,28 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/012-picker-task-grouping/plan.md` (Grouped Sections
-in the Interactive Task Picker — `rune --choose` now mirrors `rune --list`'s
-existing `group(...)`-based sectioning so large task sets stay navigable. A
-shared grouping/ordering helper (`visibleTasksByGroup`, extracted from
-`internal/cli/run.go`'s `--list` logic) is the single source both surfaces
-derive section order/membership from, so they can never drift. `choose.go`'s
-`pickerItems` returns `[]tui.PickerSection` instead of a flat `[]tui.PickerItem`.
-Headers are **not** `list.Item`s: Bubbles' `list.Model.SetItems` re-triggers its
-own async fuzzy-filter on whatever it's given, which would strip a header-as-item
-right back out the moment a filter is active — a real bug found while
-implementing the original design. Instead, `internal/tui/delegate.go`'s
-`sectionDelegate` (wrapping `list.DefaultDelegate`) draws the group name as a
-decorative line above whichever *visible* item starts a new section — derived
-at render time from adjacency in `m.list.VisibleItems()` — so there is no header
-row for `picker.go`'s `Update` to skip, and no separate recompute step on filter
-changes. Runefiles with no `group(...)` attributes render byte-identical to the
-pre-feature picker (verified: `sectionDelegate`'s output matches
-`list.DefaultDelegate`'s exactly when ungrouped). No new package, dependency,
-flag, or subcommand — reuses the existing `internal/cli` / `internal/tui` split
-and the already-vendored `bubbles`/`bubbletea`/`lipgloss`. No Constitution
-violations. Read the plan, `research.md`, `data-model.md`, and
-`contracts/tui-picker-grouping.md` (which extends, not replaces, the base
-`--choose` contract in `specs/007-interactive-tui/contracts/tui-picker.md`) for
-details.
+Active feature plan: `specs/013-secret-masking/plan.md` (Secret Masking &
+Sanitization — values of sensitive environment variables are masked as `***`
+in every output surface: task stdout/stderr, echoed command lines, Rune's own
+status/log/error lines, and MCP tool results, so credentials never reach a
+terminal transcript or an agent's chat history. Secrets are identified by
+*name* over the effective environment (built-in case-insensitive patterns:
+TOKEN, SECRET, PASSWORD, PASSWD, APIKEY, API_KEY, PRIVATE_KEY, ACCESS_KEY,
+CREDENTIAL, AUTH) plus two new list settings — `set secrets := [...]` to
+declare, `set unmasked := [...]` to exempt — resolved via the existing
+`evalList` in `internal/config/settings.go` and registered in
+`internal/language/builtin.go`. No content scanning, no parser/lexer changes.
+A new leaf package `internal/mask` (stdlib-only; justified in the plan's
+Complexity Tracking) provides the value `Set` (min length 4, multi-line values
+split per line) and a concurrent streaming `io.WriteCloser` with bounded carry
+for chunk-spanning values. It wraps `Options.Stdout/Stderr` once at engine
+construction — the single choke point covering CLI, shell echo, agent
+write-back, and the MCP adapter's buffers (`internal/cli/mcp.go`) — and is
+skipped entirely when the set is empty, so secret-free Runefiles stay
+byte-identical (golden corpus untouched). Masking is at emission time (an
+interrupted task never leaks an unmasked window), verbatim occurrences only
+(base64/URL-encoded transforms documented out of scope), always on with no
+agent-facing off switch. Read the plan, `research.md` (decisions D1–D8),
+`data-model.md`, `quickstart.md`, and `contracts/secret-masking.md` (which
+extends the base MCP secrets contract) for details.
 <!-- SPECKIT END -->
 
 ## Development workflow
