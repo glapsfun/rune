@@ -91,6 +91,51 @@ jobs:
             exit 1
           fi
 
+  extension:
+    name: extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      # The repo carries a 0.0.0 placeholder; stamp a throwaway build version.
+      # Must be plain major.minor.patch — vsce rejects prerelease suffixes.
+      - name: Stamp throwaway version
+        run: npm version --no-git-tag-version 0.0.1
+      - name: Package
+        run: npx vsce package
+      # Contract P8 (specs/015-vscode-lsp-extension): the .vsix must carry the
+      # full listing surface, or the Marketplace publish would ship a broken page.
+      - name: Assert package contents
+        run: |
+          unzip -l rune-0.0.1.vsix > /tmp/vsix-contents.txt
+          status=0
+          # Case-insensitive: vsce normalizes doc filenames in the archive
+          # (README.md -> readme.md, CHANGELOG.md -> changelog.md,
+          #  LICENSE -> LICENSE.txt).
+          for f in \
+            extension/extension.js \
+            extension/syntaxes/runefile.tmLanguage.json \
+            extension/language-configuration.json \
+            extension/readme.md \
+            extension/changelog.md \
+            extension/LICENSE \
+            extension/icon.png \
+            extension/node_modules/vscode-languageclient/ ; do
+            if ! grep -qiF "$f" /tmp/vsix-contents.txt; then
+              echo "::error::missing $f in the packaged .vsix"; status=1
+            fi
+          done
+          exit $status
+
   fuzz-smoke:
     name: fuzz-smoke
     runs-on: ubuntu-latest

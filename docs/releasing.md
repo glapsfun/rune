@@ -23,7 +23,47 @@ The workflow then:
 - runs GoReleaser: 6 binary archives + `checksums.txt`, a multi-arch GHCR image
   (`linux/amd64` + `linux/arm64`), cosign signatures, SPDX SBOMs, and — for stable releases —
   the `latest` image tag plus updated Homebrew cask and Scoop manifest;
-- attaches GitHub build-provenance attestations to the binaries and the image.
+- attaches GitHub build-provenance attestations to the binaries and the image;
+- **for stable releases only**: runs the `publish-extension` job, which packages the VS Code
+  extension from `editors/vscode/` at the released tag, attaches the `.vsix` to the GitHub
+  release, and publishes it to the VS Code Marketplace and Open VSX (see below).
+
+## VS Code extension publishing
+
+Every **stable** release (prerelease unchecked) also publishes the VS Code extension
+(`rune-task-runner.rune`). Prereleases (`-rc.N`) never publish an extension.
+
+- The extension version is the release tag without the leading `v` (tag `v0.4.0` → extension
+  `0.4.0`). The repo's `editors/vscode/package.json` keeps a `0.0.0` placeholder; the workflow
+  stamps the real version at publish time and commits nothing.
+- The job reuses the protected `release` environment, so required reviewers get a **second
+  approval prompt** after the core release finishes. Approving it is expected — it is the
+  gate for the publishing tokens, not a manual publish step.
+- Order inside the job: package → attach `rune-<version>.vsix` to the GitHub release →
+  publish to the Marketplace → publish the same file to Open VSX. Attaching first means even
+  a registry outage leaves the exact artifact recoverable.
+
+### Recovering a failed extension publish
+
+The core release (binaries, images, tag) is never affected by an extension-publish failure —
+**do not cut a new release**:
+
+1. **Re-run failed jobs** on the same workflow run. Re-runs are idempotent — and end green:
+   both publish steps pass `--skip-duplicate`, so an already-published side logs a skip and
+   exits 0 while the other side publishes.
+2. Manual fallback (registry outage, expired token): download `rune-<version>.vsix` from the
+   GitHub release assets and publish it locally:
+
+   ```sh
+   cd editors/vscode && npm ci
+   npx vsce publish --packagePath rune-<version>.vsix   # VSCE_PAT in the environment
+   npx ovsx publish rune-<version>.vsix                 # OVSX_PAT in the environment
+   ```
+
+3. **Token rotation**: Azure DevOps PATs expire (≤ 1 year) — when the Marketplace publish
+   fails with 401/403, mint a fresh PAT (same scope as in one-time setup below) and update
+   the `VSCE_PAT` secret on the `release` environment. Same procedure for `OVSX_PAT`
+   (Open VSX tokens don't expire but can be revoked).
 
 ### Versioning: rc iteration and promotion
 
@@ -100,6 +140,22 @@ The workflow is safe to re-run:
 5. Enable **Settings → General → "Default to PR title for squash merge commits"** so the
    Conventional-Commit PR title becomes the squash commit subject the changelog reads.
 6. Mark the **Validate PR title** and **release-dryrun** checks as required in branch protection.
+7. **VS Code Marketplace publisher**: create the `rune-task-runner` publisher at
+   [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage) (needs a
+   Microsoft/Azure DevOps account owned by the project, not a personal one). Mint an Azure
+   DevOps PAT — organization **"All accessible organizations"**, scope **Marketplace →
+   Manage** — and store it as the `VSCE_PAT` secret on the `release` environment.
+8. **Open VSX namespace**: create an [Eclipse Foundation account](https://accounts.eclipse.org),
+   sign the Open VSX publisher agreement, then claim the namespace and mint a token:
+
+   ```sh
+   npx ovsx create-namespace rune-task-runner -p <token>
+   ```
+
+   (Token from [open-vsx.org/user-settings/tokens](https://open-vsx.org/user-settings/tokens).)
+   Store it as the `OVSX_PAT` secret on the `release` environment. Optionally file a
+   [namespace ownership claim](https://github.com/EclipseFdn/open-vsx.org/issues) so the
+   listing shows a verified publisher.
 
 ## Deferred follow-ups
 

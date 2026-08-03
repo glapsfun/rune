@@ -63,8 +63,10 @@ If you've used `make` or `just`, Rune will feel familiar — with a few delibera
 - **Multi-language bodies.** Write task bodies in shell, Python, Node, or drive an AI agent.
 - **First-class editor support.** `rune lsp` is a built-in language server (LSP 3.17): live
   diagnostics, completion, go-to-definition, hover, outline, and formatting in VS Code,
-  Neovim, Helix, and Zed — reusing the same parser and analyzer, running nothing. `rune
-  analyze` reports the same diagnostics for CI. See [editor setup](editors/README.md).
+  Neovim, Helix, and Zed — reusing the same parser and analyzer, running nothing. For VS Code,
+  install [the Rune extension](https://marketplace.visualstudio.com/items?itemName=rune-task-runner.rune)
+  from the Marketplace. `rune analyze` reports the same diagnostics for CI. See
+  [editor setup](editors/README.md).
 
 ## Install
 

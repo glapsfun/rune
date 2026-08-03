@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: release # protected env with required reviewers (authorized maintainers)
     if: github.ref == 'refs/heads/main'
+    outputs:
+      tag: ${{ steps.ver.outputs.tag }} # consumed by publish-extension
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -183,3 +185,75 @@ jobs:
           subject-name: ghcr.io/glapsfun/rune
           subject-digest: ${{ steps.image.outputs.digest }}
           push-to-registry: true
+
+  # Publishes the VS Code extension for STABLE releases only (specs/015,
+  # contracts/publishing-pipeline.md). Strictly additive: a failure here never
+  # un-ships binaries/images/tag — recover by re-running this job (registries
+  # reject duplicate versions, so re-runs are idempotent) or publishing the
+  # release-asset .vsix manually; see docs/releasing.md. Reusing the protected
+  # `release` environment means required reviewers approve this job separately
+  # (a second prompt per release) — accepted trade-off to keep the tokens gated.
+  publish-extension:
+    name: publish-extension
+    runs-on: ubuntu-latest
+    needs: release
+    if: ${{ !inputs.prerelease }}
+    environment: release
+    permissions:
+      contents: write # upload the .vsix release asset
+    env:
+      TAG: ${{ needs.release.outputs.tag }}
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The repo carries a 0.0.0 placeholder; the published version is the
+      # release tag minus the leading "v". Never committed.
+      - name: Stamp extension version from the release tag
+        run: npm version --no-git-tag-version "${TAG#v}"
+
+      - name: Package
+        id: package
+        run: npx vsce package
+
+      # Attach before publishing so even a both-registries outage leaves the
+      # exact artifact recoverable from the release page. Both publishes are
+      # gated on this step (contract P4: attach precedes publish).
+      - name: Attach .vsix to the GitHub release
+        id: attach
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" "rune-${TAG#v}.vsix" --clobber
+
+      # --skip-duplicate makes re-runs idempotent AND green: an
+      # already-published version is a logged no-op, not a step failure
+      # (contract P6). Accidental double-publish of a tag is prevented
+      # upstream by the release job's tag-exists check.
+      - name: Publish to the VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx vsce publish --skip-duplicate --packagePath "rune-${TAG#v}.vsix"
+
+      # Same .vsix, separate step. Runs even if the Marketplace step failed —
+      # but only when the artifact was attached (P4) — so on a re-run after a
+      # partial success the missing registry still publishes (P6/P7).
+      - name: Publish to Open VSX
+        if: ${{ !cancelled() && steps.attach.outcome == 'success' }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish --skip-duplicate "rune-${TAG#v}.vsix"
