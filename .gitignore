@@ -13,6 +13,10 @@ coverage.txt
 # Not a Go test binary: the docker-compose test image (matched by *.test above).
 !Dockerfile.test
 
+# VS Code extension packaging
+editors/vscode/node_modules/
+editors/vscode/*.vsix
+
 # Editor / OS
 .DS_Store
 *.swp

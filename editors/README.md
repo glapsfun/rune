@@ -15,8 +15,17 @@ editing.
 
 ## VS Code
 
-See [`vscode/`](./vscode/) — a ready client extension. `npm install && npm run
-package`, then install the `.vsix` (or press F5 to debug).
+Install **Rune** from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rune-task-runner.rune)
+(extension ID `rune-task-runner.rune`) — search "Rune" in the Extensions
+view. VSCodium and other VS Code-compatible editors get the same extension
+from [Open VSX](https://open-vsx.org/extension/rune-task-runner/rune).
+
+Offline/air-gapped: every stable [GitHub release](https://github.com/glapsfun/rune/releases)
+attaches the `rune-<version>.vsix`; install it with
+`code --install-extension rune-<version>.vsix`.
+
+Contributors can build from source in [`vscode/`](./vscode/) — see its
+README's contributor section (or press F5 there to debug).
 
 ## Neovim (0.11+, built-in LSP)
 

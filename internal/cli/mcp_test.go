@@ -74,6 +74,64 @@ func TestAdapterCallRunsThroughEngine(t *testing.T) {
 	}
 }
 
+// The in-process agent adapter must derive a mask set from the engine's
+// environment, so a task the agent calls back into cannot leak a secret value
+// into the agent's chat history. Regression for the code-review finding that
+// newAgentAdapter left maskSet nil (masking silently skipped).
+func TestAgentAdapterMasksSecrets(t *testing.T) {
+	const secret = "supersecretvalue123"
+	src := "greet:\n    @echo " + secret + "\n"
+	f, diags := parser.Parse("Runefile", src)
+	if diags.HasErrors() {
+		t.Fatalf("parse: %v", diags)
+	}
+	scope := eval.NewScope(indexAssignments(f), map[string]string{})
+	settings, _ := config.ResolveSettings(f, eval.New(scope))
+	eng := &engine{
+		file:     f,
+		tasks:    indexTasks(f),
+		assigns:  indexAssignments(f),
+		settings: settings,
+		root:     t.TempDir(),
+		workDir:  t.TempDir(),
+		env:      []string{"MY_API_TOKEN=" + secret},
+		now:      func() string { return "" },
+	}
+
+	adapter := eng.newAgentAdapter()
+	if adapter.maskSet.Empty() {
+		t.Fatal("agent adapter maskSet is empty; secret values would leak into agent write-back")
+	}
+	res, err := adapter.Call(context.Background(), "greet", map[string]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(res.Stdout, secret) {
+		t.Errorf("agent adapter leaked the secret: %q", res.Stdout)
+	}
+	if !strings.Contains(res.Stdout, "***") {
+		t.Errorf("agent adapter should mask the secret with ***: %q", res.Stdout)
+	}
+}
+
+// 014 US2 (C7): an MCP tool result must never carry ANSI — the adapter builds
+// its engine Options with both color booleans false, so every status line and
+// echoed command captured in the buffers is plain by construction.
+func TestAdapterResultCarriesNoANSI(t *testing.T) {
+	src := "greet:\n    echo hi-from-task\n"
+	a := adapterFor(t, src)
+	res, err := a.Call(context.Background(), "greet", map[string]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.ContainsRune(res.Stdout, '\x1b') || strings.ContainsRune(res.Stderr, '\x1b') {
+		t.Errorf("tool result carried ANSI: stdout=%q stderr=%q", res.Stdout, res.Stderr)
+	}
+	if !strings.Contains(res.Stdout, "hi-from-task") {
+		t.Errorf("missing task output: %+v", res)
+	}
+}
+
 func TestAdapterDestructiveFlag(t *testing.T) {
 	src := "[confirm(\"sure?\")]\nclean:\n    @echo clean\nlogs:\n    @echo logs\n"
 	a := adapterFor(t, src)

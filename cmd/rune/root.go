@@ -93,7 +93,9 @@ func newRootCmd(opts *cli.Options, version, commit string) *cobra.Command {
 	f.BoolVar(&opts.Fmt, "fmt", false, "rewrite the Runefile in canonical formatting")
 	f.BoolVar(&opts.ClearCache, "clear-cache", false, "remove the project-local .rune/cache directory")
 	f.BoolVar(&opts.IgnoreVersion, "ignore-version", false, "bypass the Runefile's minimum_version check (prints a warning)")
-	f.StringVar(&colorFlag, "color", "auto", "when to colorize output: auto|always|never")
+	// --color is persistent so every subcommand (analyze, serve, help, …)
+	// inherits the same control — the one gate for all styled surfaces (FR-008).
+	root.PersistentFlags().StringVar(&colorFlag, "color", "auto", "when to colorize output: auto|always|never")
 
 	return root
 }

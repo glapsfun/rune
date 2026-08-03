@@ -24,15 +24,17 @@ var namePatterns = []string{
 }
 
 // builtinUnmasked are ubiquitous, definitively non-secret variable names the
-// AUTH pattern would otherwise capture — masking git author names or the
-// ssh-agent socket path silently corrupts ordinary output (e.g. `git log`
-// author columns). An explicit `set secrets` declaration still re-includes
-// any of them; only the pattern rule is bypassed.
+// AUTH pattern would otherwise capture — masking git author names, the
+// ssh-agent socket path, or the X11 authority file path silently corrupts
+// ordinary output (e.g. `git log` author columns, or a script echoing
+// $XAUTHORITY for a container bind-mount). An explicit `set secrets`
+// declaration still re-includes any of them; only the pattern rule is bypassed.
 var builtinUnmasked = map[string]struct{}{
 	"SSH_AUTH_SOCK":    {},
 	"GIT_AUTHOR_NAME":  {},
 	"GIT_AUTHOR_EMAIL": {},
 	"GIT_AUTHOR_DATE":  {},
+	"XAUTHORITY":       {},
 }
 
 // Set is an immutable collection of secret values to mask. It is safe for

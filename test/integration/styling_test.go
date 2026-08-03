@@ -3,17 +3,16 @@ package integration
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/rune-task-runner/rune/internal/styletest"
 )
 
-// escRe matches SGR (color) escape sequences emitted by the styled surfaces.
-var escRe = regexp.MustCompile("\x1b\\[[0-9;]*m")
-
-// stripANSI removes SGR escapes, recovering the visible text. Stripped styled
-// output must equal the plain output byte-for-byte (zero-width emphasis).
-func stripANSI(s string) string { return escRe.ReplaceAllString(s, "") }
+// stripANSI removes SGR escapes via the shared helper, recovering the visible
+// text. Stripped styled output must equal the plain output byte-for-byte
+// (zero-width emphasis).
+func stripANSI(s string) string { return styletest.StripSGR(s) }
 
 // hasANSI reports whether s contains any ESC byte.
 func hasANSI(s string) bool { return strings.ContainsRune(s, '\x1b') }

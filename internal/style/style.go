@@ -15,14 +15,16 @@ import (
 	"github.com/muesli/termenv"
 )
 
-// Semantic palette, defined once. 256-color codes reuse the picker's accent
-// (170) and muted greys (245/241) so the whole CLI reads as one theme.
+// Semantic palette, defined once and exported so every surface — including the
+// interactive picker (internal/tui) — draws its color literals from here and
+// the palettes cannot drift apart.
 const (
-	colorError   = lipgloss.Color("1")   // red
-	colorWarning = lipgloss.Color("3")   // yellow
-	colorSuccess = lipgloss.Color("2")   // green
-	colorAccent  = lipgloss.Color("170") // task names, headings
-	colorMuted   = lipgloss.Color("245") // docs, echo, cache notices
+	ColorError     = lipgloss.Color("1")   // red
+	ColorWarning   = lipgloss.Color("3")   // yellow
+	ColorSuccess   = lipgloss.Color("2")   // green
+	ColorAccent    = lipgloss.Color("170") // task names, headings
+	ColorMuted     = lipgloss.Color("245") // docs, echo, cache notices
+	ColorMutedDark = lipgloss.Color("241") // picker key-hint line
 )
 
 // Theme holds one Lip Gloss style per semantic role. The zero Theme is valid and
@@ -53,13 +55,13 @@ func New(enabled bool, w io.Writer) Theme {
 
 	bold := r.NewStyle().Bold(true)
 	return Theme{
-		Error:    bold.Foreground(colorError),
-		Warning:  bold.Foreground(colorWarning),
-		Success:  r.NewStyle().Foreground(colorSuccess),
-		TaskName: bold.Foreground(colorAccent),
-		Heading:  bold.Foreground(colorAccent),
-		Muted:    r.NewStyle().Foreground(colorMuted),
+		Error:    bold.Foreground(ColorError),
+		Warning:  bold.Foreground(ColorWarning),
+		Success:  r.NewStyle().Foreground(ColorSuccess),
+		TaskName: bold.Foreground(ColorAccent),
+		Heading:  bold.Foreground(ColorAccent),
+		Muted:    r.NewStyle().Foreground(ColorMuted),
 		Locator:  r.NewStyle().Faint(true),
-		Caret:    bold.Foreground(colorError),
+		Caret:    bold.Foreground(ColorError),
 	}
 }

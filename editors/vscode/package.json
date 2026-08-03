@@ -1,22 +1,53 @@
 {
   "name": "rune",
   "displayName": "Rune",
-  "description": "Language support for Runefiles — diagnostics, completion, go-to-definition, hover, document symbols, and formatting — via the embedded `rune lsp` server.",
-  "version": "0.1.0",
+  "description": "Official Rune task runner support for Runefiles — diagnostics, completion, go-to-definition, hover, document symbols, and formatting via the embedded `rune lsp` server.",
+  "version": "0.0.0",
   "publisher": "rune-task-runner",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/rune-task-runner/rune" },
-  "engines": { "vscode": "^1.75.0" },
-  "categories": ["Programming Languages", "Linters", "Formatters"],
-  "activationEvents": ["onLanguage:runefile"],
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glapsfun/rune"
+  },
+  "bugs": {
+    "url": "https://github.com/glapsfun/rune/issues"
+  },
+  "homepage": "https://github.com/glapsfun/rune#readme",
+  "keywords": [
+    "rune",
+    "runefile",
+    "task runner",
+    "lsp",
+    "language server"
+  ],
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters"
+  ],
+  "activationEvents": [
+    "onLanguage:runefile"
+  ],
   "main": "./extension.js",
   "contributes": {
     "languages": [
       {
         "id": "runefile",
-        "aliases": ["Runefile", "rune"],
-        "filenames": ["Runefile", ".runefile"],
-        "extensions": [".rune"],
+        "aliases": [
+          "Runefile",
+          "rune"
+        ],
+        "filenames": [
+          "Runefile",
+          ".runefile"
+        ],
+        "extensions": [
+          ".rune"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -37,7 +68,11 @@
         },
         "rune.trace.server": {
           "type": "string",
-          "enum": ["off", "messages", "verbose"],
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
           "default": "off",
           "description": "Trace the JSON-RPC traffic between VS Code and the rune language server."
         }
@@ -49,9 +84,12 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.75.0",
-    "@vscode/vsce": "^2.24.0"
+    "@vscode/vsce": "3.9.2",
+    "ovsx": "1.0.2"
   },
   "scripts": {
-    "package": "vsce package"
+    "package": "vsce package",
+    "publish:vsce": "vsce publish --packagePath",
+    "publish:ovsx": "ovsx publish"
   }
 }

@@ -35,7 +35,7 @@ func Analyze(opts Options, path string, jsonOut bool) error {
 			return &UsageError{Err: err}
 		}
 	} else {
-		printAnalyzeText(opts, snap.Diagnostics)
+		printAnalyzeText(opts, snap.Sources, snap.Diagnostics)
 	}
 
 	if snap.Diagnostics.HasErrors() {
@@ -44,20 +44,36 @@ func Analyze(opts Options, path string, jsonOut bool) error {
 	return nil
 }
 
-// printAnalyzeText writes one line per diagnostic plus a summary count to stdout
-// (stdout is the analysis product; incidental logs go to stderr).
-func printAnalyzeText(opts Options, diags diag.List) {
+// printAnalyzeText renders diagnostics to stdout (stdout is the analysis
+// product; incidental logs go to stderr) with the same renderer the run path
+// uses — severity color, faint locator, caret span — keeping analyze's coded
+// severity token (014 C4). The summary's severity words are emphasized only
+// when their count is non-zero. It renders against src — the exact bytes the
+// diagnostics were computed on (analysis.Snapshot.Sources) — so the caret can
+// never point at a stale line and no file is re-read.
+//
+// Analyze deliberately does NOT value-mask: it is a static tool whose output
+// must stay a pure, reproducible function of the Runefile (env-derived masking
+// would make it depend on the caller's shell and break CI goldens), and
+// length-changing substitutions would misalign the carets it renders. Secret
+// values reach output only if hardcoded into the Runefile, which the feature
+// documents as out of scope (secrets come from the environment, never a
+// Runefile); the source it echoes is on-disk repo content either way.
+func printAnalyzeText(opts Options, src diag.SourceProvider, diags diag.List) {
 	out := opts.Stdout
-	for _, d := range diags {
-		loc := fmt.Sprintf("%s:%d:%d", d.Span.File, d.Span.Start.Line, d.Span.Start.Col)
-		if d.Code != "" {
-			fmt.Fprintf(out, "%s: %s[%s]: %s\n", loc, d.Severity, d.Code, d.Message)
-		} else {
-			fmt.Fprintf(out, "%s: %s: %s\n", loc, d.Severity, d.Message)
-		}
+	th := opts.themeStdout()
+	if len(diags) > 0 {
+		fmt.Fprintln(out, diag.RenderAllCoded(diags, src, th))
 	}
 	errs, warns := countBySeverity(diags)
-	fmt.Fprintf(out, "%s, %s\n", plural(errs, "error"), plural(warns, "warning"))
+	eWord, wWord := plural(errs, "error"), plural(warns, "warning")
+	if errs > 0 {
+		eWord = th.Error.Render(eWord)
+	}
+	if warns > 0 {
+		wWord = th.Warning.Render(wWord)
+	}
+	fmt.Fprintf(out, "%s, %s\n", eWord, wWord)
 }
 
 // --- JSON output ---

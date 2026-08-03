@@ -5,18 +5,17 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/rune-task-runner/rune/internal/style"
+	"github.com/rune-task-runner/rune/internal/styletest"
 	"github.com/rune-task-runner/rune/internal/token"
 )
 
-// ansiSeq strips SGR escapes so colored renderings can be compared to plain.
-var ansiSeq = regexp.MustCompile("\x1b\\[[0-9;]*m")
-
-func stripANSI(s string) string { return ansiSeq.ReplaceAllString(s, "") }
+// stripANSI strips SGR escapes (via the shared grammar) so colored renderings
+// can be compared to plain.
+func stripANSI(s string) string { return styletest.StripSGR(s) }
 
 var update = flag.Bool("update", false, "regenerate golden diagnostic renderings")
 

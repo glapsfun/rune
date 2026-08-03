@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -48,16 +47,14 @@ func run(args []string) int {
 	root.SetArgs(args)
 
 	err := root.ExecuteContext(ctx)
-	if err != nil {
-		// Diagnostics for validation errors are already rendered by the
-		// pipeline; a [no-exit-message] failure suppresses its banner. Only
-		// print a terse banner for other error classes.
-		var ve *cli.ValidationError
-		var tf *cli.TaskFailure
-		silent := errors.As(err, &tf) && tf.Silent
-		if !errors.As(err, &ve) && !silent {
-			fmt.Fprintln(os.Stderr, "rune: "+err.Error())
-		}
+	// BannerMessage suppresses banners already rendered by the pipeline
+	// (validation diagnostics) or intentionally silenced ([no-exit-message]).
+	// The banner runs after Execute returned, where PersistentPreRunE (the
+	// normal color-resolution point) may never have fired on a flag-parse
+	// error; tolerantTheme re-resolves --color so an explicit choice still
+	// governs. Only the "rune:" prefix is styled; the message stays plain (C1).
+	if msg := cli.BannerMessage(err); msg != "" {
+		fmt.Fprintln(os.Stderr, cli.BannerLine(tolerantTheme(root, os.Stderr), msg))
 	}
 	return cli.CodeFor(err)
 }

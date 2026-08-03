@@ -56,6 +56,54 @@ func TestUS1Version_ParityWithFlag(t *testing.T) {
 	}
 }
 
+// 014 US3 (C5): every subcommand's --help uses the grouped layout (description,
+// Usage, Examples where defined, Flags) with themed section headings; piped
+// help stays ANSI-free and stripping recovers the plain bytes.
+func TestSubcommandHelpGroupedAndStyled(t *testing.T) {
+	dir := writeRunefile(t, "build:\n    @echo hi\n")
+	descriptions := map[string]string{
+		"serve":      "Model Context Protocol",
+		"version":    "Runefile language version",
+		"analyze":    "Nothing is executed",
+		"lsp":        "language server",
+		"completion": "completion script",
+	}
+	for _, name := range []string{"serve", "version", "analyze", "lsp", "completion"} {
+		t.Run(name, func(t *testing.T) {
+			// styledVsPlain covers exit parity, plain purity, and strip-equality
+			// across both streams; the checks below add the help-specific shape.
+			styled, plain := styledVsPlain(t, dir, nil, name, "--help")
+			if plain.code != 0 {
+				t.Fatalf("`rune %s --help` exit = %d; stderr=%s", name, plain.code, plain.stderr)
+			}
+			for _, sec := range []string{"Usage:", "Flags:"} {
+				if !strings.Contains(plain.stdout, sec) {
+					t.Errorf("missing section %q:\n%s", sec, plain.stdout)
+				}
+			}
+			if !strings.Contains(plain.stdout, descriptions[name]) {
+				t.Errorf("missing long description (%q):\n%s", descriptions[name], plain.stdout)
+			}
+			if !hasANSI(styled.stdout) {
+				t.Errorf("--color=always help emitted no ANSI: %q", styled.stdout)
+			}
+		})
+	}
+}
+
+// `rune help <cmd>` renders through the same grouped help path as `--help`.
+func TestHelpCommandMatchesHelpFlag(t *testing.T) {
+	dir := writeRunefile(t, "build:\n    @echo hi\n")
+	viaCmd := run(t, dir, nil, "help", "serve")
+	viaFlag := run(t, dir, nil, "serve", "--help")
+	if viaCmd.code != 0 || viaFlag.code != 0 {
+		t.Fatalf("exit codes: help=%d --help=%d", viaCmd.code, viaFlag.code)
+	}
+	if viaCmd.stdout != viaFlag.stdout {
+		t.Errorf("`rune help serve` != `rune serve --help`:\n cmd=%q\n flag=%q", viaCmd.stdout, viaFlag.stdout)
+	}
+}
+
 // TestUS6_HelpRedesign: the root help has grouped sections and a worked example
 // for each common workflow, renders ANSI-free when piped, and colorizes section
 // headings under --color=always (FR-019, FR-020, FR-021, SC-006).

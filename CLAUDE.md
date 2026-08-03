@@ -1,28 +1,31 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/013-secret-masking/plan.md` (Secret Masking &
-Sanitization — values of sensitive environment variables are masked as `***`
-in every output surface: task stdout/stderr, echoed command lines, Rune's own
-status/log/error lines, and MCP tool results, so credentials never reach a
-terminal transcript or an agent's chat history. Secrets are identified by
-*name* over the effective environment (built-in case-insensitive patterns:
-TOKEN, SECRET, PASSWORD, PASSWD, APIKEY, API_KEY, PRIVATE_KEY, ACCESS_KEY,
-CREDENTIAL, AUTH) plus two new list settings — `set secrets := [...]` to
-declare, `set unmasked := [...]` to exempt — resolved via the existing
-`evalList` in `internal/config/settings.go` and registered in
-`internal/language/builtin.go`. No content scanning, no parser/lexer changes.
-A new leaf package `internal/mask` (stdlib-only; justified in the plan's
-Complexity Tracking) provides the value `Set` (min length 4, multi-line values
-split per line) and a concurrent streaming `io.WriteCloser` with bounded carry
-for chunk-spanning values. It wraps `Options.Stdout/Stderr` once at engine
-construction — the single choke point covering CLI, shell echo, agent
-write-back, and the MCP adapter's buffers (`internal/cli/mcp.go`) — and is
-skipped entirely when the set is empty, so secret-free Runefiles stay
-byte-identical (golden corpus untouched). Masking is at emission time (an
-interrupted task never leaks an unmasked window), verbatim occurrences only
-(base64/URL-encoded transforms documented out of scope), always on with no
-agent-facing off switch. Read the plan, `research.md` (decisions D1–D8),
-`data-model.md`, `quickstart.md`, and `contracts/secret-masking.md` (which
-extends the base MCP secrets contract) for details.
+Active feature plan: `specs/015-vscode-lsp-extension/plan.md` (VS Code
+Marketplace Extension for the Rune LSP — publish the existing
+`editors/vscode/` client (feature 011) to the VS Code Marketplace and Open
+VSX under the `rune-task-runner` publisher, so users install Rune language
+support from the Extensions view instead of building a `.vsix` by hand.
+Packaging/automation only: zero Go changes, the `rune lsp` server is
+untouched. Touched surfaces (S1–S13 in `data-model.md`): manifest hardening
+in `editors/vscode/package.json` (fix the wrong `rune-task-runner/rune`
+repository URL → `glapsfun/rune`, add icon/license/keywords/bugs/homepage,
+`0.0.0` placeholder version stamped from the release tag at publish time and
+never committed), new `package-lock.json`, LICENSE copy, `icon.png`,
+`CHANGELOG.md`, `.vscodeignore`, a missing/old-binary preflight in
+`extension.js` (actionable notification, no crash loop, client not started),
+listing-grade README rewrite, a CI `extension` packaging smoke job, a new
+`publish-extension` job in `release.yml` (`needs: release`, stable-only via
+`!inputs.prerelease`, order: npm ci → stamp → vsce package → attach `.vsix`
+to the GitHub release → `vsce publish` → `ovsx publish` the same file;
+secrets `VSCE_PAT`/`OVSX_PAT` from the protected `release` environment), and
+docs (releasing runbook with one-time publisher setup + recovery,
+`editors/README.md`, root README). Hard constraints: the core `release`
+job's steps stay byte-identical (it only gains an `outputs:` mapping
+exposing the tag) and a publish failure never blocks it (P1); no bundled
+`rune` binary (FR-003); extension version == tag minus `v` (FR-006);
+duplicate-version rejection makes job re-runs idempotent recovery (P6). Read
+the plan, `research.md` (decisions D1–D10), `data-model.md` (S1–S13),
+`quickstart.md` (V1–V6), and `contracts/` (`publishing-pipeline.md` P1–P8,
+`marketplace-listing.md` L1–L9) for details.
 <!-- SPECKIT END -->
 
 ## Development workflow

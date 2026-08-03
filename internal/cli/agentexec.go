@@ -59,6 +59,9 @@ func (e *engine) executeAgent(task *ast.Task, lines []shell.Line, dir string, en
 }
 
 // newAgentAdapter builds an MCP engine adapter from the engine's module state.
+// It derives the same secret-value mask set as the `rune serve` path so a task
+// the agent calls back into cannot leak a credential verbatim into the agent's
+// chat history (the write-back surface the feature exists to protect).
 func (e *engine) newAgentAdapter() *mcpAdapter {
 	return &mcpAdapter{
 		file:      e.file,
@@ -69,6 +72,7 @@ func (e *engine) newAgentAdapter() *mcpAdapter {
 		workDir:   e.workDir,
 		baseEnv:   e.env,
 		overrides: e.overrides,
+		maskSet:   deriveMaskSet(e.env, e.tasks, e.settings.Secrets, e.settings.Unmasked),
 		now:       e.now,
 	}
 }

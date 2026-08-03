@@ -23,11 +23,19 @@ type SourceProvider func(file string) ([]byte, bool)
 // every role as plain text, so the output is byte-for-byte identical to the
 // uncolored form (FR-018) and the caret stays column-aligned (SC-003).
 func Render(d Diagnostic, source []byte, th style.Theme) string {
+	return render(d, source, th, false)
+}
+
+func render(d Diagnostic, source []byte, th style.Theme, coded bool) string {
 	var b bytes.Buffer
 
-	sev := th.Error.Render(d.Severity.String())
+	label := d.Severity.String()
+	if coded && d.Code != "" {
+		label = fmt.Sprintf("%s[%s]", label, d.Code)
+	}
+	sev := th.Error.Render(label)
 	if d.Severity == Warning {
-		sev = th.Warning.Render(d.Severity.String())
+		sev = th.Warning.Render(label)
 	}
 	fmt.Fprintf(&b, "%s: %s: %s", th.Locator.Render(d.Span.String()), sev, d.Message)
 
@@ -43,6 +51,17 @@ func Render(d Diagnostic, source []byte, th style.Theme) string {
 // RenderAll formats every diagnostic in the list (one per stanza) using src to
 // fetch the source for each diagnostic's file.
 func RenderAll(list List, src SourceProvider, th style.Theme) string {
+	return renderAll(list, src, th, false)
+}
+
+// RenderAllCoded is RenderAll with each diagnostic's code folded into the
+// severity token — `error[RUNE2001]` — the coded text format `rune analyze`
+// uses while reusing the run path's locator/caret rendering (014 C4).
+func RenderAllCoded(list List, src SourceProvider, th style.Theme) string {
+	return renderAll(list, src, th, true)
+}
+
+func renderAll(list List, src SourceProvider, th style.Theme, coded bool) string {
 	var b strings.Builder
 	for i, d := range list {
 		var source []byte
@@ -54,7 +73,7 @@ func RenderAll(list List, src SourceProvider, th style.Theme) string {
 		if i > 0 {
 			b.WriteByte('\n')
 		}
-		b.WriteString(Render(d, source, th))
+		b.WriteString(render(d, source, th, coded))
 	}
 	return b.String()
 }

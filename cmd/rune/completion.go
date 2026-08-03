@@ -16,19 +16,11 @@ func newCompletionCmd() *cobra.Command {
 		Use:   "completion [bash|zsh|fish|powershell]",
 		Short: "Generate a shell completion script",
 		Long: `Generate a shell completion script for rune. Completions include the task
-names defined in your Runefile, resolved dynamically as you type.
-
-Bash:
-  rune completion bash > /etc/bash_completion.d/rune            # system-wide
+names defined in your Runefile, resolved dynamically as you type.`,
+		Example: `  rune completion bash > /etc/bash_completion.d/rune     # bash, system-wide
   rune completion bash > ~/.local/share/bash-completion/completions/rune
-
-Zsh:
-  rune completion zsh > "${fpath[1]}/_rune"                     # then restart your shell
-
-Fish:
+  rune completion zsh > "${fpath[1]}/_rune"              # zsh; then restart your shell
   rune completion fish > ~/.config/fish/completions/rune.fish
-
-PowerShell:
   rune completion powershell | Out-String | Invoke-Expression`,
 		Args:                  cobra.ExactArgs(1),
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},

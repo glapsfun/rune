@@ -1,11 +1,14 @@
 package cli
 
 import (
+	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/parser"
+	"github.com/rune-task-runner/rune/internal/styletest"
 )
 
 // parseRunefile parses src as a Runefile for tests, failing on any diagnostic.
@@ -132,5 +135,40 @@ secret:
 
 	if got, want := taskNames(groups["build"]), []string{"compile"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("groups[\"build\"] = %v, want %v (private task must be excluded)", got, want)
+	}
+}
+
+// 014 US2 (C6): the colored --list branch pads with its own width computation
+// (rune count) while the plain branch uses fmt's byte-width padding. Task names
+// are ASCII-only by the grammar, so the two models MUST agree — stripping ANSI
+// from the colored listing must reproduce the plain listing byte-for-byte,
+// including every padding space. This pins the alignment parity FR-009 requires.
+func TestListTasksColoredAlignmentMatchesPlain(t *testing.T) {
+	f := parseRunefile(t, `
+# Short name.
+go:
+    @echo hi
+
+# A much longer task name.
+integration-tests:
+    @echo hi
+
+undocumented:
+    @echo hi
+`)
+
+	render := func(color bool) string {
+		var buf bytes.Buffer
+		listTasks(Options{Stdout: &buf, ColorStdout: color}, f)
+		return buf.String()
+	}
+
+	plain := render(false)
+	colored := render(true)
+	if !strings.ContainsRune(colored, '\x1b') {
+		t.Fatalf("colored listing carried no ANSI: %q", colored)
+	}
+	if got := styletest.StripSGR(colored); got != plain {
+		t.Errorf("colored listing (stripped) != plain:\n stripped=%q\n plain   =%q", got, plain)
 	}
 }

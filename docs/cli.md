@@ -131,8 +131,30 @@ Rune's own messages go to **stderr**, so a task's `stdout` stays clean for pipin
 
 ## Output & color
 
-Color is emitted on a TTY unless `NO_COLOR` is set or output is redirected. Validation
-errors are rendered with `file:line:col` and a caret-underlined source span.
+Color is emitted on a TTY unless `NO_COLOR` is set or output is redirected, and
+`--color always|never` forces the decision either way. The flag works on every
+command (`rune analyze --color=always` and `rune --color=always <task>` are both
+valid), and the decision is made per stream: with stdout piped but stderr on a
+terminal, status lines stay colored while the piped data stays plain.
+
+Every human-facing message shares one restrained palette:
+
+- **Errors** — the failure banner (`rune: …`), watch-mode failures, and
+  diagnostic severities render in the shared error style; warnings (cache
+  writes, `--ignore-version`) in the shared warning style.
+- **Status** — `running:`, `formatted:`, and `cleared:` labels are green;
+  command echo, cache/dry-run notices, watch and server chrome are dimmed;
+  `[confirm]` prompts use the warning style.
+- **Diagnostics** — validation errors are rendered with a dimmed
+  `file:line:col` locator and a caret-underlined source span; `rune analyze`
+  presents the same rendering (plus its `error[RUNE1234]` code tokens).
+- **Help** — `--help` on the root command and every subcommand shares the same
+  grouped, heading-styled layout.
+
+Machine-readable output — `--dump`, `analyze --json`, `version --check --json`,
+completion scripts, and everything an MCP agent or the language server receives
+— never contains color escapes, regardless of `--color`. When color is off,
+output is byte-for-byte plain text.
 
 ## See also
 

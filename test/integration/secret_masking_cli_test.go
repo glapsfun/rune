@@ -63,6 +63,31 @@ func TestSecretMasking_FailureBannerMasked(t *testing.T) {
 	}
 }
 
+// 014 US1 (C1, FR-011): styling the failure banner must not defeat masking —
+// under --color=always the banner carries ANSI *and* the mask, never the
+// secret, and stripping the ANSI recovers the plain masked banner exactly.
+func TestSecretMasking_StyledFailureBannerMasked(t *testing.T) {
+	src := "boom:\n    @exit 22 # bearer {{env(\"CLI_DEMO_TOKEN\")}}\n"
+	dir := writeRunefile(t, src)
+	// styledVsPlain covers exit parity, plain purity, and that stripping the
+	// styled stderr recovers the plain (masked) banner byte-for-byte.
+	styled, plain := styledVsPlain(t, dir, []string{"CLI_DEMO_TOKEN=" + cliSecret}, "boom")
+	if plain.code == 0 {
+		t.Fatalf("exit = %d, want failure", plain.code)
+	}
+	for name, r := range map[string]result{"styled": styled, "plain": plain} {
+		if strings.Contains(r.stderr, cliSecret) || strings.Contains(r.stdout, cliSecret) {
+			t.Fatalf("%s: banner leaked the secret: stderr=%q", name, r.stderr)
+		}
+		if !strings.Contains(r.stderr, "***") {
+			t.Errorf("%s: banner should carry the mask: %q", name, r.stderr)
+		}
+	}
+	if !hasANSI(styled.stderr) {
+		t.Errorf("styled banner should carry ANSI: %q", styled.stderr)
+	}
+}
+
 // T014 — an un-suppressed command line interpolating a secret echoes masked;
 // `@` and `set quiet` suppression semantics are unchanged.
 func TestSecretMasking_EchoedCommandMasked(t *testing.T) {

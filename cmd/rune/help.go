@@ -9,32 +9,92 @@ import (
 	"github.com/rune-task-runner/rune/internal/style"
 )
 
-// applyHelp installs Rune's friendly, grouped help on the root command. Section
+// applyHelp installs Rune's friendly, grouped help on the root command and —
+// via Cobra's help-func inheritance — on every subcommand (014 C5). Section
 // headings are colorized when stdout is a color terminal (resolved here because
 // Cobra does not run PersistentPreRunE for --help); the body stays plain so
-// piped help is ANSI-free and informative (FR-019..FR-021). Subcommands keep
-// Cobra's default help (which already carries their flags and examples).
+// piped help is ANSI-free and informative (FR-019..FR-021).
 func applyHelp(root *cobra.Command) {
-	defaultHelp := root.HelpFunc()
-	root.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+	root.SetHelpFunc(func(cmd *cobra.Command, _ []string) {
+		out := cmd.OutOrStdout()
+		// PersistentPreRunE (the normal color-resolution path) does not run for
+		// --help, so styling is resolved tolerantly here — shared with the
+		// failure-banner path (see tolerantTheme in color.go).
+		th := tolerantTheme(cmd, out)
 		if cmd.HasParent() {
-			defaultHelp(cmd, args)
+			fmt.Fprint(out, subHelp(cmd, th))
 			return
 		}
-		out := cmd.OutOrStdout()
-		// Resolve color for help output. An invalid --color value is tolerated
-		// here (falls back to auto) rather than erroring: PersistentPreRunE — the
-		// normal FR-009 validation path — does not run for --help, and refusing
-		// to print help on a bad flag would be hostile.
-		mode := colorAuto
-		if v, err := cmd.Flags().GetString("color"); err == nil {
-			if m, perr := parseColorMode(v); perr == nil {
-				mode = m
-			}
-		}
-		th := style.New(resolveColor(mode, streamIsTTY(out)), out)
 		fmt.Fprint(out, rootHelp(cmd, th))
 	})
+}
+
+// subHelp renders a subcommand's help in the same grouped shape as the root:
+// description, Usage, Aliases/Examples where defined, then flags. The plain
+// form (disabled theme) is the reviewed 014 baseline. Sections are derived
+// from Cobra metadata, so new commands and flags inherit the layout — and a
+// command missing its Long/Example shows up as a visibly thinner screen.
+func subHelp(cmd *cobra.Command, th style.Theme) string {
+	h := th.Heading.Render
+	var b strings.Builder
+
+	desc := cmd.Long
+	if desc == "" {
+		desc = cmd.Short
+	}
+	if desc != "" {
+		fmt.Fprintln(&b, strings.TrimSpace(desc))
+		fmt.Fprintln(&b)
+	}
+
+	fmt.Fprintln(&b, h("Usage:"))
+	fmt.Fprintln(&b, "  "+cmd.UseLine())
+	fmt.Fprintln(&b)
+
+	if len(cmd.Aliases) > 0 {
+		fmt.Fprintln(&b, h("Aliases:"))
+		fmt.Fprintln(&b, "  "+strings.Join(append([]string{cmd.Name()}, cmd.Aliases...), ", "))
+		fmt.Fprintln(&b)
+	}
+
+	if cmd.Example != "" {
+		fmt.Fprintln(&b, h("Examples:"))
+		fmt.Fprintln(&b, cmd.Example)
+		fmt.Fprintln(&b)
+	}
+
+	// A command group lists its children so they stay discoverable from --help,
+	// matching rootHelp's Commands section. Latent today (every subcommand is a
+	// leaf), but keeps subHelp correct if a group is ever added.
+	if cmd.HasAvailableSubCommands() {
+		fmt.Fprintln(&b, h("Commands:"))
+		width := 0
+		for _, c := range cmd.Commands() {
+			if (c.IsAvailableCommand() || c.Name() == "help") && len(c.Name()) > width {
+				width = len(c.Name())
+			}
+		}
+		for _, c := range cmd.Commands() {
+			if c.IsAvailableCommand() || c.Name() == "help" {
+				fmt.Fprintf(&b, "  %-*s  %s\n", width, c.Name(), c.Short)
+			}
+		}
+		fmt.Fprintln(&b)
+	}
+
+	if cmd.HasAvailableLocalFlags() {
+		fmt.Fprintln(&b, h("Flags:"))
+		b.WriteString(cmd.LocalFlags().FlagUsages())
+	}
+	if cmd.HasAvailableInheritedFlags() {
+		if cmd.HasAvailableLocalFlags() {
+			fmt.Fprintln(&b)
+		}
+		fmt.Fprintln(&b, h("Global Flags:"))
+		b.WriteString(cmd.InheritedFlags().FlagUsages())
+	}
+
+	return b.String()
 }
 
 // rootHelp renders the grouped root help. The plain form (disabled theme) is the
