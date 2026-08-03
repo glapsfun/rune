@@ -1,29 +1,31 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/014-colorful-cli-output/plan.md` (Colorful CLI
-Output Everywhere — finish feature 008's styling coverage so every
-human-facing message uses the single semantic theme in `internal/style`, with
-zero new packages, flags, or dependencies. Newly themed surfaces (S1–S13 in
-`data-model.md`): the top-level failure banner in `cmd/rune/main.go` (`rune:`
-prefix in the Error role, resolved tolerantly at banner time like help.go,
-since PersistentPreRunE may not have run), cycle/watch error banners via a
-shared `printErrorBanner` helper in `internal/cli`, the min-version override
-warning (Warning role label), `rune analyze` text output rerouted through
-`diag.RenderAllCoded` (new variant keeping the `error[RUNE2001]` token) for
-run-path parity, grouped+styled help extended from root to all subcommands,
-the bare-`rune` overview header, confirm prompt (Warning),
-`formatted:`/`cleared:` labels (Success), watch/serve chrome (Muted). Also
-fixed during implementation: `--color` was root-local and unusable with
-subcommands — it is now a persistent flag (audit A13). The feared `--list`
-wide-rune misalignment proved unreachable (task names are ASCII by grammar) —
-no runewidth dependency; parity is pinned by test. TUI picker palette
-literals unified with exported `style.Color*` constants. Hard constraints:
-plain output byte-identical except analyze/help (FR-006), machine formats
-(--dump, JSON modes, completion, LSP, MCP buffers) never carry ANSI (FR-007),
-existing `--color`/`NO_COLOR` per-stream decision is the only gate (FR-008),
-masking-through-styling covered by tests (FR-011), exit codes/streams/order
-frozen (FR-013). Read the plan, `research.md` (decisions D1–D10),
-`data-model.md` (surface inventory), `quickstart.md`, and `contracts/`
-(`styled-output.md` C1–C9, `cli-audit.md` findings A1–A12) for details.
+Active feature plan: `specs/015-vscode-lsp-extension/plan.md` (VS Code
+Marketplace Extension for the Rune LSP — publish the existing
+`editors/vscode/` client (feature 011) to the VS Code Marketplace and Open
+VSX under the `rune-task-runner` publisher, so users install Rune language
+support from the Extensions view instead of building a `.vsix` by hand.
+Packaging/automation only: zero Go changes, the `rune lsp` server is
+untouched. Touched surfaces (S1–S13 in `data-model.md`): manifest hardening
+in `editors/vscode/package.json` (fix the wrong `rune-task-runner/rune`
+repository URL → `glapsfun/rune`, add icon/license/keywords/bugs/homepage,
+`0.0.0` placeholder version stamped from the release tag at publish time and
+never committed), new `package-lock.json`, LICENSE copy, `icon.png`,
+`CHANGELOG.md`, `.vscodeignore`, a missing/old-binary preflight in
+`extension.js` (actionable notification, no crash loop, client not started),
+listing-grade README rewrite, a CI `extension` packaging smoke job, a new
+`publish-extension` job in `release.yml` (`needs: release`, stable-only via
+`!inputs.prerelease`, order: npm ci → stamp → vsce package → attach `.vsix`
+to the GitHub release → `vsce publish` → `ovsx publish` the same file;
+secrets `VSCE_PAT`/`OVSX_PAT` from the protected `release` environment), and
+docs (releasing runbook with one-time publisher setup + recovery,
+`editors/README.md`, root README). Hard constraints: the core `release`
+job's steps stay byte-identical (it only gains an `outputs:` mapping
+exposing the tag) and a publish failure never blocks it (P1); no bundled
+`rune` binary (FR-003); extension version == tag minus `v` (FR-006);
+duplicate-version rejection makes job re-runs idempotent recovery (P6). Read
+the plan, `research.md` (decisions D1–D10), `data-model.md` (S1–S13),
+`quickstart.md` (V1–V6), and `contracts/` (`publishing-pipeline.md` P1–P8,
+`marketplace-listing.md` L1–L9) for details.
 <!-- SPECKIT END -->
 
 ## Development workflow
