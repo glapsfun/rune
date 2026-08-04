@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.4.0] - 2026-08-04
+
+### Added
+- Group sections in the interactive task picker (#14) (#14)
+- Secret masking & sanitization (013) (#15) (#15)
+- Publish the VS Code extension to the Marketplace and Open VSX (#16) (#16)
+
 ## [0.3.0] - 2026-07-17
 
 ### Added
