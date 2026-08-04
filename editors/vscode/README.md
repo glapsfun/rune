@@ -6,7 +6,7 @@ embedded in the `rune` binary (`rune lsp`). Nothing is executed while you
 edit.
 
 > Using VSCodium or another VS Code-compatible editor? The same extension is
-> on [Open VSX](https://open-vsx.org/extension/rune-task-runner/rune).
+> on [Open VSX](https://open-vsx.org/extension/rune-task-runner/runefile).
 
 ## Requirements
 
@@ -53,8 +53,8 @@ of the Rune repository. To build and side-load it:
 ```sh
 cd editors/vscode
 npm ci
-npx vsce package 0.0.1 --no-update-package-json   # produces rune-0.0.1.vsix
-code --install-extension rune-0.0.1.vsix
+npx vsce package 0.0.1 --no-update-package-json   # produces runefile-0.0.1.vsix
+code --install-extension runefile-0.0.1.vsix
 ```
 
 (`--no-update-package-json` keeps the repo's `0.0.0` placeholder version

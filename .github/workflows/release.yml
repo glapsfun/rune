@@ -238,7 +238,7 @@ jobs:
         id: attach
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "$TAG" "rune-${TAG#v}.vsix" --clobber
+        run: gh release upload "$TAG" "runefile-${TAG#v}.vsix" --clobber
 
       # --skip-duplicate makes re-runs idempotent AND green: an
       # already-published version is a logged no-op, not a step failure
@@ -247,7 +247,7 @@ jobs:
       - name: Publish to the VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --skip-duplicate --packagePath "rune-${TAG#v}.vsix"
+        run: npx vsce publish --skip-duplicate --packagePath "runefile-${TAG#v}.vsix"
 
       # Same .vsix, separate step. Runs even if the Marketplace step failed —
       # but only when the artifact was attached (P4) — so on a re-run after a
@@ -256,4 +256,4 @@ jobs:
         if: ${{ !cancelled() && steps.attach.outcome == 'success' }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx ovsx publish --skip-duplicate "rune-${TAG#v}.vsix"
+        run: npx ovsx publish --skip-duplicate "runefile-${TAG#v}.vsix"

@@ -12,7 +12,7 @@ The installable artifact produced by `vsce package`.
 
 | Field | Source | Rule |
 |-------|--------|------|
-| `name` | manifest `name: "rune"` | Fixed; with publisher forms the extension ID `rune-task-runner.rune`. |
+| `name` | manifest `name: "runefile"` | Fixed; with publisher forms the extension ID `rune-task-runner.runefile`. (`"rune"` was rejected at first publish — Marketplace names are globally unique and taken.) |
 | `version` | Release tag minus `v` (stamped, D4) | Plain `major.minor.patch`; never committed; unique per registry (duplicates rejected → idempotent retries). |
 | Contents | `editors/vscode/` minus `.vscodeignore` | MUST include `extension.js`, grammar, language configuration, README, CHANGELOG, LICENSE, icon, and production `node_modules` (`vscode-languageclient`). |
 
