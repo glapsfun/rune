@@ -59,7 +59,7 @@ runtime dependency; **no esbuild/webpack bundling in v1**. Add a
 includes runtime dependencies in the `.vsix`, so a bundler buys nothing for
 a 40-line client with one dependency — it would only add a build step and a
 new toolchain to a repo that prides itself on being boring. `ovsx publish
-rune-<ver>.vsix` accepts the prebuilt artifact, guaranteeing byte-identical
+runefile-<ver>.vsix` accepts the prebuilt artifact, guaranteeing byte-identical
 content on both registries (FR-009).
 
 **Alternatives considered**: esbuild single-file bundle (smaller `.vsix`,
@@ -197,7 +197,7 @@ awkward).
 
 ## D9 — `.vsix` attached to the GitHub release
 
-**Decision**: The `publish-extension` job uploads `rune-<version>.vsix` as
+**Decision**: The `publish-extension` job uploads `runefile-<version>.vsix` as
 a GitHub release asset (via `gh release upload`) **before** pushing to
 either registry.
 

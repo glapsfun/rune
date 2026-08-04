@@ -20,7 +20,7 @@ cd editors/vscode
 npm ci
 npm version --no-git-tag-version 0.0.1
 npx vsce package
-unzip -l rune-0.0.1.vsix
+unzip -l runefile-0.0.1.vsix
 ```
 
 (The throwaway version must be plain `major.minor.patch` — vsce rejects
@@ -37,7 +37,7 @@ what the CI `extension` job asserts, case-insensitively.)
 ## V2 — Side-load install gives working language features (L8)
 
 ```sh
-code --install-extension editors/vscode/rune-0.0.1.vsix
+code --install-extension editors/vscode/runefile-0.0.1.vsix
 ```
 
 Open a `Runefile` containing a known error (e.g. a dependency on an
@@ -87,13 +87,13 @@ On a scratch run (or by inspection of `.github/workflows/release.yml`):
 After the first stable release with this feature (tag `vX.Y.Z`):
 
 1. `.vsix` asset `rune-X.Y.Z.vsix` is attached to the GitHub release (P4).
-2. Marketplace: search "Rune" in VS Code → the `rune-task-runner.rune`
+2. Marketplace: search "Rune" in VS Code → the `rune-task-runner.runefile`
    extension appears with icon, description, license, and repository link
    pointing at `github.com/glapsfun/rune` (L1–L6); listed version is
    `X.Y.Z` (P3, FR-006). Install it on a machine with `rune` on PATH, open
    a Runefile → diagnostics appear within 5 minutes of starting the search
    (SC-001, SC-002).
-3. Open VSX: `https://open-vsx.org/extension/rune-task-runner/rune` shows
+3. Open VSX: `https://open-vsx.org/extension/rune-task-runner/runefile` shows
    the same version (P7); install in VSCodium and repeat the smoke check
    (US3).
 4. Re-run test: re-run the `publish-extension` job for the same tag →

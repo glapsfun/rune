@@ -31,7 +31,7 @@ The workflow then:
 ## VS Code extension publishing
 
 Every **stable** release (prerelease unchecked) also publishes the VS Code extension
-(`rune-task-runner.rune`). Prereleases (`-rc.N`) never publish an extension.
+(`rune-task-runner.runefile`). Prereleases (`-rc.N`) never publish an extension.
 
 - The extension version is the release tag without the leading `v` (tag `v0.4.0` → extension
   `0.4.0`). The repo's `editors/vscode/package.json` keeps a `0.0.0` placeholder; the workflow
@@ -39,7 +39,7 @@ Every **stable** release (prerelease unchecked) also publishes the VS Code exten
 - The job reuses the protected `release` environment, so required reviewers get a **second
   approval prompt** after the core release finishes. Approving it is expected — it is the
   gate for the publishing tokens, not a manual publish step.
-- Order inside the job: package → attach `rune-<version>.vsix` to the GitHub release →
+- Order inside the job: package → attach `runefile-<version>.vsix` to the GitHub release →
   publish to the Marketplace → publish the same file to Open VSX. Attaching first means even
   a registry outage leaves the exact artifact recoverable.
 
@@ -51,13 +51,13 @@ The core release (binaries, images, tag) is never affected by an extension-publi
 1. **Re-run failed jobs** on the same workflow run. Re-runs are idempotent — and end green:
    both publish steps pass `--skip-duplicate`, so an already-published side logs a skip and
    exits 0 while the other side publishes.
-2. Manual fallback (registry outage, expired token): download `rune-<version>.vsix` from the
+2. Manual fallback (registry outage, expired token): download `runefile-<version>.vsix` from the
    GitHub release assets and publish it locally:
 
    ```sh
    cd editors/vscode && npm ci
-   npx vsce publish --packagePath rune-<version>.vsix   # VSCE_PAT in the environment
-   npx ovsx publish rune-<version>.vsix                 # OVSX_PAT in the environment
+   npx vsce publish --packagePath runefile-<version>.vsix   # VSCE_PAT in the environment
+   npx ovsx publish runefile-<version>.vsix                 # OVSX_PAT in the environment
    ```
 
 3. **Token rotation**: Azure DevOps PATs expire (≤ 1 year) — when the Marketplace publish

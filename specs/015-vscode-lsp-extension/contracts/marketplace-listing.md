@@ -3,9 +3,11 @@
 Binding rules for what users see and install. Verified by the CI smoke
 job's content assertions and quickstart scenarios V1–V3.
 
-- **L1 — Identity.** Extension ID is `rune-task-runner.rune`; display name
+- **L1 — Identity.** Extension ID is `rune-task-runner.runefile`; display name
   "Rune"; description identifies it as the official language support for
-  Runefiles by the Rune task runner project.
+  Runefiles by the Rune task runner project. (The name `rune` is unavailable:
+  Marketplace extension names are globally unique across publishers, and the
+  first `v0.4.0` publish was rejected with a name conflict.)
 
 - **L2 — Publisher.** Published only under the project-controlled
   `rune-task-runner` publisher (Marketplace) / namespace (Open VSX).
