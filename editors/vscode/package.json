@@ -1,6 +1,6 @@
 {
   "name": "runefile",
-  "displayName": "Rune",
+  "displayName": "Rune Task Runner",
   "description": "Official Rune task runner support for Runefiles \u2014 diagnostics, completion, go-to-definition, hover, document symbols, and formatting via the embedded `rune lsp` server.",
   "version": "0.0.0",
   "publisher": "rune-task-runner",

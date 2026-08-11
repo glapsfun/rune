@@ -15,7 +15,7 @@ editing.
 
 ## VS Code
 
-Install **Rune** from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rune-task-runner.runefile)
+Install **Rune Task Runner** from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rune-task-runner.runefile)
 (extension ID `rune-task-runner.runefile`) — search "Rune" in the Extensions
 view. VSCodium and other VS Code-compatible editors get the same extension
 from [Open VSX](https://open-vsx.org/extension/rune-task-runner/runefile).
