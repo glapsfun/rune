@@ -39,3 +39,5 @@ editors/vscode/*.vsix
 !.specify/memory/
 !.specify/memory/constitution.md
 skills-lock.json
+.gskill/
+.agents/
