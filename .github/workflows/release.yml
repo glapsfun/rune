@@ -44,9 +44,11 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          # Prefer a bot/App token that may bypass branch protection for the changelog
-          # commit; falls back to the default token if RELEASE_TOKEN is unset.
-          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          # TAP_GITHUB_TOKEN is the release PAT (an org admin's, so it bypasses the
+          # main ruleset for the changelog commit + tag push); the same secret is
+          # handed to GoReleaser for the Homebrew/Scoop commits below. Falls back
+          # to the default token if unset.
+          token: ${{ secrets.TAP_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Guard — clean tree and green CI for HEAD
         env:
