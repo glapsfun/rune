@@ -13,6 +13,7 @@ func newLSPCmd(opts *cli.Options) *cobra.Command {
 	var (
 		logFile  string
 		logLevel string
+		stdio    bool
 	)
 	cmd := &cobra.Command{
 		Use:   "lsp",
@@ -31,5 +32,9 @@ stdout is reserved for protocol messages; logs are written to stderr or the
 	f := cmd.Flags()
 	f.StringVar(&logFile, "log-file", "", "write logs to this file instead of stderr")
 	f.StringVar(&logLevel, "log-level", "info", "log verbosity: error|warn|info|debug")
+	// LSP clients pass --stdio by convention (vscode-languageclient appends it
+	// for stdio executables). stdio is the only transport, so accept and
+	// ignore it — rejecting it crash-loops every such client.
+	f.BoolVar(&stdio, "stdio", false, "accepted for LSP client compatibility (stdio is the only transport)")
 	return cmd
 }

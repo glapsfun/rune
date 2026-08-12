@@ -4,7 +4,7 @@
 // server and forwards requests.
 const { workspace, window, commands, env, Uri } = require("vscode");
 const { execFile } = require("node:child_process");
-const { LanguageClient, TransportKind } = require("vscode-languageclient/node");
+const { LanguageClient } = require("vscode-languageclient/node");
 
 const INSTALL_DOCS_URL = "https://github.com/glapsfun/rune/blob/main/docs/installation.md";
 const RESTART_DEBOUNCE_MS = 400;
@@ -84,9 +84,14 @@ async function startClient() {
     return;
   }
 
+  // No `transport:` here — an Executable talks stdio by default, and setting
+  // TransportKind.stdio makes vscode-languageclient append `--stdio` to the
+  // args, which older rune releases reject as an unknown flag (exit 2,
+  // crash-restart loop). rune ≥ 0.4.3 accepts --stdio, but not passing it
+  // keeps the extension working with every LSP-capable rune.
   const serverOptions = {
-    run: { command, args: ["lsp"], transport: TransportKind.stdio },
-    debug: { command, args: ["lsp", "--log-level", "debug"], transport: TransportKind.stdio },
+    run: { command, args: ["lsp"] },
+    debug: { command, args: ["lsp", "--log-level", "debug"] },
   };
 
   const clientOptions = {
