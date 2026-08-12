@@ -163,8 +163,8 @@ host OS.
 - A task with no OS attribute is available everywhere — unchanged.
 - Multiple OS attributes on one task (one line or several) combine as OR;
   `[unix]` plus `[windows]` therefore means available everywhere.
-- `unix` matches every platform except Windows (today: everything where
-  `GOOS != "windows"`), not merely Linux + macOS.
+- `unix` matches every platform except Windows — not merely Linux and
+  macOS.
 - A private (`[private]` or `_`-prefixed) OS-matched task stays hidden from
   all listings and MCP exactly as today; privacy and availability filters
   compose.
@@ -183,11 +183,11 @@ host OS.
 
 ### Functional Requirements
 
-- **FR-001**: Task OS availability MUST be computed by a single shared
-  predicate owned by the task model, used by every surface (list, picker,
-  completion, MCP, run-time), preserving today's semantics: no OS attribute
-  ⇒ available; multiple OS attributes OR together; `unix` ⇒ any platform
-  except Windows.
+- **FR-001**: Task OS availability MUST be computed by one authoritative
+  rule applied uniformly by every surface (list, picker, completion, MCP,
+  run-time), preserving today's semantics: no OS attribute ⇒ available;
+  multiple OS attributes OR together; `unix` ⇒ any platform except
+  Windows.
 - **FR-002**: The MCP server MUST NOT expose OS-mismatched tasks as tools,
   on both the stdio (`rune mcp`) and HTTP (`rune serve`) transports; the
   MCP authorization/allowlist layer MUST operate on the same filtered set.
@@ -206,9 +206,9 @@ host OS.
   host-OS-available non-private tasks are exposed, and the os-filtering
   example's "shows and runs" description matches actual behavior. The
   documentation test suite stays green.
-- **FR-007**: The availability predicate MUST accept the target OS as an
-  input (rather than reading the process's OS internally) so behavior on
-  every platform is unit-testable from any platform.
+- **FR-007**: Availability MUST be evaluatable for any named operating
+  system, not only the one the evaluation runs on, so every platform's
+  behavior can be verified from any development machine.
 
 ### Non-Functional Requirements
 
@@ -227,10 +227,11 @@ host OS.
   single- and multi-task invocations.
 - **SC-003**: The cross-platform dispatch pattern (one task depending on
   per-OS tasks) runs exactly the host-matching dependency and succeeds on
-  every supported GOOS — verified via the injectable-OS predicate tests.
-- **SC-004**: The availability predicate has unit coverage for: no
-  attributes, single match, single mismatch, multi-attribute OR, and `unix`
-  on linux/darwin/windows (its first-ever test coverage).
+  every supported operating system — verified by tests that evaluate
+  availability for each supported OS.
+- **SC-004**: The availability rule has automated coverage for: no
+  attributes, single match, single mismatch, multi-attribute OR, and
+  `unix` on Linux, macOS, and Windows (its first-ever test coverage).
 - **SC-005**: Zero regressions in `--list`, picker, and completion
   filtering; the documentation test suite (`rune docs-check`) passes with
   the updated docs.
