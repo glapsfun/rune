@@ -69,6 +69,8 @@ go install github.com/rune-task-runner/rune/cmd/rune@latest
 ```
 
 This installs `rune` into `$(go env GOPATH)/bin`. Ensure that directory is on your `PATH`.
+The binary reports the release it was built from (`rune --version`), so Runefiles that pin
+a [`minimum_version`](runefile.md) work the same as with a downloaded release binary.
 
 To build from a checkout:
 

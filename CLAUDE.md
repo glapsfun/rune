@@ -1,31 +1,27 @@
 <!-- SPECKIT START -->
-Active feature plan: `specs/015-vscode-lsp-extension/plan.md` (VS Code
-Marketplace Extension for the Rune LSP — publish the existing
-`editors/vscode/` client (feature 011) to the VS Code Marketplace and Open
-VSX under the `rune-task-runner` publisher, so users install Rune language
-support from the Extensions view instead of building a `.vsix` by hand.
-Packaging/automation only: zero Go changes, the `rune lsp` server is
-untouched. Touched surfaces (S1–S13 in `data-model.md`): manifest hardening
-in `editors/vscode/package.json` (fix the wrong `rune-task-runner/rune`
-repository URL → `glapsfun/rune`, add icon/license/keywords/bugs/homepage,
-`0.0.0` placeholder version stamped from the release tag at publish time and
-never committed), new `package-lock.json`, LICENSE copy, `icon.png`,
-`CHANGELOG.md`, `.vscodeignore`, a missing/old-binary preflight in
-`extension.js` (actionable notification, no crash loop, client not started),
-listing-grade README rewrite, a CI `extension` packaging smoke job, a new
-`publish-extension` job in `release.yml` (`needs: release`, stable-only via
-`!inputs.prerelease`, order: npm ci → stamp → vsce package → attach `.vsix`
-to the GitHub release → `vsce publish` → `ovsx publish` the same file;
-secrets `VSCE_PAT`/`OVSX_PAT` from the protected `release` environment), and
-docs (releasing runbook with one-time publisher setup + recovery,
-`editors/README.md`, root README). Hard constraints: the core `release`
-job's steps stay byte-identical (it only gains an `outputs:` mapping
-exposing the tag) and a publish failure never blocks it (P1); no bundled
-`rune` binary (FR-003); extension version == tag minus `v` (FR-006);
-duplicate-version rejection makes job re-runs idempotent recovery (P6). Read
-the plan, `research.md` (decisions D1–D10), `data-model.md` (S1–S13),
-`quickstart.md` (V1–V6), and `contracts/` (`publishing-pipeline.md` P1–P8,
-`marketplace-listing.md` L1–L9) for details.
+Active feature plan: `specs/019-fix-version-reporting/plan.md` (Accurate
+Version Reporting for Go-Toolchain Installs — bug fix: binaries installed
+via the documented `go install github.com/rune-task-runner/rune/cmd/rune@latest`
+report `rune version dev (commit none)` because the version is only stamped
+by GoReleaser ldflags, and they therefore silently bypass the Runefile
+`minimum_version` gate as "dev builds". Fix: when the ldflags version is
+still the `dev` placeholder, fall back to `runtime/debug.ReadBuildInfo()`
+`Main.Version` — but ONLY for module-cache builds (no `vcs.*` build
+settings, D3); source-checkout builds keep reporting `dev` (FR-003; a Go
+≥1.24 checkout build at a clean tag would otherwise claim the release
+version verbatim). Trim the leading `v` for display (D4). Touched surfaces
+(S1–S4 in `data-model.md`): NEW `cmd/rune/buildinfo.go` (`resolveVersion` +
+pure, unit-testable `versionFromBuildInfo`), one-line call-site change in
+`cmd/rune/main.go` (`installedVersion(resolveVersion(version))` — the
+runetest-only `RUNE_TEST_VERSION` hook stays outermost), NEW
+`cmd/rune/buildinfo_test.go`, and a note in `docs/installation.md`. Hard
+constraints: release artifacts' output byte-identical — ldflags always wins
+(FR-002/C3); `internal/` packages, `.goreleaser.yaml`, `Dockerfile`,
+`Runefile`, release workflow, and `test/integration/` all untouched;
+commit field never fabricated — go-install binaries show `(commit none)`
+(D5); no e2e go-install test in CI, it's a manual check (D7/V2). Read the
+plan, `research.md` (D1–D7), `data-model.md` (E1–E2, S1–S4),
+`quickstart.md` (V1–V6), and `contracts/version-output.md` (C1–C8).
 <!-- SPECKIT END -->
 
 ## Development workflow
