@@ -7,11 +7,35 @@ separate server to install. All you configure per editor is:
 1. a **filetype** for Runefiles (`Runefile`, `.runefile`, and `*.rune`), and
 2. a **language server command**: `rune lsp`.
 
-Capabilities: real-time diagnostics, completion, go-to-definition (incl. across
-imports), hover, document symbols, and formatting. Nothing is executed while
-editing.
+> Prerequisite: `rune` on your `PATH`. Check with `rune version`. See the
+> [installation guide](../docs/installation.md) if you don't have it yet.
 
-> Prerequisite: `rune` on your `PATH`. Check with `rune version`.
+| Editor | How it integrates | Setup |
+|--------|-------------------|-------|
+| [VS Code](#vs-code) | Marketplace / Open VSX extension | Install **Rune Task Runner** |
+| [Neovim](#neovim-011-built-in-lsp) | Built-in LSP client (0.11+) | Lua snippet |
+| [Helix](#helix-confighelixlanguagestoml) | Built-in LSP client | `languages.toml` snippet |
+| [Zed](#zed) | Small Zed extension | Extension scaffold |
+| [Emacs](#emacs-29-eglot) | Built-in Eglot (29+) | Elisp snippet |
+| [Sublime Text](#sublime-text-lsp-package) | [LSP](https://packagecontrol.io/packages/LSP) package | Syntax stub + client config |
+
+## What you get
+
+Every editor below gets the same capabilities, served by the same parser and
+analyzer that power `rune` itself:
+
+- **Diagnostics** in real time, with stable `RUNE####` codes — the same
+  analysis that runs before every `rune` execution.
+- **Completion** for dependencies, variables/parameters, settings, attributes,
+  executors, and built-in functions.
+- **Go-to-definition** for tasks (including across imports), variables, and
+  parameters.
+- **Hover** — signature, doc comment, executor, group, and location.
+- **Document symbols** — an outline of settings / variables / imports / tasks.
+- **Formatting** — Rune's canonical formatter (`rune fmt`).
+
+Nothing is executed while editing: the server never runs tasks or shell
+commands.
 
 ## VS Code
 
@@ -24,8 +48,9 @@ Offline/air-gapped: every stable [GitHub release](https://github.com/glapsfun/ru
 attaches the `runefile-<version>.vsix`; install it with
 `code --install-extension runefile-<version>.vsix`.
 
-Contributors can build from source in [`vscode/`](./vscode/) — see its
-README's contributor section (or press F5 there to debug).
+The extension's own README covers settings (`rune.path`, `rune.trace.server`)
+and troubleshooting — see [`vscode/`](./vscode/). Contributors can build from
+source there (or press F5 to debug).
 
 ## Neovim (0.11+, built-in LSP)
 
@@ -87,6 +112,70 @@ Add a `languages/runefile/config.toml` with `name = "Runefile"`, a
 `grammar`/`path-suffixes = ["rune"]`, and `line_comments = ["# "]`. See the Zed
 extension docs for the scaffold; the only Rune-specific parts are the filetype
 globs and the `rune lsp` command.
+
+## Emacs (29+, Eglot)
+
+Emacs 29 ships [Eglot](https://www.gnu.org/software/emacs/manual/html_mono/eglot.html)
+built in. Define a minimal major mode for Runefiles and point Eglot at
+`rune lsp` (in your `init.el`):
+
+```elisp
+;; A minimal major mode for Runefiles.
+(define-derived-mode runefile-mode prog-mode "Runefile"
+  "Major mode for Rune task files."
+  (setq-local comment-start "# ")
+  (setq-local comment-start-skip "#+\\s-*"))
+
+;; Recognize Runefiles.
+(add-to-list 'auto-mode-alist '("/\\.?[Rr]unefile\\'" . runefile-mode))
+(add-to-list 'auto-mode-alist '("\\.rune\\'" . runefile-mode))
+
+;; Serve them with `rune lsp`.
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(runefile-mode . ("rune" "lsp"))))
+```
+
+Then `M-x eglot` in a Runefile buffer (or add `runefile-mode-hook` →
+`eglot-ensure` to start it automatically). `lsp-mode` users: register a client
+whose `new-connection` is `(lsp-stdio-connection '("rune" "lsp"))` with
+`:major-modes '(runefile-mode)`.
+
+## Sublime Text (LSP package)
+
+Install the [LSP](https://packagecontrol.io/packages/LSP) package first.
+Sublime matches language servers by scope, so Runefiles need a syntax that
+assigns `source.rune`. Save this as
+`Packages/User/Runefile.sublime-syntax`:
+
+```yaml
+%YAML 1.2
+---
+name: Runefile
+scope: source.rune
+file_extensions: [rune, runefile]
+contexts:
+  main:
+    - match: '#.*$'
+      scope: comment.line.number-sign.rune
+```
+
+(For the extensionless `Runefile` itself, open one and pick
+**View → Syntax → Open all with current extension as… → Runefile**.)
+
+Then register the server in **Preferences → Package Settings → LSP →
+Settings** (`LSP.sublime-settings`):
+
+```json
+{
+  "clients": {
+    "rune": {
+      "enabled": true,
+      "command": ["rune", "lsp"],
+      "selector": "source.rune"
+    }
+  }
+}
+```
 
 ## Manual validation checklist (quickstart §9)
 

@@ -8,6 +8,19 @@ edit.
 > Using VSCodium or another VS Code-compatible editor? The same extension is
 > on [Open VSX](https://open-vsx.org/extension/rune-task-runner/runefile).
 
+## Quick start
+
+1. **Install Rune** — see the
+   [installation guide](https://github.com/glapsfun/rune/blob/main/docs/installation.md)
+   (Homebrew, install script, Scoop, or a release binary). Verify with
+   `rune version`.
+2. **Install the extension** — from the
+   [Marketplace](https://marketplace.visualstudio.com/items?itemName=rune-task-runner.runefile),
+   or via the Quick Open palette (`Ctrl+P` / `Cmd+P`):
+   `ext install rune-task-runner.runefile`.
+3. **Open a `Runefile`** — diagnostics, completion, and the rest activate
+   automatically.
+
 ## Requirements
 
 **This extension needs the `rune` binary** — it is not bundled. Install
@@ -38,6 +51,25 @@ Open any `Runefile`, `.runefile`, or `*.rune` file and you get:
 |---------|---------|-------------|
 | `rune.path` | `rune` | Path to the `rune` executable. |
 | `rune.trace.server` | `off` | Trace JSON-RPC traffic (`off` / `messages` / `verbose`). |
+
+## Troubleshooting
+
+- **"Rune binary not found" notification** — the extension could not run the
+  `rune` executable. Install Rune (see Requirements) or set `rune.path` to
+  the absolute path of the binary — changing `rune.path` takes effect
+  immediately, no window reload needed. The notification's **Retry** button
+  re-probes after you've installed.
+- **"…cannot run `rune lsp`" notification** — your `rune` binary predates the
+  language server. Upgrade Rune (any release with `rune lsp` works).
+- **Inspect what the server is doing** — set `rune.trace.server` to
+  `messages` or `verbose` and read the **Rune Language Server** output
+  channel (View → Output).
+
+## Other editors
+
+The same language server works in Neovim, Helix, Zed, Emacs, and Sublime Text
+— setup snippets live in the repository's
+[editor integration guide](https://github.com/glapsfun/rune/tree/main/editors).
 
 ## Versioning
 

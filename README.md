@@ -1,5 +1,9 @@
 <div align="center">
 
+<p align="center">
+  <img src="docs/img/icon.png" alt="Rune logo" width="120">
+</p>
+
 # Rune
 
 **A shared task runner for humans and AI agents.**
