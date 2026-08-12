@@ -10,14 +10,10 @@ import (
 
 // Badge integrity harness — enforces specs/009-docs-and-badges/contracts/badges.md.
 // It checks the README badge row's shape and targeting (never live HTTP: CI has no
-// network, mirroring links_test.go's policy). Repo-scoped badges must target the repo
-// host glapsfun/rune; module-scoped badges must target the module path
-// rune-task-runner/rune. The two must never be crossed.
-
-const (
-	repoHost   = "glapsfun/rune"
-	modulePath = "rune-task-runner/rune"
-)
+// network, mirroring links_test.go's policy). Since the repo transfer to the
+// rune-task-runner org, the repo host and the module path are the same
+// rune-task-runner/rune — the historical repo-vs-module split guard is gone; the
+// exact-URL assertions in requiredBadges pin every badge to the canonical owner.
 
 // requiredBadge is one entry the README badge row must contain: a distinctive
 // fragment of the image URL and of the link (href) target.
@@ -28,10 +24,10 @@ type requiredBadge struct {
 }
 
 var requiredBadges = []requiredBadge{
-	{"CI", "img.shields.io/github/actions/workflow/status/glapsfun/rune/ci.yml", "github.com/glapsfun/rune/actions/workflows/ci.yml"},
-	{"Release", "img.shields.io/github/v/tag/glapsfun/rune", "github.com/glapsfun/rune/tags"},
-	{"License", "img.shields.io/badge/License-MIT", "github.com/glapsfun/rune/blob/main/LICENSE"},
-	{"Go version", "img.shields.io/github/go-mod/go-version/glapsfun/rune", ""},
+	{"CI", "img.shields.io/github/actions/workflow/status/rune-task-runner/rune/ci.yml", "github.com/rune-task-runner/rune/actions/workflows/ci.yml"},
+	{"Release", "img.shields.io/github/v/tag/rune-task-runner/rune", "github.com/rune-task-runner/rune/tags"},
+	{"License", "img.shields.io/badge/License-MIT", "github.com/rune-task-runner/rune/blob/main/LICENSE"},
+	{"Go version", "img.shields.io/github/go-mod/go-version/rune-task-runner/rune", ""},
 	{"Go Report Card", "goreportcard.com/badge/github.com/rune-task-runner/rune", "goreportcard.com/report/github.com/rune-task-runner/rune"},
 	{"Go Reference", "pkg.go.dev/badge/github.com/rune-task-runner/rune", "pkg.go.dev/github.com/rune-task-runner/rune"},
 	{"Docs", "img.shields.io/badge/docs", "docs/README.md"},
@@ -57,26 +53,6 @@ func TestREADMEBadgesPresent(t *testing.T) {
 		if b.linkFrag != "" && !strings.Contains(src, b.linkFrag) {
 			t.Errorf("%s badge: link target fragment %q not found in README", b.name, b.linkFrag)
 		}
-	}
-}
-
-// TestREADMEBadgeTargetsAreCanonical asserts the repo-vs-module split is not crossed:
-// shields repo-scoped endpoints must use glapsfun/rune; module providers must use
-// rune-task-runner/rune.
-func TestREADMEBadgeTargetsAreCanonical(t *testing.T) {
-	src := readmeSource(t)
-	// Module providers must reference the module path, never the repo host.
-	for _, host := range []string{"goreportcard.com", "pkg.go.dev"} {
-		if strings.Contains(src, host+"/badge/github.com/"+repoHost) ||
-			strings.Contains(src, host+"/report/github.com/"+repoHost) {
-			t.Errorf("%s badge crosses repo/module split: uses repo host %q, expected module path %q", host, repoHost, modulePath)
-		}
-	}
-	// shields repo-scoped endpoints must use the repo host, never the module path.
-	if strings.Contains(src, "img.shields.io/github/actions/workflow/status/"+modulePath) ||
-		strings.Contains(src, "img.shields.io/github/v/tag/"+modulePath) ||
-		strings.Contains(src, "img.shields.io/github/go-mod/go-version/"+modulePath) {
-		t.Errorf("a shields repo-scoped badge uses the module path %q, expected repo host %q", modulePath, repoHost)
 	}
 }
 

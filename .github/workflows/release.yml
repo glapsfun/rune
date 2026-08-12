@@ -175,14 +175,14 @@ jobs:
           # so strip it to match the published ref.
           ver="${{ steps.ver.outputs.tag }}"; ver="${ver#v}"
           digest=$(docker buildx imagetools inspect \
-            "ghcr.io/glapsfun/rune:${ver}" \
+            "ghcr.io/rune-task-runner/rune:${ver}" \
             --format '{{ .Manifest.Digest }}')
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
 
       - name: Attest image provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/glapsfun/rune
+          subject-name: ghcr.io/rune-task-runner/rune
           subject-digest: ${{ steps.image.outputs.digest }}
           push-to-registry: true
 

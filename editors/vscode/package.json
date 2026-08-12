@@ -8,12 +8,12 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/glapsfun/rune"
+    "url": "https://github.com/rune-task-runner/rune"
   },
   "bugs": {
-    "url": "https://github.com/glapsfun/rune/issues"
+    "url": "https://github.com/rune-task-runner/rune/issues"
   },
-  "homepage": "https://github.com/glapsfun/rune#readme",
+  "homepage": "https://github.com/rune-task-runner/rune#readme",
   "keywords": [
     "rune",
     "runefile",

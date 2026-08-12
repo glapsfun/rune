@@ -44,7 +44,7 @@ Install **Rune Task Runner** from the [VS Code Marketplace](https://marketplace.
 view. VSCodium and other VS Code-compatible editors get the same extension
 from [Open VSX](https://open-vsx.org/extension/rune-task-runner/runefile).
 
-Offline/air-gapped: every stable [GitHub release](https://github.com/glapsfun/rune/releases)
+Offline/air-gapped: every stable [GitHub release](https://github.com/rune-task-runner/rune/releases)
 attaches the `runefile-<version>.vsix`; install it with
 `code --install-extension runefile-<version>.vsix`.
 

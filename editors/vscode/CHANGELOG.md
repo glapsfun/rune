@@ -6,5 +6,5 @@ release publishes a matching extension version.
 
 See the full release history in the repository:
 
-- [CHANGELOG.md](https://github.com/glapsfun/rune/blob/main/CHANGELOG.md)
-- [GitHub releases](https://github.com/glapsfun/rune/releases)
+- [CHANGELOG.md](https://github.com/rune-task-runner/rune/blob/main/CHANGELOG.md)
+- [GitHub releases](https://github.com/rune-task-runner/rune/releases)

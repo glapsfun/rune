@@ -12,20 +12,20 @@ Detects your OS/architecture, downloads the right archive, **verifies its checks
 installs the `rune` binary:
 
 ```sh
-curl -sSfL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/rune-task-runner/rune/main/scripts/install.sh | sh
 ```
 
 Override the target directory or version with environment variables:
 
 ```sh
 INSTALL_DIR="$HOME/.local/bin" VERSION=v0.4.0 \
-  sh -c "$(curl -sSfL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh)"
+  sh -c "$(curl -sSfL https://raw.githubusercontent.com/rune-task-runner/rune/main/scripts/install.sh)"
 ```
 
 ## Homebrew (macOS / Linux)
 
 ```sh
-brew install glapsfun/tap/rune
+brew install rune-task-runner/tap/rune
 ```
 
 `brew upgrade rune` keeps it current.
@@ -33,14 +33,14 @@ brew install glapsfun/tap/rune
 ## Scoop (Windows)
 
 ```powershell
-scoop bucket add rune https://github.com/glapsfun/scoop-bucket
+scoop bucket add rune https://github.com/rune-task-runner/scoop-bucket
 scoop install rune
 ```
 
 ## Prebuilt binary (manual)
 
 Download the archive for your OS/architecture from the
-[GitHub Releases](https://github.com/glapsfun/rune/releases) page, extract it, and put the
+[GitHub Releases](https://github.com/rune-task-runner/rune/releases) page, extract it, and put the
 `rune` binary on your `PATH`.
 
 **Linux / macOS:**
@@ -48,7 +48,7 @@ Download the archive for your OS/architecture from the
 ```sh
 # Replace VERSION, OS (linux|darwin), ARCH (amd64|arm64) as appropriate.
 curl -sSfL -o rune.tar.gz \
-  https://github.com/glapsfun/rune/releases/download/vVERSION/rune_VERSION_OS_ARCH.tar.gz
+  https://github.com/rune-task-runner/rune/releases/download/vVERSION/rune_VERSION_OS_ARCH.tar.gz
 tar -xzf rune.tar.gz rune
 sudo mv rune /usr/local/bin/
 rune --version
@@ -75,7 +75,7 @@ a [`minimum_version`](runefile.md) work the same as with a downloaded release bi
 To build from a checkout:
 
 ```sh
-git clone https://github.com/glapsfun/rune
+git clone https://github.com/rune-task-runner/rune
 cd rune
 go build -o rune ./cmd/rune
 ```
@@ -93,7 +93,7 @@ linux/arm64). See the [Docker guide](docker.md) for full details (mounting your 
 passing arguments, image verification, and the minimal-image limitations):
 
 ```sh
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune --list
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune --list
 ```
 
 ## Shell completions
