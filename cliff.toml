@@ -7,7 +7,7 @@
 # template/flag names have shifted across git-cliff versions.
 
 [remote.github]
-owner = "glapsfun"
+owner = "rune-task-runner"
 repo = "rune"
 
 [changelog]

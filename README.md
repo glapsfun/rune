@@ -9,13 +9,13 @@
 **A shared task runner for humans and AI agents.**
 
 <p align="center">
-  <a href="https://github.com/glapsfun/rune/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/glapsfun/rune/ci.yml?branch=main"></a>
-  <a href="https://github.com/glapsfun/rune/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/glapsfun/rune?sort=semver"></a>
-  <a href="https://github.com/glapsfun/rune/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-  <img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/glapsfun/rune">
+  <a href="https://github.com/rune-task-runner/rune/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/rune-task-runner/rune/ci.yml?branch=main"></a>
+  <a href="https://github.com/rune-task-runner/rune/tags"><img alt="Release" src="https://img.shields.io/github/v/tag/rune-task-runner/rune?sort=semver"></a>
+  <a href="https://github.com/rune-task-runner/rune/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/rune-task-runner/rune">
   <a href="https://goreportcard.com/report/github.com/rune-task-runner/rune"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/rune-task-runner/rune"></a>
   <a href="https://pkg.go.dev/github.com/rune-task-runner/rune"><img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/rune-task-runner/rune.svg"></a>
-  <a href="https://github.com/glapsfun/rune/blob/main/docs/README.md"><img alt="Docs" src="https://img.shields.io/badge/docs-README-blue"></a>
+  <a href="https://github.com/rune-task-runner/rune/blob/main/docs/README.md"><img alt="Docs" src="https://img.shields.io/badge/docs-README-blue"></a>
 </p>
 
 **[Docs](docs/README.md)** · **[Getting started](docs/getting-started.md)** · **[Examples](docs/examples/README.md)** · **[CLI reference](docs/cli.md)**
@@ -76,23 +76,23 @@ If you've used `make` or `just`, Rune will feel familiar — with a few delibera
 
 ```sh
 # Install script (Linux/macOS) — verifies the checksum:
-curl -sSfL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh | sh
+curl -sSfL https://raw.githubusercontent.com/rune-task-runner/rune/main/scripts/install.sh | sh
 
 # Homebrew (macOS/Linux):
-brew install glapsfun/tap/rune
+brew install rune-task-runner/tap/rune
 
 # Scoop (Windows):
-scoop bucket add rune https://github.com/glapsfun/scoop-bucket && scoop install rune
+scoop bucket add rune https://github.com/rune-task-runner/scoop-bucket && scoop install rune
 
 # From source:
 go install github.com/rune-task-runner/rune/cmd/rune@latest
 ```
 
-Or grab a prebuilt binary from [Releases](https://github.com/glapsfun/rune/releases),
+Or grab a prebuilt binary from [Releases](https://github.com/rune-task-runner/rune/releases),
 or run it in a container:
 
 ```sh
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune --list
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune --list
 ```
 
 Full instructions: **[Installation guide](docs/installation.md)**.

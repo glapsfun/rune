@@ -60,7 +60,7 @@ func TestUS1_BareNoTasksPointsToHelpAndDocs(t *testing.T) {
 	if r.code != 0 {
 		t.Fatalf("exit = %d, stderr=%s", r.code, r.stderr)
 	}
-	for _, want := range []string{"rune version:", "No available tasks", "rune --help", "https://github.com/glapsfun/rune/tree/main/docs"} {
+	for _, want := range []string{"rune version:", "No available tasks", "rune --help", "https://github.com/rune-task-runner/rune/tree/main/docs"} {
 		if !strings.Contains(r.stdout, want) {
 			t.Errorf("no-tasks overview missing %q; got:\n%s", want, r.stdout)
 		}

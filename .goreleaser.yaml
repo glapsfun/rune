@@ -48,7 +48,7 @@ snapshot:
 
 release:
   github:
-    owner: glapsfun
+    owner: rune-task-runner
     name: rune
   # Tags like v1.2.0-rc.1 are auto-flagged as GitHub pre-releases.
   prerelease: auto
@@ -63,14 +63,14 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     use: buildx
     image_templates:
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.description=A shared task runner for humans and AI agents"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.source=https://github.com/glapsfun/rune"
+      - "--label=org.opencontainers.image.source=https://github.com/rune-task-runner/rune"
       - "--label=org.opencontainers.image.licenses=MIT"
   - id: rune-arm64
     goos: linux
@@ -78,27 +78,27 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     use: buildx
     image_templates:
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-arm64"
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.description=A shared task runner for humans and AI agents"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.source=https://github.com/glapsfun/rune"
+      - "--label=org.opencontainers.image.source=https://github.com/rune-task-runner/rune"
       - "--label=org.opencontainers.image.licenses=MIT"
 
 docker_manifests:
-  - name_template: "ghcr.io/glapsfun/rune:{{ .Version }}"
+  - name_template: "ghcr.io/rune-task-runner/rune:{{ .Version }}"
     image_templates:
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-amd64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-arm64"
   # `latest` is skipped automatically for prereleases.
-  - name_template: "ghcr.io/glapsfun/rune:latest"
+  - name_template: "ghcr.io/rune-task-runner/rune:latest"
     skip_push: auto
     image_templates:
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-amd64"
-      - "ghcr.io/glapsfun/rune:{{ .Version }}-arm64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-amd64"
+      - "ghcr.io/rune-task-runner/rune:{{ .Version }}-arm64"
 
 # --- Supply chain: SBOMs, signing, provenance -------------------------------
 # One SPDX-JSON SBOM per archive (syft).
@@ -141,11 +141,11 @@ docker_signs:
 homebrew_casks:
   - name: rune
     repository:
-      owner: glapsfun
+      owner: rune-task-runner
       name: homebrew-tap
       branch: main
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/glapsfun/rune"
+    homepage: "https://github.com/rune-task-runner/rune"
     description: "A shared task runner for humans and AI agents"
     skip_upload: auto
     commit_author:
@@ -163,11 +163,11 @@ homebrew_casks:
 scoops:
   - name: rune
     repository:
-      owner: glapsfun
+      owner: rune-task-runner
       name: scoop-bucket
       branch: main
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/glapsfun/rune"
+    homepage: "https://github.com/rune-task-runner/rune"
     description: "A shared task runner for humans and AI agents"
     license: MIT
     skip_upload: auto

@@ -626,7 +626,7 @@ func buildEnv(settings config.Settings, scope *eval.Scope, root string) []string
 }
 
 // docsURL is where the overview points users when a Runefile defines no tasks.
-const docsURL = "https://github.com/glapsfun/rune/tree/main/docs"
+const docsURL = "https://github.com/rune-task-runner/rune/tree/main/docs"
 
 // printOverview renders the screen shown for bare `rune`: a version header
 // followed by the available-task listing, or a friendly pointer to --help and

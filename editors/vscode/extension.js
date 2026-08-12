@@ -6,7 +6,7 @@ const { workspace, window, commands, env, Uri } = require("vscode");
 const { execFile } = require("node:child_process");
 const { LanguageClient } = require("vscode-languageclient/node");
 
-const INSTALL_DOCS_URL = "https://github.com/glapsfun/rune/blob/main/docs/installation.md";
+const INSTALL_DOCS_URL = "https://github.com/rune-task-runner/rune/blob/main/docs/installation.md";
 const RESTART_DEBOUNCE_MS = 400;
 
 /** @type {import('vscode-languageclient/node').LanguageClient | undefined} */

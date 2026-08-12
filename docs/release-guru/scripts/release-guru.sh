@@ -7,7 +7,7 @@
 # `trigger`, which fires the GitHub workflow and prints its confirmation up front.
 #
 # Repo resolution: uses `gh repo view` unless RUNE_REPO=owner/name is exported.
-# The canonical release repo is glapsfun/rune; a fork's origin will differ, so the
+# The canonical release repo is rune-task-runner/rune; a fork's origin will differ, so the
 # CI-status check always queries the repo gh reports as the default remote.
 #
 # Usage:  release-guru.sh <command> [args]

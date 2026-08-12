@@ -11,14 +11,14 @@ arguments after the image name:
 
 ```sh
 # List tasks in the current project:
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune --list
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune --list
 
 # Run a task:
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune build
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune build
 
 # Pass arguments / variable overrides:
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune greet Ada
-docker run --rm -v "$PWD":/work ghcr.io/glapsfun/rune build target=release
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune greet Ada
+docker run --rm -v "$PWD":/work ghcr.io/rune-task-runner/rune build target=release
 ```
 
 The container's `ENTRYPOINT` is `/rune`, so everything after the image name goes straight to
@@ -27,14 +27,14 @@ the pure-Go `mvdan.cc/sh` interpreter baked into the binary.
 
 ## Tags
 
-- `ghcr.io/glapsfun/rune:latest` — latest **stable** release (prereleases never move `latest`)
-- `ghcr.io/glapsfun/rune:<version>` — a specific release (e.g. `:1.2.3`, `:1.3.0-rc.1`)
+- `ghcr.io/rune-task-runner/rune:latest` — latest **stable** release (prereleases never move `latest`)
+- `ghcr.io/rune-task-runner/rune:<version>` — a specific release (e.g. `:1.2.3`, `:1.3.0-rc.1`)
 
 Each tag is a **multi-arch manifest** covering `linux/amd64` and `linux/arm64`; Docker pulls
 the variant matching your host automatically.
 
 ```sh
-docker buildx imagetools inspect ghcr.io/glapsfun/rune:latest   # see both platforms
+docker buildx imagetools inspect ghcr.io/rune-task-runner/rune:latest   # see both platforms
 ```
 
 ## Verifying the image
@@ -43,11 +43,11 @@ Images are signed with cosign (keyless) and carry build provenance — verify wi
 material only, no pre-shared key:
 
 ```sh
-cosign verify ghcr.io/glapsfun/rune:<version> \
-  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
+cosign verify ghcr.io/rune-task-runner/rune:<version> \
+  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
 
-gh attestation verify oci://ghcr.io/glapsfun/rune:<version> --repo glapsfun/rune
+gh attestation verify oci://ghcr.io/rune-task-runner/rune:<version> --repo rune-task-runner/rune
 ```
 
 ## Building it yourself

@@ -91,18 +91,18 @@ sha256sum --check checksums.txt --ignore-missing
 # 2. Signature of the checksums file (covers every archive)
 cosign verify-blob \
   --bundle checksums.txt.sigstore.json \
-  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
+  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
   checksums.txt
 
 # 3. Build provenance
-gh attestation verify checksums.txt --repo glapsfun/rune
+gh attestation verify checksums.txt --repo rune-task-runner/rune
 
 # 4. Image signature + provenance
-cosign verify ghcr.io/glapsfun/rune:<version> \
-  --certificate-identity-regexp 'https://github.com/glapsfun/rune/.*' \
+cosign verify ghcr.io/rune-task-runner/rune:<version> \
+  --certificate-identity-regexp 'https://github.com/rune-task-runner/rune/.*' \
   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
-gh attestation verify oci://ghcr.io/glapsfun/rune:<version> --repo glapsfun/rune
+gh attestation verify oci://ghcr.io/rune-task-runner/rune:<version> --repo rune-task-runner/rune
 ```
 
 Modifying any byte of an artifact makes steps 1–2 fail — that is the point.
@@ -130,7 +130,7 @@ The workflow is safe to re-run:
 
 ## One-time setup (already provisioned? skip)
 
-1. Create public repos `glapsfun/homebrew-tap` and `glapsfun/scoop-bucket`.
+1. Create public repos `rune-task-runner/homebrew-tap` and `rune-task-runner/scoop-bucket`.
 2. Mint a token that can push to those two repos (GitHub App install token preferred, or a
    fine-grained PAT with `contents: write`); store it as the secret `TAP_GITHUB_TOKEN`.
 3. If `main` is protected, allow the release identity to bypass the push restriction (the

@@ -9,7 +9,7 @@ import (
 
 // UpgradeURL is where an incompatibility diagnostic points users to obtain a
 // newer Rune binary.
-const UpgradeURL = "https://github.com/glapsfun/rune/releases"
+const UpgradeURL = "https://github.com/rune-task-runner/rune/releases"
 
 // minimumVersionSetting is the public name of the setting that pins the minimum
 // required Rune binary release. It is distinct from `rune_version`, which pins

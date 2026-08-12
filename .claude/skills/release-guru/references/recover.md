@@ -7,10 +7,10 @@ ahead of the artifacts.
 ## Step 1: find out how far it got
 
 ```sh
-gh run view <run-id> -R glapsfun/rune            # which step failed
+gh run view <run-id> -R rune-task-runner/rune            # which step failed
 git fetch --tags origin
 git tag --list 'v<target>*'                      # did the tag get created + pushed?
-gh release view v<target> -R glapsfun/rune       # is there a (draft?) GitHub release?
+gh release view v<target> -R rune-task-runner/rune       # is there a (draft?) GitHub release?
 ```
 
 The workflow's ordered checkpoints, each safe to cross twice:
@@ -37,7 +37,7 @@ refuses an existing tag, the clean recovery is one of:
   step, *or*
 - **Delete the tag and the (draft) release, then re-trigger** from scratch:
   ```sh
-  gh release delete v<target> -R glapsfun/rune --yes    # remove the release first
+  gh release delete v<target> -R rune-task-runner/rune --yes    # remove the release first
   git push origin :refs/tags/v<target>                  # delete the remote tag
   git tag -d v<target>                                   # and the local tag
   ```
@@ -45,7 +45,7 @@ refuses an existing tag, the clean recovery is one of:
   never delete a tag whose artifacts are already public and may be depended on.
 
 **Homebrew tap / Scoop bucket left half-updated:**
-Check `glapsfun/homebrew-tap` and `glapsfun/scoop-bucket` before re-running — a mid-way failure
+Check `rune-task-runner/homebrew-tap` and `rune-task-runner/scoop-bucket` before re-running — a mid-way failure
 can leave a bad or duplicate commit there. Revert/clean it manually, then re-run; `skip_upload:
 auto` keeps prereleases off the stable channel, so an rc won't touch these.
 

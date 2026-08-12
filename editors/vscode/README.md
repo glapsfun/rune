@@ -1,6 +1,6 @@
 # Rune for VS Code
 
-Language support for [Runefiles](https://github.com/glapsfun/rune) — the
+Language support for [Runefiles](https://github.com/rune-task-runner/rune) — the
 task files of the Rune command runner — powered by the language server
 embedded in the `rune` binary (`rune lsp`). Nothing is executed while you
 edit.
@@ -11,7 +11,7 @@ edit.
 ## Quick start
 
 1. **Install Rune** — see the
-   [installation guide](https://github.com/glapsfun/rune/blob/main/docs/installation.md)
+   [installation guide](https://github.com/rune-task-runner/rune/blob/main/docs/installation.md)
    (Homebrew, install script, Scoop, or a release binary). Verify with
    `rune version`.
 2. **Install the extension** — from the
@@ -24,7 +24,7 @@ edit.
 ## Requirements
 
 **This extension needs the `rune` binary** — it is not bundled. Install
-Rune first ([installation guide](https://github.com/glapsfun/rune/blob/main/docs/installation.md)),
+Rune first ([installation guide](https://github.com/rune-task-runner/rune/blob/main/docs/installation.md)),
 make sure `rune` is on your `PATH` (verify with `rune version`), or point
 the `rune.path` setting at the executable. If the binary is missing or too
 old to serve the language server, the extension shows a notification with
@@ -69,7 +69,7 @@ Open any `Runefile`, `.runefile`, or `*.rune` file and you get:
 
 The same language server works in Neovim, Helix, Zed, Emacs, and Sublime Text
 — setup snippets live in the repository's
-[editor integration guide](https://github.com/glapsfun/rune/tree/main/editors).
+[editor integration guide](https://github.com/rune-task-runner/rune/tree/main/editors).
 
 ## Versioning
 
@@ -79,7 +79,7 @@ works — the protocol surface is stable LSP 3.17.
 
 ## Contributing / building from source
 
-The extension lives in [`editors/vscode/`](https://github.com/glapsfun/rune/tree/main/editors/vscode)
+The extension lives in [`editors/vscode/`](https://github.com/rune-task-runner/rune/tree/main/editors/vscode)
 of the Rune repository. To build and side-load it:
 
 ```sh
@@ -93,4 +93,4 @@ code --install-extension runefile-0.0.1.vsix
 untouched — the working tree stays clean.)
 
 Or open the folder in VS Code and press **F5** for an Extension Development
-Host. Issues and PRs: [github.com/glapsfun/rune](https://github.com/glapsfun/rune/issues).
+Host. Issues and PRs: [github.com/rune-task-runner/rune](https://github.com/rune-task-runner/rune/issues).

@@ -2,7 +2,7 @@
 # Rune installer — downloads the right release archive for your OS/architecture,
 # verifies it against the published checksums, and installs the `rune` binary.
 #
-#   curl -sSfL https://raw.githubusercontent.com/glapsfun/rune/main/scripts/install.sh | sh
+#   curl -sSfL https://raw.githubusercontent.com/rune-task-runner/rune/main/scripts/install.sh | sh
 #
 # Environment overrides:
 #   VERSION       release tag to install (e.g. v0.4.0). Default: latest stable release.
@@ -13,7 +13,7 @@
 
 set -eu
 
-OWNER="glapsfun"
+OWNER="rune-task-runner"
 REPO="rune"
 BIN="rune"
 

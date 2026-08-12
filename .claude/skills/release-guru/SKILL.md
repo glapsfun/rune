@@ -26,7 +26,7 @@ that math in your head — a bundled script mirrors the workflow's exact logic. 
 
 `scripts/release-guru.sh` is the deterministic engine. Every command is **read-only except
 `trigger`**. Resolve its path relative to this skill and run it from the repo root. It resolves
-the repo via `gh` (or `RUNE_REPO=owner/name`); the canonical release repo is `glapsfun/rune`.
+the repo via `gh` (or `RUNE_REPO=owner/name`); the canonical release repo is `rune-task-runner/rune`.
 
 | Command | What it does |
 |---------|--------------|
