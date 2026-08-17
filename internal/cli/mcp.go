@@ -30,12 +30,13 @@ type mcpAdapter struct {
 	goos      string    // host OS for availability checks; runtime.GOOS outside tests
 }
 
-// Tasks returns the non-private tasks as agent-facing tool descriptors. No
-// secret values appear in any field (FR-029).
+// Tasks returns the non-private tasks available on this host OS as
+// agent-facing tool descriptors, so an agent can never see (or attempt) a
+// platform-incompatible task. No secret values appear in any field (FR-029).
 func (a *mcpAdapter) Tasks() []mcpserver.TaskInfo {
 	var out []mcpserver.TaskInfo
 	for _, t := range a.file.Tasks {
-		if t.IsPrivate() {
+		if t.IsPrivate() || !t.AvailableOn(a.goos) {
 			continue
 		}
 		info := mcpserver.TaskInfo{

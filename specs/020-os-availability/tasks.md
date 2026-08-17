@@ -55,12 +55,12 @@ quickstart Scenario 5).
 
 ### Tests for User Story 1 (write first, must FAIL)
 
-- [ ] T006 [P] [US1] RED: in `internal/cli/mcp_test.go` (create or extend the existing MCP adapter test file), build a `mcpAdapter` over a fixture with `[windows]`, `[linux]`, `[linux, windows]`, unrestricted, and private tasks; with `goos: "linux"` assert `Tasks()` omits the `[windows]` task, includes the `[linux]`, OR-combined, and unrestricted tasks, and still omits private (Story 1 scenarios 1–3). Both transports (`rune mcp`, `rune serve`) build this same adapter, so adapter-level assertions cover both — note this in the test comment
+- [X] T006 [P] [US1] RED: in `internal/cli/mcp_test.go` (create or extend the existing MCP adapter test file), build a `mcpAdapter` over a fixture with `[windows]`, `[linux]`, `[linux, windows]`, unrestricted, and private tasks; with `goos: "linux"` assert `Tasks()` omits the `[windows]` task, includes the `[linux]`, OR-combined, and unrestricted tasks, and still omits private (Story 1 scenarios 1–3). Both transports (`rune mcp`, `rune serve`) build this same adapter, so adapter-level assertions cover both — note this in the test comment
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] GREEN: in `mcpAdapter.Tasks()` (`internal/cli/mcp.go`), skip tasks failing `t.AvailableOn(a.goos)` alongside the existing `IsPrivate()` skip; T006 passes
-- [ ] T008 [US1] Assert the filtered set is what tool registration AND authz consume, over the T006 fixture: (a) build `mcpserver.New(adapter, ...)` and assert no tool is registered for the OS-mismatched task; (b) exercise the authz layer (`mcpserver/authz.go` — allowlist/destructive gating built from `Engine.Tasks()`) directly and assert the mismatched task can be neither listed nor allowlisted (Story 1 scenario 4)
+- [X] T007 [US1] GREEN: in `mcpAdapter.Tasks()` (`internal/cli/mcp.go`), skip tasks failing `t.AvailableOn(a.goos)` alongside the existing `IsPrivate()` skip; T006 passes
+- [X] T008 [US1] Assert the filtered set is what tool registration AND authz consume, over the T006 fixture: (a) build `mcpserver.New(adapter, ...)` and assert no tool is registered for the OS-mismatched task; (b) exercise the authz layer (`mcpserver/authz.go` — allowlist/destructive gating built from `Engine.Tasks()`) directly and assert the mismatched task can be neither listed nor allowlisted (Story 1 scenario 4)
 
 **Checkpoint**: An agent connected on this host cannot see a
 platform-incompatible task. MVP delivered.

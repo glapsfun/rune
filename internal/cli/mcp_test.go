@@ -2,13 +2,16 @@ package cli
 
 import (
 	"context"
+	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/config"
 	"github.com/rune-task-runner/rune/internal/eval"
 	"github.com/rune-task-runner/rune/internal/parser"
+	"github.com/rune-task-runner/rune/mcpserver"
 )
 
 func adapterFor(t *testing.T, src string) *mcpAdapter {
@@ -29,6 +32,74 @@ func adapterFor(t *testing.T, src string) *mcpAdapter {
 		baseEnv:   nil,
 		overrides: map[string]string{},
 		now:       func() string { return "" },
+		goos:      runtime.GOOS,
+	}
+}
+
+// TestAdapterExcludesOSMismatchedTasks: an agent must never see a task the
+// host cannot run (spec 020 US1). Both transports (`rune mcp` stdio and
+// `rune serve` HTTP) build this same adapter, so adapter-level assertions
+// cover both.
+func TestAdapterExcludesOSMismatchedTasks(t *testing.T) {
+	src := "" +
+		"everywhere:\n    @echo e\n" +
+		"[windows]\nwin-only:\n    @echo w\n" +
+		"[linux]\nlinux-only:\n    @echo l\n" +
+		"[linux, windows]\neither:\n    @echo lw\n" +
+		"[linux]\n[private]\nhidden-linux:\n    @echo h\n"
+	a := adapterFor(t, src)
+	a.goos = "linux"
+	names := map[string]bool{}
+	for _, ti := range a.Tasks() {
+		names[ti.Name] = true
+	}
+	for _, want := range []string{"everywhere", "linux-only", "either"} {
+		if !names[want] {
+			t.Errorf("task %q should be exposed on linux: %v", want, names)
+		}
+	}
+	if names["win-only"] {
+		t.Errorf("[windows] task must not be exposed on linux: %v", names)
+	}
+	if names["hidden-linux"] {
+		t.Errorf("private task must stay hidden even when OS matches: %v", names)
+	}
+}
+
+// TestServerNeverRegistersOSMismatchedTools proves the whole agent surface
+// consumes the filtered task set (spec 020 Story 1 scenario 4): tool
+// registration skips the mismatched task, and even an allowlist naming it
+// explicitly cannot resurrect it — authz narrows the filtered set, it never
+// widens it.
+func TestServerNeverRegistersOSMismatchedTools(t *testing.T) {
+	src := "everywhere:\n    @echo e\n[windows]\nwin-only:\n    @echo w\n"
+	a := adapterFor(t, src)
+	a.goos = "linux"
+	srv := mcpserver.New(a, mcpserver.Options{AllowList: []string{"win-only"}})
+
+	ct, st := mcp.NewInMemoryTransports()
+	ctx := context.Background()
+	if _, err := srv.MCP().Connect(ctx, st, nil); err != nil {
+		t.Fatal(err)
+	}
+	client := mcp.NewClient(&mcp.Implementation{Name: "test", Version: "v1"}, nil)
+	cs, err := client.Connect(ctx, ct, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = cs.Close() })
+
+	res, err := cs.ListTools(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tl := range res.Tools {
+		if tl.Name == "win-only" {
+			t.Fatalf("OS-mismatched task registered as a tool: %v", res.Tools)
+		}
+	}
+	if _, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "win-only"}); err == nil {
+		t.Error("calling the unregistered OS-mismatched tool must fail even when allowlisted")
 	}
 }
 
