@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"runtime"
 
 	"github.com/rune-task-runner/rune/internal/ast"
 )
@@ -11,7 +12,7 @@ import (
 // (--format json), for machine consumption (FR-023).
 func dumpFile(opts Options, f *ast.File) error {
 	if opts.DumpFormat == "json" {
-		data, err := json.MarshalIndent(toDTO(f), "", "  ")
+		data, err := json.MarshalIndent(toDTO(f, runtime.GOOS), "", "  ")
 		if err != nil {
 			return &UsageError{Err: err}
 		}
@@ -33,6 +34,7 @@ type taskDTO struct {
 	Doc        string     `json:"doc,omitempty"`
 	Executor   string     `json:"executor,omitempty"`
 	Private    bool       `json:"private"`
+	Available  bool       `json:"available"` // computed for the dumping host; false is the signal, so no omitempty
 	Params     []paramDTO `json:"params,omitempty"`
 	Deps       []string   `json:"deps,omitempty"`
 	PostHooks  []string   `json:"postHooks,omitempty"`
@@ -45,7 +47,10 @@ type paramDTO struct {
 	Kind string `json:"kind"`
 }
 
-func toDTO(f *ast.File) fileDTO {
+// toDTO projects the parsed file for JSON consumption. goos parameterizes
+// the computed availability verdict so any platform's dump is testable from
+// any host; all tasks stay listed regardless of the verdict.
+func toDTO(f *ast.File, goos string) fileDTO {
 	dto := fileDTO{
 		Settings:    map[string]any{},
 		Assignments: map[string]any{},
@@ -58,10 +63,11 @@ func toDTO(f *ast.File) fileDTO {
 	}
 	for _, t := range f.Tasks {
 		td := taskDTO{
-			Name:     t.Name,
-			Doc:      t.Doc,
-			Executor: t.Executor,
-			Private:  t.IsPrivate(),
+			Name:      t.Name,
+			Doc:       t.Doc,
+			Executor:  t.Executor,
+			Private:   t.IsPrivate(),
+			Available: t.AvailableOn(goos),
 		}
 		for _, p := range t.Params {
 			td.Params = append(td.Params, paramDTO{Name: p.Name, Kind: paramKind(p.Kind)})

@@ -127,11 +127,11 @@ boolean per task, all tasks still listed (FR-005).
 
 ### Tests for User Story 4 (write first, must FAIL)
 
-- [ ] T018 [P] [US4] RED: dump tests in `internal/cli/dump_test.go` (create or extend): with a goos parameter, a `[windows]` task dumps `"available": false` on linux and `true` on windows, unrestricted tasks always `true`, unavailable and private tasks remain present, and the raw OS names stay in `attributes` (contract dump-schema.md — verify the actual attribute rendering and align the contract's example if it differs)
+- [X] T018 [P] [US4] RED: dump tests in `internal/cli/dump_test.go` (create or extend): with a goos parameter, a `[windows]` task dumps `"available": false` on linux and `true` on windows, unrestricted tasks always `true`, unavailable and private tasks remain present, and the raw OS names stay in `attributes` (contract dump-schema.md — verify the actual attribute rendering and align the contract's example if it differs)
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] GREEN: add `Available bool` with JSON tag `available` (no omitempty) to `taskDTO` in `internal/cli/dump.go`, parameterize `toDTO` with the target OS, pass the engine/host `goos` at the call site; T018 passes
+- [X] T019 [US4] GREEN: add `Available bool` with JSON tag `available` (no omitempty) to `taskDTO` in `internal/cli/dump.go`, parameterize `toDTO` with the target OS, pass the engine/host `goos` at the call site; T018 passes
 
 **Checkpoint**: All four stories functional and independently verified.
 
