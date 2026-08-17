@@ -36,7 +36,7 @@ type mcpAdapter struct {
 func (a *mcpAdapter) Tasks() []mcpserver.TaskInfo {
 	var out []mcpserver.TaskInfo
 	for _, t := range a.file.Tasks {
-		if t.IsPrivate() || !t.AvailableOn(a.goos) {
+		if !visibleOn(t, a.goos) {
 			continue
 		}
 		info := mcpserver.TaskInfo{
@@ -63,15 +63,19 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	if !ok {
 		return mcpserver.Result{}, errorf("unknown task: %s", name)
 	}
-	// Defense-in-depth: the task map stays complete (mismatched tasks remain
-	// resolvable as skippable dependencies), so a call that guessed or cached
-	// a hidden tool name is refused here with the availability error.
+	// Defense-in-depth for direct Engine.Call users (embedders, tests): over
+	// the real MCP transport a mismatched task is never registered as a tool,
+	// so the SDK rejects it as unknown before this line; the check here keeps
+	// the Engine contract safe for callers that bypass tool registration.
 	if !t.AvailableOn(a.goos) {
 		return mcpserver.Result{}, availabilityErr(name, t, a.goos)
 	}
 	var outBuf, errBuf bytes.Buffer
 	scope := eval.NewScope(a.assigns, a.overrides)
-	scope.GOOS = runtime.GOOS
+	// One host-OS truth per adapter: availability (above), dependency
+	// skipping (eng.goos below), and the os()/os_family() builtins must
+	// never disagree, so the scope reads the same injected value.
+	scope.GOOS = a.goos
 	scope.Arch = runtime.GOARCH
 
 	// The same masking choke point as the CLI path: the buffers only ever hold

@@ -11,7 +11,7 @@
 | `0` | All requested tasks succeeded. |
 | `1` | A task body failed at runtime. |
 | `2` | Usage error — no Runefile found, unknown task at the command line, or bad arguments. |
-| `3` | Static validation error (parse/analyze) — **nothing executed**. |
+| `3` | Validation error (parse/analyze, or a task not available on this OS) — **nothing executed**. |
 | `130` | Interrupted (SIGINT / Ctrl-C). |
 
 Static errors (`3`) are detected up front, so a broken Runefile never leaves your project
@@ -79,6 +79,22 @@ Runefile:3:7: error: task "greet" expects at least 1 argument(s), got 0
 
 **Fix:** pass the required argument — e.g. `(greet "Ada")` in the dependency, or give the
 parameter a default. See [Parameters](how-to/parameters.md).
+
+### "not available on ..." — exit 3
+
+The task you invoked is restricted to another OS by a `[linux]`/`[macos]`/`[windows]`/
+`[unix]` attribute. Unlike the other exit-3 errors this one is host-dependent: the same
+Runefile runs fine on a matching platform.
+
+```text
+Runefile:4:1: error: task "setup-win" is not available on macos (requires windows)
+4 | [windows]
+  | ^^^^^^^^^
+```
+
+**Fix:** run the task on a platform it names, widen the attribute (e.g. `[unix]`, or
+`[linux, windows]`), or call it via a cross-platform dispatcher task — as a dependency it
+is skipped silently instead of failing. See [OS filtering](how-to/os-filtering.md).
 
 ### "no Runefile found" — exit 2
 

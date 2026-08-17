@@ -21,9 +21,9 @@ toolchain ready
 ```
 
 (The first line reflects *your* platform — `brew install coreutils` on macOS,
-`choco install make` on Windows.) Run `rune --list` and you'll only see the
-setup task for your current OS; the others are hidden. Try `rune info` for the
-`os()`/`arch()` built-ins.
+`choco install make` on Windows.) Run `rune --list` and, of the three per-OS
+variants, you'll only see the one for your current OS; the other two are
+hidden. Try `rune info` for the `os()`/`arch()` built-ins.
 
 ## How it works
 

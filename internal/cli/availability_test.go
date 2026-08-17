@@ -142,6 +142,33 @@ func TestDispatchRunsOnlyMatchingDep(t *testing.T) {
 	}
 }
 
+// A skipped dependency's args and parameter defaults must not be evaluated:
+// a [windows] dep defaulting to env("...") of a variable that only exists on
+// Windows must not abort the dispatch pattern on linux (regression: the
+// availability skip used to run after ResolveDep's eager evaluation).
+func TestDispatchSkipsMismatchedDepWithoutEvaluatingIt(t *testing.T) {
+	src := "" +
+		"setup: setup-nix setup-win\n    @echo setup-done\n" +
+		"[unix]\nsetup-nix:\n    @echo unix-setup\n" +
+		"[windows]\nsetup-win profile=env(\"RUNE_TEST_DEFINITELY_UNSET\"):\n    @echo windows-setup\n"
+	var out bytes.Buffer
+	eng := availEngine(t, src, "linux", planRun, &out)
+	invs, err := eng.resolveRoots([]rawInvocation{{name: "setup"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := scheduler.Run(eng, invs); err != nil {
+		t.Fatalf("mismatched dep's default was evaluated: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "unix-setup") || !strings.Contains(got, "setup-done") {
+		t.Errorf("matching dep or body missing: %q", got)
+	}
+	if strings.Contains(got, "windows-setup") {
+		t.Errorf("mismatched dep executed: %q", got)
+	}
+}
+
 // A [unix] task is available on darwin (spec 020 Story 2 scenario 2) and
 // runs normally end to end.
 func TestUnixTaskRunsOnDarwin(t *testing.T) {

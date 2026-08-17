@@ -216,7 +216,7 @@ func (e *engine) resolveRoots(raw []rawInvocation) ([]scheduler.Invocation, erro
 			err := availabilityErr(r.name, t, e.goos)
 			d := diag.New(osAttrSpan(t), err.Error())
 			renderDiags(e.opts, diag.List{d}, e.src)
-			return nil, err
+			return nil, &ValidationError{Err: err}
 		}
 		params, err := bindParams(t, r.args, e.scope)
 		if err != nil {
@@ -229,19 +229,18 @@ func (e *engine) resolveRoots(raw []rawInvocation) ([]scheduler.Invocation, erro
 
 // availabilityErr reports an OS-mismatched task in attribute vocabulary,
 // e.g.: task "setup-win" is not available on macos (requires windows).
+// It returns a plain error: only callers that render a diagnostic first may
+// wrap it in ValidationError (whose contract is "already rendered").
 func availabilityErr(name string, t *ast.Task, goos string) error {
-	return &ValidationError{Err: errorf("task %q is not available on %s (requires %s)",
-		name, displayOS(goos), strings.Join(t.OSFilters(), " or "))}
+	return errorf("task %q is not available on %s (requires %s)",
+		name, displayOS(goos), strings.Join(t.OSFilters(), " or "))
 }
 
 // osAttrSpan anchors the availability diagnostic at the task's first OS
 // attribute, falling back to the task itself.
 func osAttrSpan(t *ast.Task) token.Span {
-	for _, a := range t.Attributes {
-		switch a.Kind {
-		case ast.AttrLinux, ast.AttrMacos, ast.AttrWindows, ast.AttrUnix:
-			return a.Sp
-		}
+	if kinds := t.OSFilters(); len(kinds) > 0 {
+		return t.Attr(kinds[0]).Sp
 	}
 	return t.Sp
 }
@@ -251,10 +250,19 @@ func osAttrSpan(t *ast.Task) token.Span {
 func (e *engine) Available(task *ast.Task) bool { return task.AvailableOn(e.goos) }
 
 // ResolveDep evaluates a dependency call in the caller's scope and binds args.
+// OS-mismatched targets are returned unevaluated (nil params): the scheduler
+// skips them, so their args and defaults must not run on this host.
 func (e *engine) ResolveDep(curTask *ast.Task, curParams map[string]string, dep *ast.DepCall) (*ast.Task, map[string]string, error) {
 	target, ok := e.tasks[dep.Name]
 	if !ok {
 		return nil, nil, &ValidationError{Err: errorf("unknown dependency %q of task %q", dep.Name, curTask.Name)}
+	}
+	// The scheduler skips OS-mismatched targets silently, so don't evaluate
+	// their args or parameter defaults: those may only resolve on the matching
+	// host (e.g. a [windows] dep defaulting to env("APPDATA") must not abort
+	// the dispatch pattern on linux).
+	if !e.Available(target) {
+		return target, nil, nil
 	}
 	ev := eval.New(e.scope.WithParams(curParams))
 	pos := make([]string, len(dep.Args))
@@ -681,11 +689,18 @@ func printOverview(opts Options, f *ast.File) {
 	fmt.Fprintln(opts.Stdout, "  "+th.Muted.Render(docsURL))
 }
 
+// visibleOn is the single visibility predicate shared by every listing
+// surface (--list, the overview, the picker, completion, MCP tools): a task
+// is visible when it is non-private and available on the given OS.
+func visibleOn(t *ast.Task, goos string) bool {
+	return !t.IsPrivate() && t.AvailableOn(goos)
+}
+
 // hasVisibleTasks reports whether the file exposes at least one non-private task
 // that matches the current OS (the same visibility filter listTasks applies).
 func hasVisibleTasks(f *ast.File) bool {
 	for _, t := range f.Tasks {
-		if !t.IsPrivate() && t.AvailableOn(runtime.GOOS) {
+		if visibleOn(t, runtime.GOOS) {
 			return true
 		}
 	}
@@ -701,7 +716,7 @@ func hasVisibleTasks(f *ast.File) bool {
 func visibleTasksByGroup(f *ast.File) (order []string, groups map[string][]*ast.Task) {
 	groups = map[string][]*ast.Task{}
 	for _, t := range f.Tasks {
-		if t.IsPrivate() || !t.AvailableOn(runtime.GOOS) {
+		if !visibleOn(t, runtime.GOOS) {
 			continue
 		}
 		g := ""
