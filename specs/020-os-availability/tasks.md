@@ -22,7 +22,7 @@ each story is an independently testable increment.
 **Purpose**: Confirm a green baseline so every later red test is
 attributable to this feature.
 
-- [ ] T001 Run the full suite in Docker (`docker-compose run --rm test go test ./...`) and `golangci-lint run` on branch `020-os-availability`; both must be clean before any change
+- [X] T001 Run the full suite in Docker (`docker-compose run --rm test go test ./...`) and `golangci-lint run` on branch `020-os-availability`; both must be clean before any change
 
 ---
 
@@ -33,10 +33,10 @@ injectable host-OS plumbing every story consumes.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T002 [P] RED: add table tests for `(*Task).AvailableOn` and `(*Task).OSFilters` in `internal/ast/availability_test.go` — cover the full truth table from data-model.md (no attrs; each single OS on linux/darwin/windows; `linux,windows` OR; `unix,windows` = everywhere; attrs split across multiple lines; OSFilters source order and empty case). Package currently has no tests; file will not compile until T003 (that is the red state)
-- [ ] T003 GREEN: implement `AvailableOn(goos string) bool` and `OSFilters() []string` on `*Task` in `internal/ast/ast.go`, semantics copied verbatim from `osMatches` (`internal/cli/run.go:729`); T002 passes
-- [ ] T004 Switch existing call sites to the new method and delete `osMatches`: `hasVisibleTasks` and `visibleTasksByGroup` in `internal/cli/run.go`, completion filter in `internal/cli/complete.go`; full suite stays green (SC-005 regression: `--list`, picker, completion behavior unchanged)
-- [ ] T005 Plumb the injectable host OS: add a `goos string` field to the CLI `engine` struct (`internal/cli/run.go`) and to `mcpAdapter` (`internal/cli/mcp.go`), defaulted to `runtime.GOOS` at every construction site; no behavior change yet, suite green
+- [X] T002 [P] RED: add table tests for `(*Task).AvailableOn` and `(*Task).OSFilters` in `internal/ast/availability_test.go` — cover the full truth table from data-model.md (no attrs; each single OS on linux/darwin/windows; `linux,windows` OR; `unix,windows` = everywhere; attrs split across multiple lines; OSFilters source order and empty case). Package currently has no tests; file will not compile until T003 (that is the red state)
+- [X] T003 GREEN: implement `AvailableOn(goos string) bool` and `OSFilters() []string` on `*Task` in `internal/ast/ast.go`, semantics copied verbatim from `osMatches` (`internal/cli/run.go:729`); T002 passes
+- [X] T004 Switch existing call sites to the new method and delete `osMatches`: `hasVisibleTasks` and `visibleTasksByGroup` in `internal/cli/run.go`, completion filter in `internal/cli/complete.go`; full suite stays green (SC-005 regression: `--list`, picker, completion behavior unchanged)
+- [X] T005 Plumb the injectable host OS: add a `goos string` field to the CLI `engine` struct (`internal/cli/run.go`) and to `mcpAdapter` (`internal/cli/mcp.go`), defaulted to `runtime.GOOS` at every construction site; no behavior change yet, suite green
 
 **Checkpoint**: One authoritative predicate exists, is fully unit-tested,
 and both execution engines carry a test-injectable host OS.

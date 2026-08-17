@@ -27,6 +27,7 @@ type mcpAdapter struct {
 	overrides map[string]string
 	now       func() string
 	maskSet   *mask.Set // derived once; env/tasks/settings are fixed per adapter
+	goos      string    // host OS for availability checks; runtime.GOOS outside tests
 }
 
 // Tasks returns the non-private tasks as agent-facing tool descriptors. No
@@ -84,6 +85,7 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 		plan:     planRun,
 		now:      a.now,
 		ctx:      ctx,
+		goos:     a.goos,
 	}
 
 	params, err := bindNamedParams(t, args, scope)

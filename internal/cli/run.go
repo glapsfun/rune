@@ -152,6 +152,7 @@ func execute(opts Options, runefile string, args []string) error {
 		now:       func() string { return time.Now().UTC().Format(time.RFC3339) },
 		ctx:       mopts.ctx(),
 		src:       srcProvider,
+		goos:      runtime.GOOS,
 	}
 
 	invs, err := eng.resolveRoots(rawInvs)
@@ -193,6 +194,7 @@ type engine struct {
 	now       func() string
 	ctx       context.Context
 	src       diag.SourceProvider
+	goos      string // host OS for availability checks; runtime.GOOS outside tests
 }
 
 // resolveRoots turns CLI task invocations into scheduler roots. Bare `rune`
@@ -649,7 +651,7 @@ func printOverview(opts Options, f *ast.File) {
 // that matches the current OS (the same visibility filter listTasks applies).
 func hasVisibleTasks(f *ast.File) bool {
 	for _, t := range f.Tasks {
-		if !t.IsPrivate() && osMatches(t, runtime.GOOS) {
+		if !t.IsPrivate() && t.AvailableOn(runtime.GOOS) {
 			return true
 		}
 	}
@@ -657,7 +659,7 @@ func hasVisibleTasks(f *ast.File) bool {
 }
 
 // visibleTasksByGroup partitions f's visible tasks (non-private, OS-matching
-// per osMatches) by their group("...") attribute, in the order each group
+// per ast.Task.AvailableOn) by their group("...") attribute, in the order each group
 // name first occurs. The "" key holds tasks with no group attribute. This is
 // the single source of truth for group ordering/membership shared by --list
 // (listTasks) and the interactive picker (pickerItems in choose.go) so the
@@ -665,7 +667,7 @@ func hasVisibleTasks(f *ast.File) bool {
 func visibleTasksByGroup(f *ast.File) (order []string, groups map[string][]*ast.Task) {
 	groups = map[string][]*ast.Task{}
 	for _, t := range f.Tasks {
-		if t.IsPrivate() || !osMatches(t, runtime.GOOS) {
+		if t.IsPrivate() || !t.AvailableOn(runtime.GOOS) {
 			continue
 		}
 		g := ""
@@ -724,40 +726,14 @@ func listTasks(opts Options, f *ast.File) {
 	}
 }
 
-// osMatches reports whether a task's OS-filter attributes (if any) include the
-// current OS. A task with no OS attribute is always available.
-func osMatches(t *ast.Task, goos string) bool {
-	var filters []string
-	for _, a := range t.Attributes {
-		switch a.Kind {
-		case ast.AttrLinux, ast.AttrMacos, ast.AttrWindows, ast.AttrUnix:
-			filters = append(filters, a.Kind)
-		}
+// displayOS renders a GOOS value in the Runefile attribute vocabulary so
+// diagnostics never mix internal platform names with attribute names
+// ("darwin" is written [macos] in a Runefile).
+func displayOS(goos string) string {
+	if goos == "darwin" {
+		return "macos"
 	}
-	if len(filters) == 0 {
-		return true
-	}
-	for _, f := range filters {
-		switch f {
-		case ast.AttrLinux:
-			if goos == "linux" {
-				return true
-			}
-		case ast.AttrMacos:
-			if goos == "darwin" {
-				return true
-			}
-		case ast.AttrWindows:
-			if goos == "windows" {
-				return true
-			}
-		case ast.AttrUnix:
-			if goos != "windows" {
-				return true
-			}
-		}
-	}
-	return false
+	return goos
 }
 
 func firstLine(s string) string {

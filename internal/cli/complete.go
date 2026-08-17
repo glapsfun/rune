@@ -38,7 +38,7 @@ func TaskCandidates(opts Options) []TaskCandidate {
 
 	var out []TaskCandidate
 	for _, t := range file.Tasks {
-		if t.IsPrivate() || !osMatches(t, runtime.GOOS) {
+		if t.IsPrivate() || !t.AvailableOn(runtime.GOOS) {
 			continue
 		}
 		out = append(out, TaskCandidate{Name: t.Name, Doc: firstLine(t.Doc)})
