@@ -142,13 +142,13 @@ boolean per task, all tasks still listed (FR-005).
 **Purpose**: Make every documentation claim true (FR-006), record the
 behavior change, and run the full constitutional gate set.
 
-- [ ] T020 [P] Update `docs/runefile.md` attributes section: OS attributes now document visibility AND enforcement — hidden from list/picker/completion/MCP, direct invocation errors, dependencies/post-hooks skip silently, OR semantics, `unix` = everything except Windows
-- [ ] T021 [P] Update `docs/mcp.md` exposure rule: "Every non-private task **available on the host OS** is exposed as an MCP tool" (contract mcp-surface.md)
-- [ ] T022 [P] Update `docs/examples/os-filtering/`: add a dispatcher task (deps on the per-OS setup tasks) to the `Runefile` and rewrite `README.md` so the "only shows and runs on that OS" claim is true and the skip/dispatch pattern is demonstrated
-- [ ] T023 Run the docs harness in Docker: `docker-compose run --rm test go test ./test/docs/...` — examples validate and run, fenced blocks parse, links resolve (SC-005)
-- [ ] T024 Execute quickstart.md scenarios 1–5 manually with a built binary (`go build -trimpath -o dist/rune ./cmd/rune`) and confirm expected outputs
-- [ ] T025 Full gate set: `golangci-lint run` clean, `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `goreleaser check` untouched-config sanity — all green
-- [ ] T026 Record the behavior change for the changelog (git-cliff reads commits): the feature commit body must note that OS-mismatched dependencies are now skipped and direct invocation now errors — previously both executed — as an intentional pre-1.0 behavior change (plan Complexity Tracking)
+- [X] T020 [P] Update `docs/runefile.md` attributes section: OS attributes now document visibility AND enforcement — hidden from list/picker/completion/MCP, direct invocation errors, dependencies/post-hooks skip silently, OR semantics, `unix` = everything except Windows
+- [X] T021 [P] Update `docs/mcp.md` exposure rule: "Every non-private task **available on the host OS** is exposed as an MCP tool" (contract mcp-surface.md)
+- [X] T022 [P] Update `docs/examples/os-filtering/`: add a dispatcher task (deps on the per-OS setup tasks) to the `Runefile` and rewrite `README.md` so the "only shows and runs on that OS" claim is true and the skip/dispatch pattern is demonstrated
+- [X] T023 Run the docs harness in Docker: `docker-compose run --rm test go test ./test/docs/...` — examples validate and run, fenced blocks parse, links resolve (SC-005)
+- [X] T024 Execute quickstart.md scenarios 1–5 manually with a built binary (`go build -trimpath -o dist/rune ./cmd/rune`) and confirm expected outputs
+- [X] T025 Full gate set: `golangci-lint run` clean, `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `goreleaser check` untouched-config sanity — all green
+- [X] T026 Record the behavior change for the changelog (git-cliff reads commits): the feature commit body must note that OS-mismatched dependencies are now skipped and direct invocation now errors — previously both executed — as an intentional pre-1.0 behavior change (plan Complexity Tracking)
 
 ---
 

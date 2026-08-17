@@ -32,8 +32,11 @@ never enabled by default.
 
 ## How tasks become tools
 
-- Every **non-private** task is exposed as an MCP tool. Add `[private]` to hide a task (it
-  remains callable only as a dependency of another task).
+- Every **non-private** task **available on the host OS** is exposed as an MCP tool. Add
+  `[private]` to hide a task (it remains callable only as a dependency of another task).
+  A task restricted to another platform (`[linux]`/`[macos]`/`[windows]`/`[unix]`) is not
+  registered at all, so an agent can never see — or attempt — a platform-incompatible
+  command; calling such a task by a remembered name is refused with the availability error.
 - A task's **parameters** define the tool's input schema. Defaults and variadic
   parameters carry over.
 - The task's **doc comment** (the comment directly above it) becomes the tool description.
