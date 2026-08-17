@@ -207,6 +207,17 @@ func (e *engine) resolveRoots(raw []rawInvocation) ([]scheduler.Invocation, erro
 	var invs []scheduler.Invocation
 	for _, r := range raw {
 		t := e.tasks[r.name] // existence already checked in splitArgs
+		// An explicitly requested task must be runnable here: unlike a
+		// dependency (which the scheduler skips silently), an OS-mismatched
+		// root aborts the whole invocation before anything executes. The
+		// caret-anchored diagnostic renders here because ValidationError
+		// suppresses the trailing banner (its contract: already rendered).
+		if !t.AvailableOn(e.goos) {
+			err := availabilityErr(r.name, t, e.goos)
+			d := diag.New(osAttrSpan(t), err.Error())
+			renderDiags(e.opts, diag.List{d}, e.src)
+			return nil, err
+		}
 		params, err := bindParams(t, r.args, e.scope)
 		if err != nil {
 			return nil, err
@@ -214,6 +225,25 @@ func (e *engine) resolveRoots(raw []rawInvocation) ([]scheduler.Invocation, erro
 		invs = append(invs, scheduler.Invocation{Task: t, Params: params})
 	}
 	return invs, nil
+}
+
+// availabilityErr reports an OS-mismatched task in attribute vocabulary,
+// e.g.: task "setup-win" is not available on macos (requires windows).
+func availabilityErr(name string, t *ast.Task, goos string) error {
+	return &ValidationError{Err: errorf("task %q is not available on %s (requires %s)",
+		name, displayOS(goos), strings.Join(t.OSFilters(), " or "))}
+}
+
+// osAttrSpan anchors the availability diagnostic at the task's first OS
+// attribute, falling back to the task itself.
+func osAttrSpan(t *ast.Task) token.Span {
+	for _, a := range t.Attributes {
+		switch a.Kind {
+		case ast.AttrLinux, ast.AttrMacos, ast.AttrWindows, ast.AttrUnix:
+			return a.Sp
+		}
+	}
+	return t.Sp
 }
 
 // ResolveDep evaluates a dependency call in the caller's scope and binds args.

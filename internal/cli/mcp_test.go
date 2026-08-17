@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/config"
 	"github.com/rune-task-runner/rune/internal/eval"
@@ -100,6 +101,31 @@ func TestServerNeverRegistersOSMismatchedTools(t *testing.T) {
 	}
 	if _, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "win-only"}); err == nil {
 		t.Error("calling the unregistered OS-mismatched tool must fail even when allowlisted")
+	}
+}
+
+// A call naming an OS-mismatched task is refused with the availability
+// error, not "unknown task" — defense-in-depth for agents that guessed or
+// cached a tool name (spec 020 US2; contracts/mcp-surface.md).
+func TestAdapterCallRefusesOSMismatchedTask(t *testing.T) {
+	src := "everywhere:\n    @echo e\n[windows]\nwin-only:\n    @echo w\n"
+	a := adapterFor(t, src)
+	a.goos = "linux"
+	_, err := a.Call(context.Background(), "win-only", nil)
+	if err == nil {
+		t.Fatal("OS-mismatched call accepted")
+	}
+	if strings.Contains(err.Error(), "unknown task") {
+		t.Errorf("mismatched task misreported as unknown: %q", err.Error())
+	}
+	for _, part := range []string{`"win-only"`, "not available on linux", "requires windows"} {
+		if !strings.Contains(err.Error(), part) {
+			t.Errorf("message %q missing %q", err.Error(), part)
+		}
+	}
+	// Genuinely unknown names keep the existing diagnostic.
+	if _, err := a.Call(context.Background(), "no-such-task", nil); err == nil || !strings.Contains(err.Error(), "unknown task") {
+		t.Errorf("unknown-task diagnostic changed: %v", err)
 	}
 }
 

@@ -63,6 +63,12 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	if !ok {
 		return mcpserver.Result{}, errorf("unknown task: %s", name)
 	}
+	// Defense-in-depth: the task map stays complete (mismatched tasks remain
+	// resolvable as skippable dependencies), so a call that guessed or cached
+	// a hidden tool name is refused here with the availability error.
+	if !t.AvailableOn(a.goos) {
+		return mcpserver.Result{}, availabilityErr(name, t, a.goos)
+	}
 	var outBuf, errBuf bytes.Buffer
 	scope := eval.NewScope(a.assigns, a.overrides)
 	scope.GOOS = runtime.GOOS
