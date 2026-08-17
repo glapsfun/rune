@@ -116,6 +116,32 @@ func TestAvailabilityErrorUsesAttributeVocabulary(t *testing.T) {
 	}
 }
 
+// The cross-platform dispatch pattern (spec 020 US3): one dispatcher task
+// depends on per-OS halves; only the host-matching half runs, the mismatched
+// one is skipped silently, and the dispatcher's own body still runs.
+func TestDispatchRunsOnlyMatchingDep(t *testing.T) {
+	var out bytes.Buffer
+	eng := availEngine(t, dispatchSrc, "linux", planRun, &out)
+	invs, err := eng.resolveRoots([]rawInvocation{{name: "setup"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := scheduler.Run(eng, invs); err != nil {
+		t.Fatal(err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "unix-setup") || !strings.Contains(got, "setup-done") {
+		t.Errorf("matching dep or body missing: %q", got)
+	}
+	if strings.Contains(got, "windows-setup") {
+		t.Errorf("mismatched dep executed: %q", got)
+	}
+	// The skip is silent: no notice in default output (spec Assumptions).
+	if strings.Contains(got, "skip") || strings.Contains(got, "setup-win") {
+		t.Errorf("skip must be silent in default output: %q", got)
+	}
+}
+
 // A [unix] task is available on darwin (spec 020 Story 2 scenario 2) and
 // runs normally end to end.
 func TestUnixTaskRunsOnDarwin(t *testing.T) {

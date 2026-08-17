@@ -104,13 +104,13 @@ Scenario 3).
 
 ### Tests for User Story 3 (write first, must FAIL)
 
-- [ ] T014 [P] [US3] RED: scheduler tests in `internal/runtime/scheduler/scheduler_test.go` using a fake engine whose `Available` rejects chosen tasks: (a) serial dep skipped, remaining deps keep order; (b) `[parallel]` dep skipped; (c) post-hook skipped (Story 3 scenario 3); (d) all deps skipped ⇒ body still executes (scenario 2); (e) skipped target never reaches `Execute` and leaves no memo entry. Existing fake engines gain an `Available` method to compile — that compile failure plus the new assertions are the red state
-- [ ] T015 [P] [US3] RED: CLI-level dispatch test in `internal/cli/run_test.go` with injected `goos`: dispatcher task with `[unix]` + `[windows]` deps runs only the matching dep then its own body, exit 0, no skip notice in default output (spec Assumptions: silent skip)
+- [X] T014 [P] [US3] RED: scheduler tests in `internal/runtime/scheduler/scheduler_test.go` using a fake engine whose `Available` rejects chosen tasks: (a) serial dep skipped, remaining deps keep order; (b) `[parallel]` dep skipped; (c) post-hook skipped (Story 3 scenario 3); (d) all deps skipped ⇒ body still executes (scenario 2); (e) skipped target never reaches `Execute` and leaves no memo entry. Existing fake engines gain an `Available` method to compile — that compile failure plus the new assertions are the red state
+- [X] T015 [P] [US3] RED: CLI-level dispatch test in `internal/cli/run_test.go` with injected `goos`: dispatcher task with `[unix]` + `[windows]` deps runs only the matching dep then its own body, exit 0, no skip notice in default output (spec Assumptions: silent skip)
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] GREEN: add `Available(task *ast.Task) bool` to the `Engine` interface in `internal/runtime/scheduler/scheduler.go` and skip in `runDep` after `ResolveDep` (return nil, no memo entry, chain untouched — research D2); update the package doc comment; T014 passes
-- [ ] T017 [US3] GREEN: implement `Available` on the CLI `engine` (`internal/cli/run.go`) as `task.AvailableOn(e.goos)`; T015 passes and the same behavior flows to MCP `Call` (shared scheduler)
+- [X] T016 [US3] GREEN: add `Available(task *ast.Task) bool` to the `Engine` interface in `internal/runtime/scheduler/scheduler.go` and skip in `runDep` after `ResolveDep` (return nil, no memo entry, chain untouched — research D2); update the package doc comment; T014 passes
+- [X] T017 [US3] GREEN: implement `Available` on the CLI `engine` (`internal/cli/run.go`) as `task.AvailableOn(e.goos)`; T015 passes and the same behavior flows to MCP `Call` (shared scheduler)
 
 **Checkpoint**: The dispatch pattern works; direct-invoke error (US2) and
 dep skip coexist for the same task (spec Edge Cases).

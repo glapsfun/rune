@@ -14,10 +14,11 @@ import (
 // carry no real args; Execute records the run order and can fail a named task.
 // It is concurrency-safe so the parallel tests can use it.
 type mockEngine struct {
-	tasks   map[string]*ast.Task
-	failOn  string
-	execErr error
-	delay   time.Duration
+	tasks       map[string]*ast.Task
+	failOn      string
+	execErr     error
+	delay       time.Duration
+	unavailable map[string]bool // tasks Available reports false for
 
 	mu      sync.Mutex
 	order   []string
@@ -58,6 +59,8 @@ func (m *mockEngine) Execute(task *ast.Task, _ map[string]string) error {
 
 func (m *mockEngine) Namespace(_ *ast.Task) string { return "" }
 
+func (m *mockEngine) Available(t *ast.Task) bool { return !m.unavailable[t.Name] }
+
 func task(name string, deps ...string) *ast.Task {
 	t := &ast.Task{Name: name}
 	for _, d := range deps {
@@ -72,6 +75,75 @@ func newEngine(tasks ...*ast.Task) *mockEngine {
 		m.tasks[t.Name] = t
 	}
 	return m
+}
+
+// Spec 020 US3: unavailable dependency/post-hook targets are skipped
+// silently — they never reach Execute, remaining edges keep their order,
+// and the depending task still runs.
+
+func TestSchedulerSkipsUnavailableDep(t *testing.T) {
+	nix := task("setup-nix")
+	win := task("setup-win")
+	setup := task("setup", "setup-nix", "setup-win")
+	m := newEngine(nix, win, setup)
+	m.unavailable = map[string]bool{"setup-win": true}
+	if err := Run(m, []Invocation{{Task: setup, Params: map[string]string{}}}); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"setup-nix", "setup"}
+	if strings.Join(m.order, ",") != strings.Join(want, ",") {
+		t.Errorf("order = %v, want %v (skip must preserve remaining order)", m.order, want)
+	}
+}
+
+func TestSchedulerSkipsUnavailableParallelDep(t *testing.T) {
+	a := task("a")
+	b := task("b")
+	top := task("top", "a", "b")
+	top.Attributes = append(top.Attributes, &ast.Attribute{Kind: ast.AttrParallel})
+	m := newEngine(a, b, top)
+	m.unavailable = map[string]bool{"b": true}
+	if err := Run(m, []Invocation{{Task: top, Params: map[string]string{}}}); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range m.order {
+		if n == "b" {
+			t.Errorf("unavailable [parallel] dep executed: %v", m.order)
+		}
+	}
+	if m.order[len(m.order)-1] != "top" {
+		t.Errorf("depending task did not run after skip: %v", m.order)
+	}
+}
+
+func TestSchedulerSkipsUnavailablePostHook(t *testing.T) {
+	hook := task("hook")
+	main := task("main")
+	main.PostHooks = append(main.PostHooks, &ast.DepCall{Name: "hook"})
+	m := newEngine(hook, main)
+	m.unavailable = map[string]bool{"hook": true}
+	if err := Run(m, []Invocation{{Task: main, Params: map[string]string{}}}); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(m.order, ",") != "main" {
+		t.Errorf("order = %v, want [main] (post-hook must be skipped)", m.order)
+	}
+}
+
+func TestSchedulerAllDepsSkippedBodyStillRuns(t *testing.T) {
+	a := task("a")
+	b := task("b")
+	top := task("top", "a", "b")
+	m := newEngine(a, b, top)
+	m.unavailable = map[string]bool{"a": true, "b": true}
+	if err := Run(m, []Invocation{{Task: top, Params: map[string]string{}}}); err != nil {
+		t.Fatal(err)
+	}
+	// The skip happens in runDep, before the target enters run(): Execute is
+	// never reached and no memo entry is written for skipped targets.
+	if strings.Join(m.order, ",") != "top" {
+		t.Errorf("order = %v, want [top] (all deps skipped, body still runs)", m.order)
+	}
 }
 
 func TestSchedulerTopoOrder(t *testing.T) {

@@ -246,6 +246,10 @@ func osAttrSpan(t *ast.Task) token.Span {
 	return t.Sp
 }
 
+// Available reports whether the task may run on this host OS; the scheduler
+// skips unavailable dependency/post-hook targets silently.
+func (e *engine) Available(task *ast.Task) bool { return task.AvailableOn(e.goos) }
+
 // ResolveDep evaluates a dependency call in the caller's scope and binds args.
 func (e *engine) ResolveDep(curTask *ast.Task, curParams map[string]string, dep *ast.DepCall) (*ast.Task, map[string]string, error) {
 	target, ok := e.tasks[dep.Name]
