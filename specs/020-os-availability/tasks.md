@@ -55,12 +55,12 @@ quickstart Scenario 5).
 
 ### Tests for User Story 1 (write first, must FAIL)
 
-- [ ] T006 [P] [US1] RED: in `internal/cli/mcp_test.go` (create or extend the existing MCP adapter test file), build a `mcpAdapter` over a fixture with `[windows]`, `[linux]`, `[linux, windows]`, unrestricted, and private tasks; with `goos: "linux"` assert `Tasks()` omits the `[windows]` task, includes the `[linux]`, OR-combined, and unrestricted tasks, and still omits private (Story 1 scenarios 1–3)
+- [ ] T006 [P] [US1] RED: in `internal/cli/mcp_test.go` (create or extend the existing MCP adapter test file), build a `mcpAdapter` over a fixture with `[windows]`, `[linux]`, `[linux, windows]`, unrestricted, and private tasks; with `goos: "linux"` assert `Tasks()` omits the `[windows]` task, includes the `[linux]`, OR-combined, and unrestricted tasks, and still omits private (Story 1 scenarios 1–3). Both transports (`rune mcp`, `rune serve`) build this same adapter, so adapter-level assertions cover both — note this in the test comment
 
 ### Implementation for User Story 1
 
 - [ ] T007 [US1] GREEN: in `mcpAdapter.Tasks()` (`internal/cli/mcp.go`), skip tasks failing `t.AvailableOn(a.goos)` alongside the existing `IsPrivate()` skip; T006 passes
-- [ ] T008 [US1] Add an assertion that the filtered set is what tool registration and authz consume: extend `internal/cli/mcp_test.go` to build `mcpserver.New(adapter, ...)` (or the smallest equivalent) over the T006 fixture and assert no tool is registered for the OS-mismatched task (Story 1 scenario 4 — authz iterates `Engine.Tasks()` and inherits the filter)
+- [ ] T008 [US1] Assert the filtered set is what tool registration AND authz consume, over the T006 fixture: (a) build `mcpserver.New(adapter, ...)` and assert no tool is registered for the OS-mismatched task; (b) exercise the authz layer (`mcpserver/authz.go` — allowlist/destructive gating built from `Engine.Tasks()`) directly and assert the mismatched task can be neither listed nor allowlisted (Story 1 scenario 4)
 
 **Checkpoint**: An agent connected on this host cannot see a
 platform-incompatible task. MVP delivered.
@@ -78,13 +78,14 @@ the availability message and executes nothing (quickstart Scenario 2).
 
 ### Tests for User Story 2 (write first, must FAIL)
 
-- [ ] T009 [P] [US2] RED: CLI-level tests in `internal/cli/run_test.go` (or the existing file covering `resolveRoots`/`execute`) with injected `goos`: (a) invoking a mismatched task exits `ExitValidation` (3) with a message containing the task name, its required OS list, and the host OS; (b) `rune ok-task bad-task` executes nothing — not even `ok-task` (Story 2 scenario 3); (c) `--dry-run` and `--summary` of a mismatched task also fail (research D3); (d) a `[unix]` task runs on darwin (Story 2 scenario 2)
+- [ ] T009 [P] [US2] RED: CLI-level tests in `internal/cli/run_test.go` (or the existing file covering `resolveRoots`/`execute`) with injected `goos`: (a) invoking a mismatched task exits `ExitValidation` (3) with a message containing the task name, its required OS list, and the host OS in **attribute vocabulary** (`macos`, never `darwin` — contract availability.md); (b) `rune ok-task bad-task` executes nothing — not even `ok-task` (Story 2 scenario 3); (c) `--dry-run` and `--summary` of a mismatched task also fail (research D3); (d) a `[unix]` task runs on darwin (Story 2 scenario 2)
 - [ ] T010 [P] [US2] RED: in `internal/cli/mcp_test.go`, `Call()` on an OS-mismatched task name returns the availability error (not "unknown task") and schedules nothing (contract mcp-surface.md defense-in-depth)
+- [ ] T011 [P] [US2] RED: binary-level integration test in `test/integration` (constitution VI layer — real binary, real GOOS, no injection): a fixture Runefile with a task restricted to an OS that is never the CI host's counterpart is invoked directly; assert stderr carries the availability message, exit code is 3, and nothing executed. Use an OS-complement fixture (e.g. a `[windows]` task asserted on linux/darwin hosts and a `[unix]` task asserted on windows hosts) so the test is meaningful on all three CI platforms
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] GREEN: gate roots in `resolveRoots` (`internal/cli/run.go`): for each root task failing `AvailableOn(e.goos)`, return a `ValidationError` shaped `task "NAME" is not available on HOST (requires F1 or F2)` using `OSFilters()`; T009 passes
-- [ ] T012 [US2] GREEN: re-check availability at the top of `mcpAdapter.Call()` (`internal/cli/mcp.go`) with the same message; keep `unknown task:` for genuinely unknown names; T010 passes
+- [ ] T012 [US2] GREEN: gate roots in `resolveRoots` (`internal/cli/run.go`): for each root task failing `AvailableOn(e.goos)`, return a `ValidationError` shaped `task "NAME" is not available on HOST (requires F1 or F2)` using `OSFilters()`, where HOST is rendered via a small display helper mapping GOOS→attribute vocabulary (`darwin`→`macos`, else as-is; contract availability.md); T009 and T011 pass
+- [ ] T013 [US2] GREEN: re-check availability at the top of `mcpAdapter.Call()` (`internal/cli/mcp.go`) with the same message; keep `unknown task:` for genuinely unknown names; T010 passes
 
 **Checkpoint**: Nothing — human, script, or agent — can execute a task on
 a platform it excludes.
@@ -103,13 +104,13 @@ Scenario 3).
 
 ### Tests for User Story 3 (write first, must FAIL)
 
-- [ ] T013 [P] [US3] RED: scheduler tests in `internal/runtime/scheduler/scheduler_test.go` using a fake engine whose `Available` rejects chosen tasks: (a) serial dep skipped, remaining deps keep order; (b) `[parallel]` dep skipped; (c) post-hook skipped (Story 3 scenario 3); (d) all deps skipped ⇒ body still executes (scenario 2); (e) skipped target never reaches `Execute` and leaves no memo entry. Existing fake engines gain an `Available` method to compile — that compile failure plus the new assertions are the red state
-- [ ] T014 [P] [US3] RED: CLI-level dispatch test in `internal/cli/run_test.go` with injected `goos`: dispatcher task with `[unix]` + `[windows]` deps runs only the matching dep then its own body, exit 0, no skip notice in default output (spec Assumptions: silent skip)
+- [ ] T014 [P] [US3] RED: scheduler tests in `internal/runtime/scheduler/scheduler_test.go` using a fake engine whose `Available` rejects chosen tasks: (a) serial dep skipped, remaining deps keep order; (b) `[parallel]` dep skipped; (c) post-hook skipped (Story 3 scenario 3); (d) all deps skipped ⇒ body still executes (scenario 2); (e) skipped target never reaches `Execute` and leaves no memo entry. Existing fake engines gain an `Available` method to compile — that compile failure plus the new assertions are the red state
+- [ ] T015 [P] [US3] RED: CLI-level dispatch test in `internal/cli/run_test.go` with injected `goos`: dispatcher task with `[unix]` + `[windows]` deps runs only the matching dep then its own body, exit 0, no skip notice in default output (spec Assumptions: silent skip)
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] GREEN: add `Available(task *ast.Task) bool` to the `Engine` interface in `internal/runtime/scheduler/scheduler.go` and skip in `runDep` after `ResolveDep` (return nil, no memo entry, chain untouched — research D2); update the package doc comment; T013 passes
-- [ ] T016 [US3] GREEN: implement `Available` on the CLI `engine` (`internal/cli/run.go`) as `task.AvailableOn(e.goos)`; T014 passes and the same behavior flows to MCP `Call` (shared scheduler)
+- [ ] T016 [US3] GREEN: add `Available(task *ast.Task) bool` to the `Engine` interface in `internal/runtime/scheduler/scheduler.go` and skip in `runDep` after `ResolveDep` (return nil, no memo entry, chain untouched — research D2); update the package doc comment; T014 passes
+- [ ] T017 [US3] GREEN: implement `Available` on the CLI `engine` (`internal/cli/run.go`) as `task.AvailableOn(e.goos)`; T015 passes and the same behavior flows to MCP `Call` (shared scheduler)
 
 **Checkpoint**: The dispatch pattern works; direct-invoke error (US2) and
 dep skip coexist for the same task (spec Edge Cases).
@@ -126,11 +127,11 @@ boolean per task, all tasks still listed (FR-005).
 
 ### Tests for User Story 4 (write first, must FAIL)
 
-- [ ] T017 [P] [US4] RED: dump tests in `internal/cli/dump_test.go` (create or extend): with a goos parameter, a `[windows]` task dumps `"available": false` on linux and `true` on windows, unrestricted tasks always `true`, unavailable and private tasks remain present, and the raw OS names stay in `attributes` (contract dump-schema.md)
+- [ ] T018 [P] [US4] RED: dump tests in `internal/cli/dump_test.go` (create or extend): with a goos parameter, a `[windows]` task dumps `"available": false` on linux and `true` on windows, unrestricted tasks always `true`, unavailable and private tasks remain present, and the raw OS names stay in `attributes` (contract dump-schema.md — verify the actual attribute rendering and align the contract's example if it differs)
 
 ### Implementation for User Story 4
 
-- [ ] T018 [US4] GREEN: add `Available bool` with JSON tag `available` (no omitempty) to `taskDTO` in `internal/cli/dump.go`, parameterize `toDTO` with the target OS, pass the engine/host `goos` at the call site; T017 passes
+- [ ] T019 [US4] GREEN: add `Available bool` with JSON tag `available` (no omitempty) to `taskDTO` in `internal/cli/dump.go`, parameterize `toDTO` with the target OS, pass the engine/host `goos` at the call site; T018 passes
 
 **Checkpoint**: All four stories functional and independently verified.
 
@@ -141,13 +142,13 @@ boolean per task, all tasks still listed (FR-005).
 **Purpose**: Make every documentation claim true (FR-006), record the
 behavior change, and run the full constitutional gate set.
 
-- [ ] T019 [P] Update `docs/runefile.md` attributes section: OS attributes now document visibility AND enforcement — hidden from list/picker/completion/MCP, direct invocation errors, dependencies/post-hooks skip silently, OR semantics, `unix` = everything except Windows
-- [ ] T020 [P] Update `docs/mcp.md` exposure rule: "Every non-private task **available on the host OS** is exposed as an MCP tool" (contract mcp-surface.md)
-- [ ] T021 [P] Update `docs/examples/os-filtering/`: add a dispatcher task (deps on the per-OS setup tasks) to the `Runefile` and rewrite `README.md` so the "only shows and runs on that OS" claim is true and the skip/dispatch pattern is demonstrated
-- [ ] T022 Run the docs harness in Docker: `docker-compose run --rm test go test ./test/docs/...` — examples validate and run, fenced blocks parse, links resolve (SC-005)
-- [ ] T023 Execute quickstart.md scenarios 1–5 manually with a built binary (`go build -trimpath -o dist/rune ./cmd/rune`) and confirm expected outputs
-- [ ] T024 Full gate set: `golangci-lint run` clean, `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `goreleaser check` untouched-config sanity — all green
-- [ ] T025 Record the behavior change for the changelog (git-cliff reads commits): the feature commit body must note that OS-mismatched dependencies are now skipped and direct invocation now errors — previously both executed — as an intentional pre-1.0 behavior change (plan Complexity Tracking)
+- [ ] T020 [P] Update `docs/runefile.md` attributes section: OS attributes now document visibility AND enforcement — hidden from list/picker/completion/MCP, direct invocation errors, dependencies/post-hooks skip silently, OR semantics, `unix` = everything except Windows
+- [ ] T021 [P] Update `docs/mcp.md` exposure rule: "Every non-private task **available on the host OS** is exposed as an MCP tool" (contract mcp-surface.md)
+- [ ] T022 [P] Update `docs/examples/os-filtering/`: add a dispatcher task (deps on the per-OS setup tasks) to the `Runefile` and rewrite `README.md` so the "only shows and runs on that OS" claim is true and the skip/dispatch pattern is demonstrated
+- [ ] T023 Run the docs harness in Docker: `docker-compose run --rm test go test ./test/docs/...` — examples validate and run, fenced blocks parse, links resolve (SC-005)
+- [ ] T024 Execute quickstart.md scenarios 1–5 manually with a built binary (`go build -trimpath -o dist/rune ./cmd/rune`) and confirm expected outputs
+- [ ] T025 Full gate set: `golangci-lint run` clean, `docker-compose run --rm test go test ./...`, `docker-compose run --rm -e CGO_ENABLED=1 test go test -race ./...`, `goreleaser check` untouched-config sanity — all green
+- [ ] T026 Record the behavior change for the changelog (git-cliff reads commits): the feature commit body must note that OS-mismatched dependencies are now skipped and direct invocation now errors — previously both executed — as an intentional pre-1.0 behavior change (plan Complexity Tracking)
 
 ---
 
@@ -159,14 +160,14 @@ behavior change, and run the full constitutional gate set.
 - **Foundational (Phase 2)**: T002 → T003 → T004; T005 after T003 (independent of T004). BLOCKS all stories
 - **US1 (Phase 3)**: needs T003 + T005 (predicate + adapter goos)
 - **US2 (Phase 4)**: needs T003 + T005; independent of US1 (different concern, small shared file `mcp.go` — see notes)
-- **US3 (Phase 5)**: needs T003 + T005; scheduler work (T013/T015) is independent of US1/US2
+- **US3 (Phase 5)**: needs T003 + T005; scheduler work (T014/T016) is independent of US1/US2
 - **US4 (Phase 6)**: needs T003 + T005 only; fully independent of US1–US3
-- **Polish (Phase 7)**: T019–T021 after all stories; T022 after T021; T023–T025 last
+- **Polish (Phase 7)**: T020–T022 after all stories; T023 after T022; T024–T026 last
 
 ### User Story Dependencies
 
 - No story depends on another story's tasks. US1 is the MVP.
-- Shared-file caution: US1 (T007), US2 (T012) both edit `internal/cli/mcp.go`; US2 (T011), US3 (T016) both edit `internal/cli/run.go`. Parallelize across stories only with separate branches/worktrees; sequential P1→P4 avoids conflicts entirely.
+- Shared-file caution: US1 (T007), US2 (T013) both edit `internal/cli/mcp.go`; US2 (T012), US3 (T017) both edit `internal/cli/run.go`. Parallelize across stories only with separate branches/worktrees; sequential P1→P4 avoids conflicts entirely.
 
 ### Within Each User Story
 
@@ -178,21 +179,22 @@ behavior change, and run the full constitutional gate set.
 ### Parallel Opportunities
 
 - T002 (ast tests) alongside T001 baseline.
-- After Phase 2: T006, T009, T010, T013, T014, T017 (all RED tests, six different files) can be written in parallel.
-- Polish docs T019, T020, T021 in parallel (three separate docs).
+- After Phase 2: T006, T009, T010, T011, T014, T015, T018 (all RED tests across five distinct files) can be written in parallel — T006/T010 share `mcp_test.go` and T009/T015 share `run_test.go`, so same-file pairs belong to one author.
+- Polish docs T020, T021, T022 in parallel (three separate docs).
 
 ---
 
 ## Parallel Example: post-Foundational RED wave
 
 ```bash
-# All failing tests, six different files, no shared state:
+# All failing tests, five distinct files, no shared state:
 Task: "T006 MCP Tasks() filter test in internal/cli/mcp_test.go"
 Task: "T009 direct-invoke error tests in internal/cli/run_test.go"
-Task: "T010 MCP Call() defense test in internal/cli/mcp_test.go"   # same file as T006 — same author
-Task: "T013 scheduler skip tests in internal/runtime/scheduler/scheduler_test.go"
-Task: "T014 CLI dispatch test in internal/cli/run_test.go"          # same file as T009 — same author
-Task: "T017 dump availability test in internal/cli/dump_test.go"
+Task: "T010 MCP Call() defense test in internal/cli/mcp_test.go"    # same file as T006 — same author
+Task: "T011 binary-level availability-error test in test/integration/"
+Task: "T014 scheduler skip tests in internal/runtime/scheduler/scheduler_test.go"
+Task: "T015 CLI dispatch test in internal/cli/run_test.go"           # same file as T009 — same author
+Task: "T018 dump availability test in internal/cli/dump_test.go"
 ```
 
 ---
@@ -213,14 +215,14 @@ Task: "T017 dump availability test in internal/cli/dump_test.go"
 - +US4 → tooling sees computed verdicts
 - Polish → docs truthful, gates green, changelog note
 
-Sequential single-developer order T001→T025 is conflict-free by
+Sequential single-developer order T001→T026 is conflict-free by
 construction.
 
 ---
 
 ## Notes
 
-- Total: 25 tasks (Setup 1, Foundational 4, US1 3, US2 4, US3 4, US4 2, Polish 7)
+- Total: 26 tasks (Setup 1, Foundational 4, US1 3, US2 5, US3 4, US4 2, Polish 7)
 - Exact existing test-file names may differ (`run_test.go` etc.) — extend
   the file that already covers that unit; create it only if none exists
 - Tests run in Docker exclusively (constitution Engineering Constraints)

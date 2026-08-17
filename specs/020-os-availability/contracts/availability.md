@@ -30,7 +30,8 @@ Guarantees:
 | Check point | Root resolution, before the scheduler starts and before any confirmation prompt, cache check, or body execution |
 | On mismatch | Entire invocation fails: nothing executes, even for other (available) tasks named in the same invocation |
 | Error class | `ValidationError` → exit code **3** (`ExitValidation`) |
-| Message shape | `task "NAME" is not available on HOST (requires F1 or F2)` where `HOST` is the host GOOS name and `F1..Fn` are the task's OS filters in source order |
+| Message shape | `task "NAME" is not available on HOST (requires F1 or F2)` where `F1..Fn` are the task's OS filters in source order |
+| HOST vocabulary | HOST uses the **attribute vocabulary**, not raw GOOS: `darwin` displays as `macos`; `linux`/`windows` display as-is; any other GOOS displays raw. The message never mixes vocabularies — on a Mac it reads `not available on macos (requires windows)` |
 | Stream | stderr, styled like existing validation diagnostics |
 
 ## Scheduler: dependency & post-hook skip
