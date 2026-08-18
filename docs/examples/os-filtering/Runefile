@@ -1,12 +1,17 @@
-# OS-restricted tasks: an [linux]/[macos]/[windows] task only lists and runs on
-# that OS. The os()/arch() built-ins report the current platform.
+# OS-restricted tasks: an [linux]/[macos]/[windows] task only exists on that
+# OS — hidden from listings and MCP, not runnable, and silently skipped as a
+# dependency. The os()/arch() built-ins report the current platform.
 
 # Always available; reports the current platform.
 info:
     @echo "running on {{os()}}/{{arch()}}"
 
+# Cross-platform dispatcher: only the dependency matching this OS runs.
+setup: setup-linux setup-mac setup-win
+    @echo "toolchain ready"
+
 [linux]
-setup:
+setup-linux:
     @echo "apt-get install build-essential"
 
 [macos]

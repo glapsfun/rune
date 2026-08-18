@@ -74,6 +74,7 @@ func (e *engine) newAgentAdapter() *mcpAdapter {
 		overrides: e.overrides,
 		maskSet:   deriveMaskSet(e.env, e.tasks, e.settings.Secrets, e.settings.Unmasked),
 		now:       e.now,
+		goos:      e.goos,
 	}
 }
 

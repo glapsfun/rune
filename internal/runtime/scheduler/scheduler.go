@@ -3,6 +3,9 @@
 // (FR-005), runs dependencies before the body and post-hooks after, detects
 // cycles, and fails fast on the first error. [parallel] dependencies run
 // concurrently (bounded by CPU count) while preserving run-once semantics.
+// Dependency and post-hook targets the Engine reports unavailable (e.g.
+// declared for another OS) are skipped silently — they never execute and
+// leave no memo entry — while the depending task still runs (spec 020).
 package scheduler
 
 import (
@@ -24,6 +27,9 @@ type Engine interface {
 	Execute(task *ast.Task, params map[string]string) error
 	// Namespace returns the memoization namespace for a task (mod path, or "").
 	Namespace(task *ast.Task) string
+	// Available reports whether a task may run on this host. Unavailable
+	// dependency/post-hook targets are skipped silently.
+	Available(task *ast.Task) bool
 }
 
 // Invocation is a task plus its resolved parameters (a scheduler root).
@@ -125,6 +131,12 @@ func (s *state) runDep(curTask *ast.Task, curParams map[string]string, dep *ast.
 	target, depParams, err := s.engine.ResolveDep(curTask, curParams, dep)
 	if err != nil {
 		return err
+	}
+	// A target declared for another platform is skipped before entering
+	// run(): no execution, no memo entry, no chain participation. This is
+	// what turns per-OS deps into a dispatch pattern (spec 020 US3).
+	if !s.engine.Available(target) {
+		return nil
 	}
 	return s.run(target, depParams, chain)
 }

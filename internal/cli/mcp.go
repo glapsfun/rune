@@ -27,14 +27,16 @@ type mcpAdapter struct {
 	overrides map[string]string
 	now       func() string
 	maskSet   *mask.Set // derived once; env/tasks/settings are fixed per adapter
+	goos      string    // host OS for availability checks; runtime.GOOS outside tests
 }
 
-// Tasks returns the non-private tasks as agent-facing tool descriptors. No
-// secret values appear in any field (FR-029).
+// Tasks returns the non-private tasks available on this host OS as
+// agent-facing tool descriptors, so an agent can never see (or attempt) a
+// platform-incompatible task. No secret values appear in any field (FR-029).
 func (a *mcpAdapter) Tasks() []mcpserver.TaskInfo {
 	var out []mcpserver.TaskInfo
 	for _, t := range a.file.Tasks {
-		if t.IsPrivate() {
+		if !visibleOn(t, a.goos) {
 			continue
 		}
 		info := mcpserver.TaskInfo{
@@ -61,9 +63,19 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 	if !ok {
 		return mcpserver.Result{}, errorf("unknown task: %s", name)
 	}
+	// Defense-in-depth for direct Engine.Call users (embedders, tests): over
+	// the real MCP transport a mismatched task is never registered as a tool,
+	// so the SDK rejects it as unknown before this line; the check here keeps
+	// the Engine contract safe for callers that bypass tool registration.
+	if !t.AvailableOn(a.goos) {
+		return mcpserver.Result{}, availabilityErr(name, t, a.goos)
+	}
 	var outBuf, errBuf bytes.Buffer
 	scope := eval.NewScope(a.assigns, a.overrides)
-	scope.GOOS = runtime.GOOS
+	// One host-OS truth per adapter: availability (above), dependency
+	// skipping (eng.goos below), and the os()/os_family() builtins must
+	// never disagree, so the scope reads the same injected value.
+	scope.GOOS = a.goos
 	scope.Arch = runtime.GOARCH
 
 	// The same masking choke point as the CLI path: the buffers only ever hold
@@ -84,6 +96,7 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 		plan:     planRun,
 		now:      a.now,
 		ctx:      ctx,
+		goos:     a.goos,
 	}
 
 	params, err := bindNamedParams(t, args, scope)

@@ -24,7 +24,8 @@ func newServeCmd(opts *cli.Options) *cobra.Command {
 		Aliases: []string{"mcp"},
 		Short:   "Run the MCP server for agents and IDEs",
 		Long: `Run the Model Context Protocol (MCP) server so agents and IDEs can call your
-Runefile's non-private tasks as tools.
+Runefile's non-private tasks as tools. Tasks restricted to another OS via
+[linux]/[macos]/[windows]/[unix] are not exposed on this host.
 
 By default the server speaks MCP over stdio. Use --http to serve over Streamable
 HTTP, which additionally requires --token-file for bearer-token authentication.

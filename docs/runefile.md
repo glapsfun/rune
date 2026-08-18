@@ -229,7 +229,7 @@ Attributes sit on their own line(s) above a task in `[...]`:
 [confirm("Really clean?")]      # prompt before running (auto-approve with --yes)
 [parallel]                      # run this task's dependencies concurrently
 [group("build")]                # group label in listings
-[linux]  [macos]  [windows]  [unix]   # restrict to an OS
+[linux]  [macos]  [windows]  [unix]   # restrict to an OS (see below)
 [no-cd]                         # don't change into the Runefile's directory
 [network]                       # marks the task as network-using (MCP openWorldHint)
 [no-exit-message]               # suppress the trailing error banner on failure
@@ -239,6 +239,38 @@ Attributes sit on their own line(s) above a task in `[...]`:
 [script("/usr/bin/env python3")]  # run the whole body as a script under this interpreter
 [cache(inputs = ["go.mod", "src/**/*.go"], outputs = ["dist/app"])]  # content-hash caching
 ```
+
+### OS availability
+
+The OS attributes make a task exist only on the platforms it names. Several
+attributes combine as OR (`[linux, windows]` means either), and `[unix]`
+matches every platform except Windows. On a non-matching host the task is:
+
+- **hidden** from `--list`, the bare `rune` overview, the interactive picker,
+  shell completion, and the MCP tool list — an AI agent never sees it;
+- **not runnable**: invoking it by name fails before anything executes, with
+  a diagnostic naming the required OS (exit 3);
+- **skipped silently as a dependency or post-hook**, which turns per-OS tasks
+  into a dispatch pattern — one cross-platform task can depend on a
+  `[linux]`, a `[macos]`, and a `[windows]` variant, and only the matching
+  one runs:
+
+```rune
+# Install the toolchain for this platform.
+setup: setup-nix setup-win
+    @echo "toolchain ready"
+
+[unix]
+setup-nix:
+    @echo "apt-get/brew install ..."
+
+[windows]
+setup-win:
+    @echo "choco install ..."
+```
+
+`rune --dump --format json` reports the computed verdict per task in an
+`available` field, alongside the raw attribute names.
 
 ### Caching (opt-in)
 

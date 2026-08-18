@@ -105,6 +105,52 @@ func (t *Task) IsPrivate() bool {
 	return false
 }
 
+// AvailableOn reports whether the task may run on the given GOOS. A task
+// with no OS attribute is available everywhere; multiple OS attributes
+// combine as OR; "unix" matches every GOOS except "windows". This is the
+// single availability rule shared by listing, completion, MCP exposure,
+// root resolution, and dependency scheduling.
+func (t *Task) AvailableOn(goos string) bool {
+	filters := t.OSFilters()
+	if len(filters) == 0 {
+		return true
+	}
+	for _, f := range filters {
+		switch f {
+		case AttrLinux:
+			if goos == "linux" {
+				return true
+			}
+		case AttrMacos:
+			if goos == "darwin" {
+				return true
+			}
+		case AttrWindows:
+			if goos == "windows" {
+				return true
+			}
+		case AttrUnix:
+			if goos != "windows" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// OSFilters returns the task's OS attribute kinds in source order, or nil
+// when the task is unrestricted.
+func (t *Task) OSFilters() []string {
+	var filters []string
+	for _, a := range t.Attributes {
+		switch a.Kind {
+		case AttrLinux, AttrMacos, AttrWindows, AttrUnix:
+			filters = append(filters, a.Kind)
+		}
+	}
+	return filters
+}
+
 // Attr returns the first attribute of the given kind, or nil.
 func (t *Task) Attr(kind string) *Attribute {
 	for _, a := range t.Attributes {
