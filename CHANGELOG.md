@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.5.0] - 2026-08-18
+
+### Added
+- Enforce OS availability — hide mismatched tasks from agents, gate execution, enable per-OS dispatch (#23) (#23)
+
+### Documentation
+- Drop stale spec-019 plan block from CLAUDE.md
+
 ## [0.4.4] - 2026-08-12
 
 ### Fixed
