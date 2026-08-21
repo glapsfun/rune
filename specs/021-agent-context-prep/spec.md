@@ -27,10 +27,9 @@ captured output into the agent's context:
 
 - For an MCP session, the output becomes the `instructions` field of the
   initialize result, the protocol's designated slot for context the model
-  should have. Run once per server start: the MCP SDK fixes instructions at
-  server construction, so a stdio server (one session per process) gets
-  per-session freshness, while HTTP sessions of one server process share
-  the instructions computed at startup.
+  should have. Run once per server start: a stdio server (one session per
+  process) gets per-session freshness, while HTTP sessions of one server
+  process share the instructions computed at startup.
 - For an `agent`-executor task, the output is prepended to the prompt under a
   fixed delimiter. Run once per task invocation.
 
