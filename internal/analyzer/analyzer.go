@@ -6,6 +6,8 @@
 package analyzer
 
 import (
+	"fmt"
+
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/diag"
 	"github.com/rune-task-runner/rune/internal/eval"
@@ -20,6 +22,7 @@ func Analyze(f *ast.File) diag.List {
 		tasks: map[string]*ast.Task{},
 	}
 	a.collect()
+	a.checkContext()
 	a.checkExpressions()
 	a.checkDependencies()
 	a.checkCycles()
@@ -84,6 +87,42 @@ func (a *analyzer) checkParams(t *ast.Task) {
 		case ast.ParamRequired:
 			if sawDefaulted {
 				a.diags.Errorf(p.Sp, "required parameter %q cannot follow a defaulted parameter", p.Name)
+			}
+		}
+	}
+}
+
+// checkContext enforces the [context] hook contract (spec 021 FR-001,
+// FR-007): at most one context task in the composed file, and the hook must
+// be runnable unattended — no [confirm], no parameter without a default,
+// and not itself an agent task (which would recurse into an agent session).
+func (a *analyzer) checkContext() {
+	var first *ast.Task
+	for _, t := range a.file.Tasks {
+		attr := t.Attr(ast.AttrContext)
+		if attr == nil {
+			continue
+		}
+		if first != nil {
+			a.diags.Add(diag.Diagnostic{
+				Severity: diag.Error,
+				Span:     attr.Span(),
+				Message:  fmt.Sprintf("duplicate [context] task %q (already declared on %q)", t.Name, first.Name),
+				Code:     diag.CodeInvalidAttribute,
+				Related:  []diag.RelatedLocation{{Span: first.Sp, Message: first.Name}},
+			})
+			continue
+		}
+		first = t
+		if t.Attr(ast.AttrConfirm) != nil {
+			a.diags.Codef(diag.CodeInvalidAttribute, attr.Span(), "[context] task %q cannot use [confirm]: the hook runs unattended", t.Name)
+		}
+		if t.Executor == ast.ExecAgent {
+			a.diags.Codef(diag.CodeInvalidAttribute, attr.Span(), "[context] task %q cannot use the agent executor", t.Name)
+		}
+		for _, p := range t.Params {
+			if p.Kind == ast.ParamRequired || p.Kind == ast.ParamVariadicPlus {
+				a.diags.Codef(diag.CodeInvalidAttribute, p.Sp, "parameter %q of [context] task %q must have a default: the hook is invoked with no arguments", p.Name, t.Name)
 			}
 		}
 	}
