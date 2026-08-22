@@ -78,7 +78,10 @@ func TestGatherContextTimeoutDegrades(t *testing.T) {
 
 func TestGatherContextTruncates(t *testing.T) {
 	// Emit ~9000 bytes; the cap is 8192 bytes of content plus the marker.
-	a := adapterFor(t, "[context]\nhealth:\n    @head -c 9000 /dev/zero | tr '\\0' 'x'\n")
+	// A single builtin (no pipeline) keeps the capture path single-writer:
+	// piped segments share the captured stderr and race in os/exec copiers —
+	// a pre-existing Call() hazard tracked outside this feature.
+	a := adapterFor(t, "[context]\nhealth:\n    @printf '%09000d' 0\n")
 	text, ok := a.gatherContext(context.Background(), &bytes.Buffer{})
 	if !ok {
 		t.Fatal("hook should run")

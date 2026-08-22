@@ -47,10 +47,12 @@ go run ./cmd/rune health     # prints the health lines
 ## 3. MCP instructions on initialize
 
 ```sh
-printf '%s\n' \
-  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"0"}}}' \
-  | go run ./cmd/rune mcp 2>/dev/null | head -1
+{ printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"0"}}}'; \
+  sleep 1; } | go run ./cmd/rune mcp 2>/dev/null | head -1
 ```
+
+(The `sleep` keeps stdin open long enough for the response to flush.)
 
 Expected: the JSON response's `result.instructions` contains `demo-marker`.
 Also verify `tools/list` (append the corresponding request) does **not**

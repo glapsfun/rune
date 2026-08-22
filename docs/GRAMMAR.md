@@ -53,6 +53,7 @@ AttrItem    = "private"
             | "no-cd"
             | "network"                  (* sets MCP openWorldHint *)
             | "no-exit-message"          (* suppress the trailing error banner *)
+            | "context"                  (* project-health hook injected into agent context *)
             | "working-directory" "(" StringLit ")"
             | "env" "(" StringLit "," StringLit ")"
             | "doc" "(" StringLit ")"

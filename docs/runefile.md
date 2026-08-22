@@ -233,12 +233,20 @@ Attributes sit on their own line(s) above a task in `[...]`:
 [no-cd]                         # don't change into the Runefile's directory
 [network]                       # marks the task as network-using (MCP openWorldHint)
 [no-exit-message]               # suppress the trailing error banner on failure
+[context]                       # project-health hook: output is injected into agent context
 [working-directory("./sub")]    # run the body from a specific directory
 [env("KEY", "value")]           # set an environment variable for the body
 [doc("Custom one-line doc")]    # override the doc string
 [script("/usr/bin/env python3")]  # run the whole body as a script under this interpreter
 [cache(inputs = ["go.mod", "src/**/*.go"], outputs = ["dist/app"])]  # content-hash caching
 ```
+
+`[context]` marks at most one task as the project's **context hook**: Rune runs it
+when an agent session starts and injects its output into the agent's context — see
+[Using Rune with AI Agents](mcp.md#project-context-for-agents). The hook must run
+unattended, so it cannot carry `[confirm]`, take a parameter without a default, or
+use the `agent` executor. It is never exposed as an MCP tool, but stays runnable by
+name from the CLI.
 
 ### OS availability
 

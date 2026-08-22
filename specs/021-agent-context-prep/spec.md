@@ -181,8 +181,9 @@ each produces its specific diagnostic.
   findings as output.
 - Dependencies and post-hooks of the context task run under normal task
   semantics, inside the same overall timeout budget.
-- Output is captured from stdout only; stderr goes to Rune's stderr as
-  usual.
+- The injected context is the hook's stdout only. The hook's stderr is
+  captured through the same masked pipeline and discarded — the only stderr
+  Rune emits for the hook is its own one-line warning on failure.
 - The 10s timeout and 8 KiB cap are fixed constants in this version; no
   configuration knob is introduced.
 - Masking applies before truncation, so a secret spanning the cap boundary
