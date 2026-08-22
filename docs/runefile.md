@@ -245,8 +245,8 @@ Attributes sit on their own line(s) above a task in `[...]`:
 when an agent session starts and injects its output into the agent's context — see
 [Using Rune with AI Agents](mcp.md#project-context-for-agents). The hook must run
 unattended, so it cannot carry `[confirm]`, take a parameter without a default, or
-use the `agent` executor. It is never exposed as an MCP tool, but stays runnable by
-name from the CLI.
+use the `agent` executor — and neither can any task in its dependency chain. It is
+never exposed as an MCP tool, but stays runnable by name from the CLI.
 
 ### OS availability
 

@@ -23,14 +23,16 @@ The `[context]`-attributed task inside the composed Runefile.
 
 ### Gathered Context (in-flight value)
 
-The processed output of one hook run: `(text string, hasHook bool)`.
+The processed output of one hook run: a single `string`; empty means "no
+context" (revised 2026-08-22: the `(text, hasHook)` pair collapsed to one
+string so both surfaces treat an empty-output hook identically).
 
-| State | `hasHook` | `text` |
-|---|---|---|
-| No hook (or OS-mismatched) | `false` | `""` — surfaces behave exactly as pre-feature (FR-009) |
-| Success | `true` | masked stdout, trailing newlines trimmed |
-| Success, oversized | `true` | masked stdout cut at 8 192 bytes + `\n[truncated]` (FR-004) |
-| Failure / timeout | `true` | `(context hook "NAME" failed; proceeding without project context)` (FR-005) |
+| State | `text` |
+|---|---|
+| No hook, OS-mismatched hook, or hook with empty stdout | `""` — surfaces behave exactly as pre-feature (FR-009) |
+| Success | masked stdout, trailing `\r`/`\n` trimmed |
+| Success, oversized | masked stdout cut at ≤ 8 192 bytes (backed up to a UTF-8 rune boundary) + `\n[truncated]` (FR-004) |
+| Failure / timeout | `(context hook "NAME" failed; proceeding without project context)` (FR-005) |
 
 Invariants: masking always precedes truncation (the gathering path only ever
 sees masked buffers); the value is computed fresh per gathering event and

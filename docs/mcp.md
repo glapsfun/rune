@@ -72,7 +72,10 @@ health:
 - **MCP sessions** receive the task's output as the server `instructions` in the
   initialize result, computed once at server start.
 - **`(agent)` tasks** get the output prepended to their prompt, fresh on every
-  invocation.
+  invocation from the CLI (directly or as a dependency). An agent task called
+  *as an MCP tool* runs without the prefix — the caller's session already
+  received the context as instructions, and the omission doubles as the guard
+  against agent-in-agent recursion.
 
 The hook is best-effort and can never block agent access: it runs under a 10-second
 timeout, and on failure or timeout the agent proceeds with a one-line notice instead.

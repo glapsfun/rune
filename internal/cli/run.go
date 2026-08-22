@@ -691,7 +691,9 @@ func printOverview(opts Options, f *ast.File) {
 
 // visibleOn is the single visibility predicate shared by every listing
 // surface (--list, the overview, the picker, completion, MCP tools): a task
-// is visible when it is non-private and available on the given OS.
+// is visible when it is non-private and available on the given OS. The MCP
+// tool surface additionally excludes the [context] hook (spec 021 FR-006) —
+// see mcpAdapter.Tasks; that rule is tool-specific, not a listing rule.
 func visibleOn(t *ast.Task, goos string) bool {
 	return !t.IsPrivate() && t.AvailableOn(goos)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"runtime"
+	"time"
 
 	"github.com/rune-task-runner/rune/internal/ast"
 	"github.com/rune-task-runner/rune/internal/config"
@@ -28,6 +29,11 @@ type mcpAdapter struct {
 	now       func() string
 	maskSet   *mask.Set // derived once; env/tasks/settings are fixed per adapter
 	goos      string    // host OS for availability checks; runtime.GOOS outside tests
+
+	// contextTimeout bounds the [context] hook run; zero means the fixed
+	// defaultContextTimeout. A field (not a global) so tests shrink it per
+	// adapter without racing each other.
+	contextTimeout time.Duration
 }
 
 // Tasks returns the non-private tasks available on this host OS as
@@ -87,6 +93,11 @@ func (a *mcpAdapter) Call(ctx context.Context, name string, args map[string]stri
 		a.maskSet,
 	)
 
+	// Deliberately no `file` here: executeAgent gates its [context] gathering
+	// and callback endpoint on e.file != nil, so leaving it unset is what
+	// keeps gatherContext → Call → executeAgent from recursing when an agent
+	// task is reached through this path. If you ever thread file through,
+	// add an explicit recursion guard first (spec 021, review finding).
 	eng := &engine{
 		tasks:    a.tasks,
 		scope:    scope,

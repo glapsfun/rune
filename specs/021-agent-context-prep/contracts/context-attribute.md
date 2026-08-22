@@ -29,6 +29,8 @@ the offending attribute/parameter; surfaced identically by CLI and LSP:
 | `[context]` + `[confirm]` | `[context] task "a" cannot use [confirm]: the hook runs unattended` |
 | Parameter without default | `parameter "p" of [context] task "a" must have a default: the hook is invoked with no arguments` |
 | `agent` executor | `[context] task "a" cannot use the agent executor` |
+| `[confirm]` anywhere in the hook's dep/post-hook closure | `dependency "clean" of [context] task "a" cannot use [confirm]: the hook runs unattended` |
+| `agent` executor anywhere in the closure | `dependency "summarize" of [context] task "a" cannot use the agent executor` |
 
 ## C3. MCP surface (protocol-observable)
 
@@ -52,7 +54,9 @@ With a hook (text or degrade notice):
 <task body, interpolated, unchanged>
 ```
 
-Without a hook: the prompt is byte-identical to the pre-feature prompt (no
-headers, no blank lines added). Gathering happens per invocation, before the
-provider starts; a hook failure additionally writes one warning line to
-Rune's own stderr.
+Without a hook — or when the hook succeeds with empty stdout — the prompt is
+byte-identical to the pre-feature prompt (no headers, no blank lines added).
+Gathering happens per CLI invocation, before the provider starts; a hook
+failure additionally writes one warning line to Rune's own stderr. An agent
+task invoked *as an MCP tool* runs without the prefix (the session already
+holds the context as instructions; this is also the anti-recursion guard).

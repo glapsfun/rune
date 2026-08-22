@@ -95,7 +95,10 @@ func (a *analyzer) checkParams(t *ast.Task) {
 // checkContext enforces the [context] hook contract (spec 021 FR-001,
 // FR-007): at most one context task in the composed file, and the hook must
 // be runnable unattended — no [confirm], no parameter without a default,
-// and not itself an agent task (which would recurse into an agent session).
+// and not an agent task (which would recurse into an agent session). The
+// unattended rules apply to the hook's whole dependency closure: the hook
+// runs with no stdin and no operator, so a [confirm] or agent-executor task
+// anywhere beneath it would silently doom every run.
 func (a *analyzer) checkContext() {
 	var first *ast.Task
 	for _, t := range a.file.Tasks {
@@ -104,13 +107,10 @@ func (a *analyzer) checkContext() {
 			continue
 		}
 		if first != nil {
-			a.diags.Add(diag.Diagnostic{
-				Severity: diag.Error,
-				Span:     attr.Span(),
-				Message:  fmt.Sprintf("duplicate [context] task %q (already declared on %q)", t.Name, first.Name),
-				Code:     diag.CodeInvalidAttribute,
-				Related:  []diag.RelatedLocation{{Span: first.Sp, Message: first.Name}},
-			})
+			a.diags.Add(diag.New(attr.Span(),
+				fmt.Sprintf("duplicate [context] task %q (already declared on %q)", t.Name, first.Name)).
+				WithCode(diag.CodeInvalidAttribute).
+				WithRelated(diag.RelatedLocation{Span: first.Sp, Message: "first [context] task declared here"}))
 			continue
 		}
 		first = t
@@ -125,6 +125,34 @@ func (a *analyzer) checkContext() {
 				a.diags.Codef(diag.CodeInvalidAttribute, p.Sp, "parameter %q of [context] task %q must have a default: the hook is invoked with no arguments", p.Name, t.Name)
 			}
 		}
+		a.checkContextClosure(t)
+	}
+}
+
+// checkContextClosure walks the [context] hook's dependency/post-hook
+// closure and rejects tasks the unattended hook could never run: a
+// [confirm] task auto-declines (the hook engine has no stdin), and an
+// agent-executor task would spawn an agent session from inside context
+// prep. Unknown dependency names are left to checkDependencies.
+func (a *analyzer) checkContextClosure(hook *ast.Task) {
+	visited := map[string]bool{hook.Name: true}
+	queue := append(append([]*ast.DepCall{}, hook.Deps...), hook.PostHooks...)
+	for len(queue) > 0 {
+		dep := queue[0]
+		queue = queue[1:]
+		t, ok := a.tasks[dep.Name]
+		if !ok || visited[t.Name] {
+			continue
+		}
+		visited[t.Name] = true
+		if t.Attr(ast.AttrConfirm) != nil {
+			a.diags.Codef(diag.CodeInvalidAttribute, dep.Sp, "dependency %q of [context] task %q cannot use [confirm]: the hook runs unattended", t.Name, hook.Name)
+		}
+		if t.Executor == ast.ExecAgent {
+			a.diags.Codef(diag.CodeInvalidAttribute, dep.Sp, "dependency %q of [context] task %q cannot use the agent executor", t.Name, hook.Name)
+		}
+		queue = append(queue, t.Deps...)
+		queue = append(queue, t.PostHooks...)
 	}
 }
 
