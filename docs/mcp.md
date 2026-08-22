@@ -55,6 +55,37 @@ _internal-helper:
 Here `build` is offered to the agent as a tool with a `target` argument; `_internal-helper`
 is not.
 
+## Project context for agents
+
+Mark one task with `[context]` to hand agents the project's current state — branch,
+dirty files, lint findings — *before* they choose a task:
+
+```rune
+# Gather project health for agents.
+[context]
+health:
+    @git branch --show-current
+    @git status --short
+    -golangci-lint run
+```
+
+- **MCP sessions** receive the task's output as the server `instructions` in the
+  initialize result, computed once at server start.
+- **`(agent)` tasks** get the output prepended to their prompt, fresh on every
+  invocation from the CLI (directly or as a dependency). An agent task called
+  *as an MCP tool* runs without the prefix — the caller's session already
+  received the context as instructions, and the omission doubles as the guard
+  against agent-in-agent recursion.
+
+The hook is best-effort and can never block agent access: it runs under a 10-second
+timeout, and on failure or timeout the agent proceeds with a one-line notice instead.
+Output is capped at 8 KiB and passes through the same
+[secret masking](how-to/secret-masking.md) as every other agent-facing surface. A
+failing health check (like `golangci-lint` finding errors) fails the task under
+normal semantics — prefix the line with `-` (continue on error) to deliver the
+findings as context instead. The hook itself is never exposed as a tool; it stays
+runnable by name from the CLI for debugging.
+
 ## Security model (secure by default)
 
 Exposing tasks to an agent grants execution capability, so Rune is conservative by default:

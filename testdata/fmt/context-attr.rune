@@ -1,0 +1,5 @@
+# Gather project health for agents.
+[context]
+health:
+    @git branch --show-current
+    @git status --short

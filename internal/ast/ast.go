@@ -188,6 +188,7 @@ const (
 	AttrCache            = "cache"
 	AttrNetwork          = "network"         // sets MCP openWorldHint
 	AttrNoExitMessage    = "no-exit-message" // suppress the trailing error banner
+	AttrContext          = "context"         // project-health hook injected into agent context (spec 021)
 )
 
 // Attribute is a `[name(args)]` annotation on a task. Most attributes carry a

@@ -109,23 +109,31 @@ func ServeMCP(opts Options, useHTTP bool, addr, tokenFile string) error {
 	if err != nil {
 		return err
 	}
-	srv := mcpserver.New(adapter, mcpserver.Options{
-		AllowDestructive: opts.Yes,
-		Version:          opts.Version,
-	})
-
 	ctx := opts.ctx()
+	// Validate the transport before anything executes: a usage error must
+	// never run Runefile code (the [context] hook below runs task commands).
+	var httpToken string
 	if useHTTP {
-		token, err := readToken(tokenFile)
+		httpToken, err = readToken(tokenFile)
 		if err != nil {
 			return &UsageError{Err: err}
 		}
 		if addr == "" {
 			addr = "127.0.0.1:7777"
 		}
+	}
+	// Run the [context] hook once at server start; its masked output becomes
+	// the instructions of every session's initialize result (spec 021 FR-002).
+	instructions := adapter.gatherContext(ctx, opts.Stderr)
+	srv := mcpserver.New(adapter, mcpserver.Options{
+		AllowDestructive: opts.Yes,
+		Version:          opts.Version,
+		Instructions:     instructions,
+	})
+	if useHTTP {
 		// Server chrome is dimmed like the rest of Rune's meta output (014 C3).
 		fmt.Fprintln(opts.Stderr, opts.themeStderr().Muted.Render(fmt.Sprintf("rune MCP server on http://%s (token required)", addr)))
-		return srv.ServeHTTP(ctx, mcpserver.HTTPConfig{Addr: addr, Token: token})
+		return srv.ServeHTTP(ctx, mcpserver.HTTPConfig{Addr: addr, Token: httpToken})
 	}
 	fmt.Fprintln(opts.Stderr, opts.themeStderr().Muted.Render("rune MCP server on stdio"))
 	return srv.ServeStdio(ctx)
