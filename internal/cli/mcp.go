@@ -36,7 +36,9 @@ type mcpAdapter struct {
 func (a *mcpAdapter) Tasks() []mcpserver.TaskInfo {
 	var out []mcpserver.TaskInfo
 	for _, t := range a.file.Tasks {
-		if !visibleOn(t, a.goos) {
+		// The [context] hook is delivered as instructions, never as a tool
+		// (spec 021 FR-006) — independent of [private].
+		if !visibleOn(t, a.goos) || t.Attr(ast.AttrContext) != nil {
 			continue
 		}
 		info := mcpserver.TaskInfo{

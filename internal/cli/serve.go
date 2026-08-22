@@ -109,12 +109,15 @@ func ServeMCP(opts Options, useHTTP bool, addr, tokenFile string) error {
 	if err != nil {
 		return err
 	}
+	ctx := opts.ctx()
+	// Run the [context] hook once at server start; its masked output becomes
+	// the instructions of every session's initialize result (spec 021 FR-002).
+	instructions, _ := adapter.gatherContext(ctx, opts.Stderr)
 	srv := mcpserver.New(adapter, mcpserver.Options{
 		AllowDestructive: opts.Yes,
 		Version:          opts.Version,
+		Instructions:     instructions,
 	})
-
-	ctx := opts.ctx()
 	if useHTTP {
 		token, err := readToken(tokenFile)
 		if err != nil {

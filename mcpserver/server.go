@@ -49,6 +49,11 @@ type Options struct {
 	AllowList []string
 	// Version reported to clients.
 	Version string
+	// Instructions, when non-empty, is delivered to clients as the MCP
+	// server instructions in the initialize result. Rune uses it for the
+	// [context] hook's project-health text (spec 021 FR-002). It must
+	// already be masked; this package never processes it.
+	Instructions string
 }
 
 // Server wraps an mcp.Server built from a Runefile's tasks.
@@ -64,7 +69,10 @@ func New(engine Engine, opts Options) *Server {
 		opts.Version = "dev"
 	}
 	srv := &Server{engine: engine, opts: opts}
-	srv.mcp = mcp.NewServer(&mcp.Implementation{Name: "rune", Version: opts.Version}, nil)
+	srv.mcp = mcp.NewServer(
+		&mcp.Implementation{Name: "rune", Version: opts.Version},
+		&mcp.ServerOptions{Instructions: opts.Instructions},
+	)
 	for _, t := range engine.Tasks() {
 		srv.mcp.AddTool(toolFor(t), srv.handler(t.Name))
 	}
